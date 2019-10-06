@@ -1,0 +1,31 @@
+
+<h2><a id="content" name="content"><%:Container Status%></a></h2>
+
+<fieldset class="cbi-section">
+
+	<table width="100%" cellspacing="10">
+		<tr><td width="33%"><%:ID%></td><td><%=pcdata(self.container_info.Id or "?")%></td></tr>
+		<tr><td width="33%"><%:Name%></td><td><%=pcdata(self.container_name or "?")%></td></tr>
+		<tr><td width="33%"><%:Status%></td><td><%=pcdata(self.container_info.State and self.container_info.State.Status or "?")%></td></tr>
+		<tr><td width="33%"><%:Image%></td><td><%=pcdata(self.container_info.Image or "?")%></td></tr>
+		<tr><td width="33%"><%:Created%></td><td><%=pcdata(self.container_info.Created or "?")%></td></tr>
+    <tr><td width="33%"><%:Start time%></td><td><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></td></tr>
+    <tr><td width="33%"><%:Healthy%></td><td id="localtime">-</td></tr>
+    <tr><td width="33%"><%:CPU%></td><td id="loadavg">-</td></tr>
+    <tr><td width="33%"><%:Memory%></td><td id="loadavg">-</td></tr>
+    <tr><td width="33%"><%:Networks%></td><td id="loadavg">-</td></tr>
+	</table>
+</fieldset>
+
+<fieldset class="cbi-section">
+	<legend><%:Details%></legend>
+
+	<table width="100%" cellspacing="10">
+		<tr><td width="33%"><%:Ports%></td><td><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></td></tr>
+		<tr><td width="33%"><%:Links%></td><td><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></td></tr>
+		<tr><td width="33%"><%:Env%></td><td><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></td></tr>
+    <tr><td width="33%"><%:Command%></td><td><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></td></tr>
+    <tr><td width="33%"><%:Mount/Volume%></td><td><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></td></tr>
+    <tr><td width="33%"><%:Restart Policy%></td><td><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></td></tr>
+	</table>
+</fieldset>

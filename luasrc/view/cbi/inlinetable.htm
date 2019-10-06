@@ -1,0 +1,16 @@
+<table >
+	<%- for i, k in ipairs(self:cfgsections()) do
+			section = k
+			scope = { valueheader = "cbi/cell_valueheader", valuefooter = "cbi/cell_valuefooter" }
+	-%>
+	<tr style="display:inline-block">
+		<%-
+			for k, node in ipairs(self.children) do
+				if not node.optional then
+					node:render(section, scope or {})
+				end
+			end
+		-%>
+	</tr>
+	<%- end -%>
+</table>
