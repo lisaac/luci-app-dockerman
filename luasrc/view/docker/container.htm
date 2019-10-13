@@ -6,7 +6,7 @@
 		<tr><td width="33%"><%:ID%></td><td><%=pcdata(self.container_info.Id or "?")%></td></tr>
 		<tr><td width="33%"><%:Name%></td><td><%=pcdata(self.container_name or "?")%></td></tr>
 		<tr><td width="33%"><%:Status%></td><td id="Status"><%=pcdata(self.container_info.State and self.container_info.State.Status or "?")%></td></tr>
-		<tr><td width="33%"><%:Image%></td><td><%=pcdata(self.container_info.Image or "?")%></td></tr>
+		<tr><td width="33%"><%:Image%></td><td><%=(self.container_info.Config.Image.. "<br>"..self.container_info.Image or "?")%></td></tr>
 		<tr><td width="33%"><%:Created%></td><td><%=pcdata(self.container_info.Created or "?")%></td></tr>
 		<% if self.container_info.State.Status == "running" then %>
 			<tr><td width="33%"><%:Start time%></td><td><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></td></tr>
