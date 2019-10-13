@@ -66,7 +66,7 @@ container_selected.default = 0
 container_name = c_table:option(DummyValue, "_name", translate("Name"))
 container_name.template="cbi/dummyvalue"
 container_name.href = function (self, section)
-  return luci.dispatcher.build_url("admin/docker/container/" .. self:cfgvalue(section))
+  return luci.dispatcher.build_url("admin/docker/container/" .. luci.http.protocol.urlencode(self:cfgvalue(section)))
 end
 container_status = c_table:option(DummyValue, "_status", translate("Status"))
 container_ip = c_table:option(DummyValue, "_network", translate("Network"))
@@ -74,9 +74,7 @@ container_ports = c_table:option(DummyValue, "_ports", translate("Ports"))
 container_image = c_table:option(DummyValue, "_image", translate("Image"))
 container_name.template="cbi/dummyvalue"
 container_image.href = function (self, section)
-  -- self:cfgvalue(section):find("^([^%s]-)/([^%s]-)[:([^%s]+)]")
-  image = self:cfgvalue(section):gsub("[/:]",".")
-  return luci.dispatcher.build_url("admin/docker/image/" .. image)
+  return luci.dispatcher.build_url("admin/docker/image/" .. luci.http.protocol.urlencode(self:cfgvalue(section)))
 end
 container_command = c_table:option(DummyValue, "_command", translate("Command"))
 
