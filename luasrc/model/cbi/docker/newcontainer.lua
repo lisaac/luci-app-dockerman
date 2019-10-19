@@ -71,6 +71,11 @@ for _, v in ipairs (networks) do
   end
 end
 
+d = s:option(DynamicList, "links", translate("Links with other containers"))
+d.placeholder = "container_name:alias"
+d.rmempty = true
+d:depends("network", "bridge")
+
 d = s:option(DynamicList, "env", translate("Environmental Variable"))
 d.placeholder = "TZ=Asia/Shanghai"
 d.rmempty = true
@@ -83,9 +88,7 @@ d = s:option(DynamicList, "port", translate("Exposed Ports"))
 d.placeholder = "2200:22/tcp"
 d.rmempty = true
 
-d = s:option(DynamicList, "links", translate("Links with other containers"))
-d.placeholder = "redis3:redis"
-d.rmempty = true
+
 
 d = s:option(Value, "command", translate("Run command"))
 d.placeholder = "/bin/sh init.sh"
@@ -143,10 +146,12 @@ m.handle = function(self, state, data)
     local exposedports = {}
     local tmpfs = {}
     tmp = data.tmpfs
-    for i, v in ipairs(tmp)do
-      local _,_, k,v1 = v:find("(.-):(.+)")
-      if k and v1 then
-        tmpfs[k]=v1
+    if type(tmp) == "table" then
+      for i, v in ipairs(tmp)do
+        local _,_, k,v1 = v:find("(.-):(.+)")
+        if k and v1 then
+          tmpfs[k]=v1
+        end
       end
     end
 
@@ -170,6 +175,21 @@ m.handle = function(self, state, data)
         command[#command+1] = v
       end 
     end
+    if memory ~= 0 then
+      _,_,n,unit = memory:find("([%d%.]+)([%l%u]+)")
+      if n then
+        unit = unit and unit:sub(1,1):upper() or "B"
+        if  unit == "M" then
+          memory = tonumber(n) * 1024 * 1024
+        elseif unit == "G" then
+          memory = tonumber(n) * 1024 * 1024 * 1024
+        elseif unit == "K" then
+          memory = tonumber(n) * 1024
+        else
+          memory = tonumber(n)
+        end
+      end
+    end
 
     local create_body={
       Hostname = name,
@@ -189,10 +209,9 @@ m.handle = function(self, state, data)
         Privileged = privileged and true or false,
         PortBindings = (next(portbindings) ~= nil) and portbindings or nil,
         Memory = memory,
-        CpuShares = cpushares,
-        NanoCPUs = cpus * 10 ^ 9,
-        BlkioWeight = blkioweight,
-        Tmpfs = tmpfs
+        CpuShares = tonumber(cpushares),
+        NanoCPUs = tonumber(cpus) * 10 ^ 9,
+        BlkioWeight = tonumber(blkioweight)
       },
       NetworkingConfig = ip and {
         EndpointsConfig = {
@@ -204,6 +223,13 @@ m.handle = function(self, state, data)
         }
       } or nil
     }
+    if next(tmpfs) ~= nil then
+      create_body["HostConfig"]["Tmpfs"] = tmpfs
+    end
+    if network == "bridge" and next(links) ~= nil then
+      create_body["HostConfig"]["Links"] = links
+    end
+
     local msg = dk.containers:create(name, nil, create_body)
     if msg.code == 201 then
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
