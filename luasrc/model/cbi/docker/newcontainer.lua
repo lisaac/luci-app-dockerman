@@ -103,11 +103,13 @@ d = s:option(Value, "cpus", translate("CPUs"), translate("Number of CPUs. Number
 d.placeholder = "1.5"
 d.rmempty = true
 d:depends("advance", 1)
+d.datatype="ufloat"
 
 d = s:option(Value, "cpushares", translate("CPU Shares Weight"), translate("CPU shares (relative weight, if 0 is set, the system will ignore the value and use the default of 1024."))
 d.placeholder = "1024"
 d.rmempty = true
 d:depends("advance", 1)
+d.datatype="uinteger"
 
 d = s:option(Value, "memory", translate("Memory"), translate("Memory limit (format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g. Minimum is 4M."))
 d.placeholder = "128m"
@@ -118,6 +120,7 @@ d = s:option(Value, "blkioweight", translate("Block IO Weight"), translate("Bloc
 d.placeholder = "500"
 d.rmempty = true
 d:depends("advance", 1)
+d.datatype="uinteger"
 
 d = s:option(DynamicList, "tmpfs", translate("Tmpfs"), translate("Mount tmpfs filesystems"))
 d.placeholder = "/run:rw,noexec,nosuid,size=65536k"
@@ -234,7 +237,7 @@ m.handle = function(self, state, data)
     if msg.code == 201 then
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
     else
-      err.description=string.format("<strong><font color=red>"..msg.message.."</font></strong>")
+      err.description=string.format("<strong><font color=red>"..msg.code..msg.message.."<br>"..msg.body.message.."</font></strong>")
     end
   end
 end

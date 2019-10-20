@@ -11,35 +11,87 @@ $Id$
 require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.docker"
-local d = docker.new()
+local dk = docker.new()
+local dknetworks = dk.networks:list().body
 
-function get_networks()
-  local networks = d.networks:list().body
+
+local get_networks = function ()
   local data = {}
-  for i, v in ipairs(networks) do
-    data[i]={}
-    data[i]["name"] = v.Name
-    data[i]["driver"] = v.Driver
+
+  if type(dknetworks) ~= "table" then return nil end
+  for i, v in ipairs(dknetworks) do
+    local index = v.Created .. v.Id
+    data[index]={}
+    data[index]["_selected"] = 0
+    data[index]["_id"] = v.Id:sub(1,12)
+    data[index]["_name"] = v.Name
+    data[index]["_driver"] = v.Driver
     if v.Driver == "bridge" then
-      data[i]["interface"] = v.Options["com.docker.network.bridge.name"]
+      data[index]["_interface"] = v.Options["com.docker.network.bridge.name"]
     elseif v.Driver == "macvlan" then
-      data[i]["interface"] = v.Options.parent
+      data[index]["_interface"] = v.Options.parent
     end
-    data[i]["subnet"] = v.IPAM and v.IPAM.Config[1] and v.IPAM.Config[1].Subnet or nil
-    data[i]["gateway"] = v.IPAM and v.IPAM.Config[1] and v.IPAM.Config[1].Gateway or nil
+    data[index]["_subnet"] = v.IPAM and v.IPAM.Config[1] and v.IPAM.Config[1].Subnet or nil
+    data[index]["_gateway"] = v.IPAM and v.IPAM.Config[1] and v.IPAM.Config[1].Gateway or nil
   end
   return data
 end
 
+
+local network_list = get_networks()
 m = Map("docker", translate("Docker"))
 
-v = m:section(Table, get_networks(), translate("Networks"))
+network_table = m:section(Table, network_list, translate("Networks"))
+network_table.nodescr=true
 
-v:option(DummyValue, "name", translate("name"))
-v:option(DummyValue, "driver", translate("Driver"))
-v:option(DummyValue, "interface", translate("Interface"))
-v:option(DummyValue, "subnet", translate("subnet"))
-v:option(DummyValue, "gateway", translate("Gateway"))
-v:option(Button, "remove", translate("Remove"))
+network_selecter = network_table:option(Flag, "_selected","")
+network_id = network_table:option(DummyValue, "_id", translate("ID"))
+network_selecter.disabled = 0
+network_selecter.enabled = 1
+network_selecter.default = 0
+for k,v in pairs(network_list) do
+  if v["_name"] ~= "bridge" and v["_name"] ~= "none" and v["_name"] ~= "host" then
+    network_selecter:depends("_name", v["_name"])
+  end
+end
+
+
+network_name = network_table:option(DummyValue, "_name", translate("Name"))
+network_driver = network_table:option(DummyValue, "_driver", translate("Driver"))
+network_interface = network_table:option(DummyValue, "_interface", translate("Interface"))
+network_subnet = network_table:option(DummyValue, "_subnet", translate("Subnet"))
+network_gateway = network_table:option(DummyValue, "_gateway", translate("Gateway"))
+
+network_selecter.write = function(self, section, value)
+  network_list[section]._selected = value
+end
+
+
+action = m:section(Table,{{}})
+action.template="cbi/inlinetable"
+btnnew=action:option(Button, "_new", translate("New"))
+btnnew.inputstyle = "add"
+btnnew.write = function(self, section)
+  luci.http.redirect(luci.dispatcher.build_url("admin/docker/newnetwork"))
+end
+btnremove = action:option(Button, "_remove", translate("Remove"))
+btnremove.inputstyle = "remove"
+btnremove.write = function(self, section)
+  local network_selected = {}
+  -- 遍历table中sectionid
+  local network_table_sids = network_table:cfgsections()
+  for _, network_table_sid in ipairs(network_table_sids) do
+    -- 得到选中项的名字
+    if network_list[network_table_sid]._selected == 1 then
+      network_selected[#network_selected+1] = network_name:cfgvalue(network_table_sid)
+    end
+  end
+  if next(network_selected) ~= nil then
+    for _,net in ipairs(network_selected) do
+      dk.networks["remove"](dk, net)
+    end
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
+  end
+end
 
 return m

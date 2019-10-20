@@ -11,37 +11,67 @@ $Id$
 require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.docker"
-local d = docker.new()
+local dk = docker.new()
 
 function get_images()
-  local images = d.images:list().body
+  local images = dk.images:list().body
   local data = {}
   for i, v in ipairs(images) do
-    data[i]={}
-    data[i]["id"] = v.Id
-    data[i]["containers"] = tostring(v.Containers)
+    local index = v.Created .. v.Id
+    data[index]={}
+    data[index]["_selected"] = 0
+    data[index]["_id"] = v.Id:sub(8,20)
+    data[index]["_containers"] = tostring(v.Containers)
     if v.RepoTags then
-      data[i]["tags"] = v.RepoTags[1]
+      data[index]["_tags"] = v.RepoTags[1]
     else 
-      _,_, data[i]["tags"] = v.RepoDigests[1]:find("^(.-)@.+")
-      data[i]["tags"]=data[i]["tags"]..":none"
+      _,_, data[index]["_tags"] = v.RepoDigests[1]:find("^(.-)@.+")
+      data[index]["_tags"]=data[index]["_tags"]..":none"
     end
-    data[i]["size"] = string.format("%.2f", tostring(v.Size/1024/1024)).."MB"
-    data[i]["created"] = os.date("%Y/%m/%d %H:%M:%S",v.Created)
+    data[index]["_size"] = string.format("%.2f", tostring(v.Size/1024/1024)).."MB"
+    data[index]["_created"] = os.date("%Y/%m/%d %H:%M:%S",v.Created)
   end
   return data
 end
 
+local image_list = get_images()
 m = Map("docker", translate("Docker"))
 
-v = m:section(Table, get_images(), translate("Images"))
+image_table = m:section(Table, image_list, translate("Images"))
 
-v:option(DummyValue, "id", translate("ID"))
-v:option(DummyValue, "containers", translate("Containers"))
-v:option(DummyValue, "tags", translate("RepoTags"))
-v:option(DummyValue, "size", translate("Size"))
-v:option(DummyValue, "created", translate("Created"))
+image_selecter = image_table:option(Flag, "_selected","")
+image_selecter.disabled = 0
+image_selecter.enabled = 1
+image_selecter.default = 0
 
-v:option(Button, "remove", translate("Remove"))
+image_id = image_table:option(DummyValue, "_id", translate("ID"))
+image_table:option(DummyValue, "_containers", translate("Containers"))
+image_table:option(DummyValue, "_tags", translate("RepoTags"))
+image_table:option(DummyValue, "_size", translate("Size"))
+image_table:option(DummyValue, "_created", translate("Created"))
+image_selecter.write = function(self, section, value)
+  image_list[section]._selected = value
+end
 
+action = m:section(Table,{{}})
+action.template="cbi/inlinetable"
+btnremove = action:option(Button, "remove", translate("Remove"))
+btnremove.inputstyle = "remove"
+btnremove.write = function(self, section)
+  local image_selected = {}
+  -- 遍历table中sectionid
+  local image_table_sids = image_table:cfgsections()
+  for _, image_table_sid in ipairs(image_table_sids) do
+    -- 得到选中项的名字
+    if image_list[image_table_sid]._selected == 1 then
+      image_selected[#image_selected+1] = image_id:cfgvalue(image_table_sid)
+    end
+  end
+  if next(image_selected) ~= nil then
+    for _,img in ipairs(image_selected) do
+      dk.images["remove"](dk, img)
+    end
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
+  end
+end
 return m

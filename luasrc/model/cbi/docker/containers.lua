@@ -19,33 +19,36 @@ local containers = dk.containers:list(nil, {all=true}).body
 
 function get_containers()
   local data = {}
+  if type(containers) ~= "table" then return nil end
   for i, v in ipairs(containers) do
-    data[i]={}
-    data[i]["_selected"] = 0
-    data[i]["_name"] = v.Names[1]:sub(2)
-    data[i]["_status"] = v.Status
+    local index = v.Created .. v.Id
+    data[index]={}
+    data[index]["_selected"] = 0
+    data[index]["_id"] = v.Id:sub(1,12)
+    data[index]["_name"] = v.Names[1]:sub(2)
+    data[index]["_status"] = v.Status
     -- if v.Status:find("^Exited") then
-    --   data[i]["_status"] = "Exited"
+    --   data[index]["_status"] = "Exited"
     -- end
     if (type(v.NetworkSettings) == "table" and type(v.NetworkSettings.Networks) == "table") then
       for networkname, netconfig in pairs(v.NetworkSettings.Networks) do
-        data[i]["_network"] = (data[i]["_network"] ~= nil and (data[i]["_network"] .." | ") or "").. networkname .. (netconfig.IPAddress ~= "" and (": " .. netconfig.IPAddress) or "")
+        data[index]["_network"] = (data[index]["_network"] ~= nil and (data[index]["_network"] .." | ") or "").. networkname .. (netconfig.IPAddress ~= "" and (": " .. netconfig.IPAddress) or "")
       end
     end
     -- networkmode = v.HostConfig.NetworkMode ~= "default" and v.HostConfig.NetworkMode or "bridge"
-    -- data[i]["_network"] = v.NetworkSettings.Networks[networkmode].IPAddress or nil
+    -- data[index]["_network"] = v.NetworkSettings.Networks[networkmode].IPAddress or nil
     _, _, image = v.Image:find("^sha256:(.+)")
     if image ~= nil then
       image=image:sub(1,12)
     end
     if v.Ports then
-      data[i]["_ports"] = nil
+      data[index]["_ports"] = nil
       for _,v2 in ipairs(v.Ports) do
-        data[i]["_ports"] = (data[i]["_ports"] and (data[i]["_ports"] .. ", ") or "") .. (v2.PublicPort and (v2.PublicPort .. ":") or "")  .. (v2.PrivatePort and (v2.PrivatePort .."/") or "") .. (v2.Type and v2.Type or "")
+        data[index]["_ports"] = (data[index]["_ports"] and (data[index]["_ports"] .. ", ") or "") .. (v2.PublicPort and (v2.PublicPort .. ":") or "")  .. (v2.PrivatePort and (v2.PrivatePort .."/") or "") .. (v2.Type and v2.Type or "")
       end
     end
-    data[i]["_image"] = image or v.Image
-    data[i]["_command"] = v.Command
+    data[index]["_image"] = image or v.Image
+    data[index]["_command"] = v.Command
   end
   return data
 end
@@ -58,11 +61,12 @@ c_table = m:section(Table, c_lists, translate("Containers"))
 c_table.nodescr=true
 -- v.template = "cbi/tblsection"
 -- v.sortable = true
-container_selected = c_table:option(Flag, "_selected","")
-container_selected.disabled = 0
-container_selected.enabled = 1
-container_selected.default = 0
+container_selecter = c_table:option(Flag, "_selected","")
+container_selecter.disabled = 0
+container_selecter.enabled = 1
+container_selecter.default = 0
 
+container_id = c_table:option(DummyValue, "_id", translate("ID"))
 container_name = c_table:option(DummyValue, "_name", translate("Name"))
 container_name.template="cbi/dummyvalue"
 container_name.href = function (self, section)
@@ -72,14 +76,14 @@ container_status = c_table:option(DummyValue, "_status", translate("Status"))
 container_ip = c_table:option(DummyValue, "_network", translate("Network"))
 container_ports = c_table:option(DummyValue, "_ports", translate("Ports"))
 container_image = c_table:option(DummyValue, "_image", translate("Image"))
-container_name.template="cbi/dummyvalue"
+container_image.template="cbi/dummyvalue"
 container_image.href = function (self, section)
   return luci.dispatcher.build_url("admin/docker/image/" .. luci.http.protocol.urlencode(self:cfgvalue(section)))
 end
 container_command = c_table:option(DummyValue, "_command", translate("Command"))
 
 
-container_selected.write=function(self, section, value)
+container_selecter.write=function(self, section, value)
   c_lists[section]._selected = value
 end
 --[[
