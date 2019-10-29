@@ -11,7 +11,7 @@ $Id$
 require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.docker"
-local dk = docker.new()
+local dk = docker.new({debug=true})
 local dknetworks = dk.networks:list().body
 
 
@@ -49,7 +49,7 @@ network_id = network_table:option(DummyValue, "_id", translate("ID"))
 network_selecter.disabled = 0
 network_selecter.enabled = 1
 network_selecter.default = 0
-for k,v in pairs(network_list) do
+for k, v in pairs(network_list) do
   if v["_name"] ~= "bridge" and v["_name"] ~= "none" and v["_name"] ~= "host" then
     network_selecter:depends("_name", v["_name"])
   end
@@ -68,8 +68,11 @@ end
 
 
 action = m:section(Table,{{}})
-action.template="cbi/inlinetable"
+action.notitle=true
+action.rowcolors=false
+action.template="cbi/ntblsection"
 btnnew=action:option(Button, "_new", translate("New"))
+btnnew.notitle=true
 btnnew.inputstyle = "add"
 btnnew.write = function(self, section)
   luci.http.redirect(luci.dispatcher.build_url("admin/docker/newnetwork"))
@@ -87,10 +90,17 @@ btnremove.write = function(self, section)
     end
   end
   if next(network_selected) ~= nil then
+    m.message = ""
     for _,net in ipairs(network_selected) do
-      dk.networks["remove"](dk, net)
+      local msg = dk.networks["remove"](dk, net)
+      if msg.code >= 300 then
+        m.message = m.message .."\n" .. msg.code..": "..msg.body.message
+        luci.util.perror(msg.body.message)
+      end
     end
-    luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
+    if m.message == "" then
+      luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
+    end
   end
 end
 

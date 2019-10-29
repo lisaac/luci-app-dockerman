@@ -11,7 +11,7 @@ $Id$
 require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.docker"
-local dk = docker.new()
+local dk = docker.new({debug=true})
 
 m = SimpleForm("docker", translate("Docker"))
 m.redirect = luci.dispatcher.build_url("admin", "docker", "networks")
@@ -19,7 +19,6 @@ m.redirect = luci.dispatcher.build_url("admin", "docker", "networks")
 s = m:section(SimpleSection, translate("New Network"))
 s.addremove = true
 s.anonymous = true
-
 
 d = s:option(Value, "name", translate("Network Name"))
 d.rmempty = true
@@ -54,6 +53,9 @@ d:value("l3", "l3")
 
 d = s:option(Flag, "ingress", translate("Ingress"), translate("Ingress network is the network which provides the routing-mesh in swarm mode."))
 d.rmempty = true
+d.disabled = 0
+d.enabled = 1
+d.default = 0
 d:depends("dirver", "overlay")
 
 d = s:option(DynamicList, "options", translate("Options"))
@@ -62,11 +64,15 @@ d.placeholder="com.docker.network.driver.mtu=1500"
 
 d = s:option(Flag, "internal", translate("Internal"), translate("Restrict external access to the network"))
 d.rmempty = true
+d.disabled = 0
+d.enabled = 1
+d.default = 0
 
 d = s:option(Value, "subnet", translate("Subnet"))
 d.rmempty = true
 d.placeholder="10.1.0.0/16"
 d.datatype="ip4addr"
+
 d = s:option(Value, "gateway", translate("Gateway"))
 d.rmempty = true
 d.placeholder="10.1.1.1"
@@ -83,28 +89,28 @@ d.placeholder="my-route=10.1.1.1"
 
 d = s:option(Flag, "ipv6", translate("Enable IPv6"))
 d.rmempty = true
-d.disabled = nil
+d.disabled = 0
 d.enabled = 1
+d.default = 0
 
 d = s:option(Value, "subnet6", translate("IPv6 Subnet"))
 d.rmempty = true
 d.placeholder="fe80::/10"
 d.datatype="ip6addr"
 d:depends("ipv6", 1)
+
 d = s:option(Value, "gateway6", translate("IPv6 Gateway"))
 d.rmempty = true
 d.placeholder="fe80::1"
 d.datatype="ip6addr"
 d:depends("ipv6", 1)
 
-local err = s:option(DummyValue, "_error", translate(" "))
-
 m.handle = function(self, state, data)
   if state == FORM_VALID then
     local name = data.name
     local driver = data.dirver
 
-    local internal = data.internal and true or false
+    local internal = data.internal == 1 and true or false
 
     local subnet = data.subnet
     local gateway = data.gateway
@@ -124,7 +130,7 @@ m.handle = function(self, state, data)
       options[k1] = v1
     end
 
-    local ipv6 = data.ipv6 and true or false
+    local ipv6 = data.ipv6 == 1 and true or false
 
     local create_body={
       Name = name,
@@ -136,7 +142,7 @@ m.handle = function(self, state, data)
       Internal = internal
     }
   
-    if subnet or gateway or ip_range or aux_address then
+    if subnet or gateway or ip_range or next(aux_address)~=nil then
       create_body["IPAM"]["Config"] = {
         {
           Subnet = subnet,
@@ -157,7 +163,7 @@ m.handle = function(self, state, data)
         ipvlan_mode = data.ipvlan_mode
       }
     elseif driver == "overlay" then
-      create_body["Ingress"] = data.ingerss and true or false
+      create_body["Ingress"] = data.ingerss == 1 and true or false
     end
 
     if ipv6 and data.subnet6 and data.subnet6 then
@@ -179,7 +185,7 @@ m.handle = function(self, state, data)
     if msg.code == 201 then
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
     else
-      err.description=string.format("<strong><font color=red>"..msg.code..msg.message.."<br>"..msg.body.message.."</font></strong>")
+      m.message=msg.code..": "..msg.body.message
     end
   end
 end

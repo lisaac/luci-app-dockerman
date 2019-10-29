@@ -49,8 +49,8 @@ d:value("unless-stopped", "Unless stopped")
 d:value("always", "Always")
 d:value("on-failure", "On failure")
 d.default = "unless-stopped"
-d = s:option(ListValue, "network", translate("Networks"))
 
+d = s:option(ListValue, "network", translate("Networks"))
 d.rmempty = true
 d.default = "bridge"
 
@@ -87,8 +87,6 @@ d.rmempty = true
 d = s:option(DynamicList, "port", translate("Exposed Ports"))
 d.placeholder = "2200:22/tcp"
 d.rmempty = true
-
-
 
 d = s:option(Value, "command", translate("Run command"))
 d.placeholder = "/bin/sh init.sh"
@@ -127,7 +125,19 @@ d.placeholder = "/run:rw,noexec,nosuid,size=65536k"
 d.rmempty = true
 d:depends("advance", 1)
 
-local err = s:option(DummyValue, "_error", translate(" "))
+-- 查看某值是否为表tbl中的value值
+function imagein(tbl, value)
+  if tbl == nil then
+      return false
+  end
+
+  for k, v in pairs(tbl) do
+    if v.RepoTags then
+      if (v.RepoTags[1] == value) then return true end
+    end
+  end
+  return false
+end
 
 m.handle = function(self, state, data)
   if state == FORM_VALID then
@@ -233,11 +243,14 @@ m.handle = function(self, state, data)
       create_body["HostConfig"]["Links"] = links
     end
 
+    if not imagein(images, image) then 
+      
+    end
     local msg = dk.containers:create(name, nil, create_body)
     if msg.code == 201 then
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
     else
-      err.description=string.format("<strong><font color=red>"..msg.code..msg.message.."<br>"..msg.body.message.."</font></strong>")
+      m.message=msg.code..": "..msg.body.message
     end
   end
 end

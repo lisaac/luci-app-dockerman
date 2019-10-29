@@ -9,6 +9,7 @@ $Id$
 ]]--
 
 require "luci.util"
+local http = require "luci.http"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.docker"
 local dk = docker.new()
@@ -70,7 +71,7 @@ container_id = c_table:option(DummyValue, "_id", translate("ID"))
 container_name = c_table:option(DummyValue, "_name", translate("Name"))
 container_name.template="cbi/dummyvalue"
 container_name.href = function (self, section)
-  return luci.dispatcher.build_url("admin/docker/container/" .. luci.http.protocol.urlencode(self:cfgvalue(section)))
+  return luci.dispatcher.build_url("admin/docker/container/" .. luci.util.urlencode(self:cfgvalue(section)))
 end
 container_status = c_table:option(DummyValue, "_status", translate("Status"))
 container_ip = c_table:option(DummyValue, "_network", translate("Network"))
@@ -78,7 +79,7 @@ container_ports = c_table:option(DummyValue, "_ports", translate("Ports"))
 container_image = c_table:option(DummyValue, "_image", translate("Image"))
 container_image.template="cbi/dummyvalue"
 container_image.href = function (self, section)
-  return luci.dispatcher.build_url("admin/docker/image/" .. luci.http.protocol.urlencode(self:cfgvalue(section)))
+  return luci.dispatcher.build_url("admin/docker/image/" .. luci.util.urlencode(self:cfgvalue(section)))
 end
 container_command = c_table:option(DummyValue, "_command", translate("Command"))
 
@@ -127,7 +128,7 @@ end
   end
 ]]
 
-local start_stop_remove = function(cmd)
+local start_stop_remove = function(m,cmd)
   local c_selected = {}
   -- 遍历table中sectionid
   local c_table_sids = c_table:cfgsections()
@@ -138,15 +139,24 @@ local start_stop_remove = function(cmd)
     end
   end
   if #c_selected >0 then
+    m.message = ""
     for _,cont in ipairs(c_selected) do
-      dk.containers[cmd](dk, cont)
+      local msg = dk.containers[cmd](dk, cont)
+      if msg.code >= 300 then
+        m.message = m.message .."\n" .. msg.code..": "..msg.body.message
+        luci.util.perror(msg.body.message)
+      end
     end
-    luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
+    if m.message == "" then
+      luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
+    end
   end
 end
 
 action = m:section(Table,{{}})
-action.template="cbi/inlinetable"
+action.notitle=true
+action.rowcolors=false
+action.template="cbi/ntblsection"
 btnnew=action:option(Button, "_new", translate("New"))
 btnnew.inputstyle = "add"
 btnstart=action:option(Button, "_start", translate("Start"))
@@ -157,9 +167,6 @@ btnstop=action:option(Button, "_stop", translate("Stop"))
 btnstop.inputstyle = "reset"
 btnremove=action:option(Button, "_remove", translate("Remove"))
 btnremove.inputstyle = "remove"
-action.notitle=true
-action.rowcolors=false
-action.nodescr=true
 btnnew.write = function(self, section)
   -- luci.template.render("admin_uci/apply", {
 	-- 	changes = next(changes) and changes,
@@ -168,16 +175,16 @@ btnnew.write = function(self, section)
   luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
 end
 btnstart.write = function(self, section)
-  start_stop_remove("start")
+  start_stop_remove(m,"start")
 end
 btnrestart.write = function(self, section)
-  start_stop_remove("restart")
+  start_stop_remove(m,"restart")
 end
 btnremove.write = function(self, section)
-  start_stop_remove("remove")
+  start_stop_remove(m,"remove")
 end
 btnstop.write = function(self, section)
-  start_stop_remove("stop")
+  start_stop_remove(m,"stop")
 end
 
 return m

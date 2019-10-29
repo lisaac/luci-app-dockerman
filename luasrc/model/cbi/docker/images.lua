@@ -11,7 +11,7 @@ $Id$
 require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.docker"
-local dk = docker.new()
+local dk = docker.new({debug=true})
 
 function get_images()
   local images = dk.images:list().body
@@ -36,6 +36,42 @@ end
 
 local image_list = get_images()
 m = Map("docker", translate("Docker"))
+local pull_value={{_image_tag_name="", _registry="index.docker.io"}}
+local pull_section = m:section(Table,pull_value, "Pull Image")
+-- pull_section.template="cbi/nullsection"
+local tag_name = pull_section:option(Value, "_image_tag_name", translate("Image"))
+tag_name.placeholder="lisaac/luci-in-docker:x86_64"
+local registry = pull_section:option(Value, "_registry", translate("Registry"))
+registry:value("index.docker.io", "DockerHub")
+
+local action_pull = pull_section:option(Button, "_pull", translate("Pull"))
+action_pull.inputstyle = "add"
+tag_name.write = function(self, section,value)
+  local hastag = value:find(":")
+  if not hastag then
+    value = value .. ":latest"
+  end
+  pull_value[section]["_image_tag_name"] = value
+end
+registry.write = function(self, section,value)
+  pull_value[section]["_registry"] = value
+end
+action_pull.write = function(self, section)
+  local tag = pull_value[section]["_image_tag_name"]
+  local server = pull_value[section]["_registry"]
+  --去掉协议前缀和后缀
+  local _,_,tmp = server:find(".-://([%.%w%-%_]+)")
+  if not tmp then
+    _,_,server = server:find("([%.%w%-%_]+)")
+  end
+  local x_auth = nixio.bin.b64encode(luci.json.encode({serveraddress= server}))
+  local msg = dk.images:create(nil, {fromImage=tag,_header={["X-Registry-Auth"]=x_auth}})
+  if msg.code >=300 then
+    m.message=msg.code..": "..msg.body.message
+  else
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
+  end
+end
 
 image_table = m:section(Table, image_list, translate("Images"))
 
@@ -54,7 +90,9 @@ image_selecter.write = function(self, section, value)
 end
 
 action = m:section(Table,{{}})
-action.template="cbi/inlinetable"
+action.notitle=true
+action.rowcolors=false
+action.template="cbi/ntblsection"
 btnremove = action:option(Button, "remove", translate("Remove"))
 btnremove.inputstyle = "remove"
 btnremove.write = function(self, section)
@@ -68,10 +106,17 @@ btnremove.write = function(self, section)
     end
   end
   if next(image_selected) ~= nil then
+    m.message = ""
     for _,img in ipairs(image_selected) do
-      dk.images["remove"](dk, img)
+      local msg = dk.images["remove"](dk, img)
+      if msg.code ~= 200 then
+        m.message = m.message .."\n" .. msg.code..": "..msg.body.message
+        luci.util.perror(msg.body.message)
+      end
     end
-    luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
+    if m.message == "" then
+      luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
+    end
   end
 end
 return m

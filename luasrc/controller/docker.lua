@@ -12,8 +12,8 @@ entry({"admin","docker","containers"},cbi("docker/containers", {hideapplybtn=tru
 entry({"admin","docker","networks"},cbi("docker/networks", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Networks"),3).leaf=true
 entry({"admin","docker","images"},cbi("docker/images", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Images"),2).leaf=true
 entry({"admin","docker","logs"},call("action_logs"),_("Logs"),4)
-entry({"admin","docker","newcontainer"},cbi("docker/newcontainer")).leaf=true
-entry({"admin","docker","newnetwork"},cbi("docker/newnetwork")).leaf=true
+entry({"admin","docker","newcontainer"},form("docker/newcontainer")).leaf=true
+entry({"admin","docker","newnetwork"},form("docker/newnetwork")).leaf=true
 entry({"admin","docker","container"},cbi("docker/container")).leaf=true
 end
 
