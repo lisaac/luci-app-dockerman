@@ -1,20 +1,24 @@
 
 local docker = require "luci.docker"
+local uci = require "luci.model.uci"
 
 module("luci.controller.docker",package.seeall)
 
-
 function index()
-local e
--- entry({"docker"},cbi("docker/overview"),_("Docker"))
-entry({"admin", "docker"}, firstchild(), "Docker", 40).dependent = false
-entry({"admin","docker","containers"},cbi("docker/containers", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Containers"),1).leaf=true
-entry({"admin","docker","networks"},cbi("docker/networks", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Networks"),3).leaf=true
-entry({"admin","docker","images"},cbi("docker/images", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Images"),2).leaf=true
-entry({"admin","docker","logs"},call("action_logs"),_("Logs"),4)
-entry({"admin","docker","newcontainer"},form("docker/newcontainer")).leaf=true
-entry({"admin","docker","newnetwork"},form("docker/newnetwork")).leaf=true
-entry({"admin","docker","container"},cbi("docker/container")).leaf=true
+  socket = luci.model.uci.cursor().get("docker","local", "socket_path")
+  if not nixio.fs.access(socket) then
+    return
+  end
+  local e
+  -- entry({"docker"},cbi("docker/overview"),_("Docker"))
+  entry({"admin", "docker"}, firstchild(), "Docker", 40).dependent = false
+  entry({"admin","docker","containers"},cbi("docker/containers", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Containers"),1).leaf=true
+  entry({"admin","docker","networks"},cbi("docker/networks", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Networks"),3).leaf=true
+  entry({"admin","docker","images"},cbi("docker/images", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Images"),2).leaf=true
+  entry({"admin","docker","logs"},call("action_logs"),_("Logs"),4)
+  entry({"admin","docker","newcontainer"},form("docker/newcontainer")).leaf=true
+  entry({"admin","docker","newnetwork"},form("docker/newnetwork")).leaf=true
+  entry({"admin","docker","container"},cbi("docker/container")).leaf=true
 end
 
 

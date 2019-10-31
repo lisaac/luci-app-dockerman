@@ -1,1 +1,6 @@
-option "_pull_image"
+config options 'local'
+        option socket_path '/var/run/docker.sock'
+        option status_path '/tmp/.docker_action_status'
+        option debug_path '/tmp/.docker_debug'
+        option status_enabled 'true'
+        option debug 'false'
