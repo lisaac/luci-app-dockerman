@@ -18,7 +18,7 @@ function index()
   entry({"admin","docker","logs"},call("action_logs"),_("Logs"),4)
   entry({"admin","docker","newcontainer"},form("docker/newcontainer")).leaf=true
   entry({"admin","docker","newnetwork"},form("docker/newnetwork")).leaf=true
-  entry({"admin","docker","container"},cbi("docker/container")).leaf=true
+  entry({"admin","docker","container"},form("docker/container")).leaf=true
 end
 
 

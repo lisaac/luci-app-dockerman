@@ -1,7 +1,7 @@
 
 <h2><a id="content" name="content"><%:Container Status%></a></h2>
 
-<fieldset class="cbi-section">
+<!-- <fieldset class="cbi-section">
 	<table width="100%" cellspacing="10">
 		<tr><td width="33%"><%:ID%></td><td><%=pcdata(self.container_info.Id or "?")%></td></tr>
 		<tr><td width="33%"><%:Name%></td><td><%=pcdata(self.container_name or "?")%></td></tr>
@@ -16,9 +16,27 @@
 			<tr><td width="33%"><%:Networks%></td><td id="networks"><%=self.get_rx_tx(self.container_stats) or "-"%></td></tr>
 		<% end %>
 	</table>
-</fieldset>
+</fieldset> -->
+<div class="cbi-section">
+	<h3><%:System%></h3>
 
-<fieldset class="cbi-section">
+	<div class="table" width="100%">
+		<div class="tr"><div class="td left" width="33%"><%:ID%></div><div class="td left"><%=pcdata(self.container_info.Id or "?")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Name%></div><div class="td left"><%=pcdata(self.container_name or "?")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Status%></div><div class="td left"><%=pcdata(self.container_info.State and self.container_info.State.Status or "?")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Image%></div><div class="td left"><%=(self.container_info.Config.Image.. "<br>"..self.container_info.Image or "?")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Created%></div><div class="td left"><%=pcdata(self.container_info.Created or "?")%></div></div>
+		<% if self.container_info.State.Status == "running" then %>
+			<div class="tr"><div class="td left" width="33%"><%:Start time%></div><div class="td left"><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></div></div>
+			<div class="tr"><div class="td left" width="33%"><%:Healthy%></div><div class="td left"><%=pcdata(self.container_info.State and self.container_info.State.Health and self.container_info.State.Health.Status or "-")%></div></div>
+			<div class="tr"><div class="td left" width="33%"><%:CPU%></div><div class="td left"><%=self.calculate_cpu_percent(self.container_stats) or "-"%></div></div>
+			<div class="tr"><div class="td left" width="33%"><%:Memory%></div><div class="td left"><%=self.get_memory(self.container_stats) or "-"%></div></div>
+			<div class="tr"><div class="td left" width="33%"><%:Networks%></div><div class="td left"><%=self.get_rx_tx(self.container_stats) or "-"%></div></div>
+		<% end %>
+	</div>
+</div>
+
+<!-- <fieldset class="cbi-section">
 	<legend><%:Details%></legend>
 	<table width="100%" cellspacing="10">
 		<tr><td width="33%"><%:Ports%></td><td><%=(self.get_ports(self.container_info) or "-")%></td></tr>
@@ -28,4 +46,17 @@
     <tr><td width="33%"><%:Mount/Volume%></td><td><%=(self.get_mounts(self.container_info) or "-")%></td></tr>
     <tr><td width="33%"><%:Restart Policy%></td><td><%=pcdata(self.container_info.HostConfig and self.container_info.HostConfig.RestartPolicy and self.container_info.HostConfig.RestartPolicy.Name or "?")%></td></tr>
 	</table>
-</fieldset>
+</fieldset> -->
+
+<div class="cbi-section">
+	<h3><%:Details%></h3>
+
+	<div class="table" width="100%">
+		<div class="tr"><div class="td left" width="33%"><%:Ports%></div><div class="td left"><%=(self.get_ports(self.container_info) or "-")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Links%></div><div class="td left"><%=(self.get_links(self.container_info) or "-")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Env%></div><div class="td left"><%=(self.get_env(self.container_info) or "-")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Command%></div><div class="td left"><%=pcdata(self.get_command(self.container_info) or "-")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Mount/Volume%></div><div class="td left"><%=(self.get_mounts(self.container_info) or "-")%></div></div>
+			<div class="tr"><div class="td left" width="33%"><%:Restart Policy%></div><div class="td left"><%=pcdata(self.container_info.HostConfig and self.container_info.HostConfig.RestartPolicy and self.container_info.HostConfig.RestartPolicy.Name or "?")%></div></div>
+	</div>
+</div>
