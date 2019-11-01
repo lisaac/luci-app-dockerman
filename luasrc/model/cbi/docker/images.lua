@@ -36,15 +36,19 @@ end
 
 local image_list = get_images()
 m = Map("docker", translate("Docker"))
+
 local pull_value={{_image_tag_name="", _registry="index.docker.io"}}
 local pull_section = m:section(Table,pull_value, "Pull Image")
--- pull_section.template="cbi/nullsection"
-local tag_name = pull_section:option(Value, "_image_tag_name", translate("Image"))
-tag_name.placeholder="lisaac/luci-in-docker:x86_64"
-local registry = pull_section:option(Value, "_registry", translate("Registry"))
+pull_section.template="cbi/nullsection"
+local tag_name = pull_section:option(Value, "_image_tag_name")
+tag_name.template="cbi/inlinevalue"
+tag_name.placeholder="lisaac/luci:latest"
+local registry = pull_section:option(Value, "_registry")
+registry.template="cbi/inlinevalue"
 registry:value("index.docker.io", "DockerHub")
-
-local action_pull = pull_section:option(Button, "_pull", translate("Pull"))
+local action_pull = pull_section:option(Button, "_pull")
+action_pull.inputtitle= translate("Pull")
+action_pull.template="cbi/inlinebutton"
 action_pull.inputstyle = "add"
 tag_name.write = function(self, section,value)
   local hastag = value:find(":")
@@ -92,8 +96,10 @@ end
 action = m:section(Table,{{}})
 action.notitle=true
 action.rowcolors=false
-action.template="cbi/ntblsection"
-btnremove = action:option(Button, "remove", translate("Remove"))
+action.template="cbi/nullsection"
+btnremove = action:option(Button, "remove")
+btnremove.inputtitle= translate("Remove")
+btnremove.template="cbi/inlinebutton"
 btnremove.inputstyle = "remove"
 btnremove.write = function(self, section)
   local image_selected = {}

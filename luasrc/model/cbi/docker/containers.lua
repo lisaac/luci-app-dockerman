@@ -18,6 +18,8 @@ local images = dk.images:list().body
 local networks = dk.networks:list().body
 local containers = dk.containers:list(nil, {all=true}).body
 
+local urlencode = luci.http.protocol and luci.http.protocol.urlencode or luci.util.urlencode
+
 function get_containers()
   local data = {}
   if type(containers) ~= "table" then return nil end
@@ -71,7 +73,7 @@ container_id = c_table:option(DummyValue, "_id", translate("ID"))
 container_name = c_table:option(DummyValue, "_name", translate("Name"))
 container_name.template="cbi/dummyvalue"
 container_name.href = function (self, section)
-  return luci.dispatcher.build_url("admin/docker/container/" .. luci.util.urlencode(self:cfgvalue(section)))
+  return luci.dispatcher.build_url("admin/docker/container/" .. urlencode(self:cfgvalue(section)))
 end
 container_status = c_table:option(DummyValue, "_status", translate("Status"))
 container_ip = c_table:option(DummyValue, "_network", translate("Network"))
@@ -79,7 +81,7 @@ container_ports = c_table:option(DummyValue, "_ports", translate("Ports"))
 container_image = c_table:option(DummyValue, "_image", translate("Image"))
 container_image.template="cbi/dummyvalue"
 container_image.href = function (self, section)
-  return luci.dispatcher.build_url("admin/docker/image/" .. luci.util.urlencode(self:cfgvalue(section)))
+  return luci.dispatcher.build_url("admin/docker/image/" .. urlencode(self:cfgvalue(section)))
 end
 container_command = c_table:option(DummyValue, "_command", translate("Command"))
 
@@ -156,16 +158,26 @@ end
 action = m:section(Table,{{}})
 action.notitle=true
 action.rowcolors=false
-action.template="cbi/ntblsection"
-btnnew=action:option(Button, "_new", translate("New"))
+action.template="cbi/nullsection"
+btnnew=action:option(Button, "_new")
+btnnew.inputtitle= translate("New")
+btnnew.template="cbi/inlinebutton"
 btnnew.inputstyle = "add"
-btnstart=action:option(Button, "_start", translate("Start"))
+btnstart=action:option(Button, "_start")
+btnstart.template="cbi/inlinebutton"
+btnstart.inputtitle=translate("Start")
 btnstart.inputstyle = "apply"
-btnrestart=action:option(Button, "_restart", translate("Restart"))
+btnrestart=action:option(Button, "_restart")
+btnrestart.template="cbi/inlinebutton"
+btnrestart.inputtitle=translate("Restart")
 btnrestart.inputstyle = "reload"
-btnstop=action:option(Button, "_stop", translate("Stop"))
+btnstop=action:option(Button, "_stop")
+btnstop.template="cbi/inlinebutton"
+btnstop.inputtitle=translate("Stop")
 btnstop.inputstyle = "reset"
-btnremove=action:option(Button, "_remove", translate("Remove"))
+btnremove=action:option(Button, "_remove")
+btnremove.template="cbi/inlinebutton"
+btnremove.inputtitle=translate("Remove")
 btnremove.inputstyle = "remove"
 btnnew.write = function(self, section)
   -- luci.template.render("admin_uci/apply", {

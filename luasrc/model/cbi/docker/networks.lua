@@ -70,14 +70,18 @@ end
 action = m:section(Table,{{}})
 action.notitle=true
 action.rowcolors=false
-action.template="cbi/ntblsection"
-btnnew=action:option(Button, "_new", translate("New"))
+action.template="cbi/nullsection"
+btnnew=action:option(Button, "_new")
+btnnew.inputtitle= translate("New")
+btnnew.template="cbi/inlinebutton"
 btnnew.notitle=true
 btnnew.inputstyle = "add"
 btnnew.write = function(self, section)
   luci.http.redirect(luci.dispatcher.build_url("admin/docker/newnetwork"))
 end
-btnremove = action:option(Button, "_remove", translate("Remove"))
+btnremove = action:option(Button, "_remove")
+btnremove.inputtitle= translate("Remove")
+btnremove.template="cbi/inlinebutton"
 btnremove.inputstyle = "remove"
 btnremove.write = function(self, section)
   local network_selected = {}

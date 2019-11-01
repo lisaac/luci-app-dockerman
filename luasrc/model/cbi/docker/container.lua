@@ -16,28 +16,29 @@ local dk = docker.new()
 -- local images = dk.images:list().body
 -- local networks = dk.networks:list().body
 
-
-
 m=SimpleForm("docker", translate("Docker"))
-m.template="docker/container"
-m.container_name = arg[1]
-m.container_info = {}
-m.container_stats = {}
-local response = dk.containers:inspect(m.container_name)
+d_status = m:section(SimpleSection)
+d_status:tab("general",  translate("General Settings"))
+d_status:tab("template", translate("Edit Template"))
+d_status.template="docker/container"
+d_status.container_name = arg[1]
+d_status.container_info = {}
+d_status.container_stats = {}
+local response = dk.containers:inspect(d_status.container_name)
 if response.code == 200 then
-  m.container_info = response.body
+  d_status.container_info = response.body
 else
-  m.container_info = nil
+  d_status.container_info = nil
 end
-response = dk.containers:stats(m.container_name, {stream=false})
+response = dk.containers:stats(d_status.container_name, {stream=false})
 if response.code == 200 then
-  m.container_stats = response.body
+  d_status.container_stats = response.body
 else
-  m.container_stats = nil
+  d_status.container_stats = nil
 end
 
 
-m.calculate_cpu_percent = function(d)
+d_status.calculate_cpu_percent = function(d)
   if type(d) ~= "table" then return end
   cpu_count = tonumber(d["cpu_stats"]["online_cpus"])
   cpu_percent = 0.0
@@ -49,14 +50,14 @@ m.calculate_cpu_percent = function(d)
   return cpu_percent .. "%"
 end
 
-m.get_memory = function(d)
+d_status.get_memory = function(d)
   if type(d) ~= "table" then return end
   limit = string.format("%.2f", tonumber(d["memory_stats"]["limit"]) / 1024 / 1024)
   usage = string.format("%.2f", (tonumber(d["memory_stats"]["usage"]) - tonumber(d["memory_stats"]["stats"]["total_cache"])) / 1024 / 1024)
   return usage .. "MB / " .. limit.. "MB" 
 end
 
-m.get_rx_tx = function(d)
+d_status.get_rx_tx = function(d)
   if type(d) ~="table" then return end
   local data
   if type(d["networks"]) == "table" then
@@ -67,7 +68,7 @@ m.get_rx_tx = function(d)
   return data
 end
 
-m.get_ports = function(d)
+d_status.get_ports = function(d)
   local data
   if d.NetworkSettings and d.NetworkSettings.Ports then
     for inter, out in pairs(d.NetworkSettings.Ports) do
@@ -77,7 +78,7 @@ m.get_ports = function(d)
   return data
 end
 
-m.get_env = function(d)
+d_status.get_env = function(d)
   local data
   if d.Config and d.Config.Env then
     for _,v in ipairs(d.Config.Env) do
@@ -87,7 +88,7 @@ m.get_env = function(d)
   return data
 end
 
-m.get_command = function(d)
+d_status.get_command = function(d)
   local data
   if d.Config and d.Config.Cmd then
     for _,v in ipairs(d.Config.Cmd) do
@@ -97,7 +98,7 @@ m.get_command = function(d)
   return data
 end
 
-m.get_mounts = function(d)
+d_status.get_mounts = function(d)
   local data
   if d.Mounts then
     for _,v in ipairs(d.Mounts) do
@@ -108,7 +109,7 @@ m.get_mounts = function(d)
 end
 
 
-m.get_links = function(d)
+d_status.get_links = function(d)
   local data
   if d.HostConfig and d.HostConfig.Links then
     for _,v in ipairs(d.HostConfig.Links) do
