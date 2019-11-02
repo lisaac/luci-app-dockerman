@@ -1,62 +1,23 @@
 
-<h2><a id="content" name="content"><%:Container Status%></a></h2>
-
-<!-- <fieldset class="cbi-section">
-	<table width="100%" cellspacing="10">
-		<tr><td width="33%"><%:ID%></td><td><%=pcdata(self.container_info.Id or "?")%></td></tr>
-		<tr><td width="33%"><%:Name%></td><td><%=pcdata(self.container_name or "?")%></td></tr>
-		<tr><td width="33%"><%:Status%></td><td id="Status"><%=pcdata(self.container_info.State and self.container_info.State.Status or "?")%></td></tr>
-		<tr><td width="33%"><%:Image%></td><td><%=(self.container_info.Config.Image.. "<br>"..self.container_info.Image or "?")%></td></tr>
-		<tr><td width="33%"><%:Created%></td><td><%=pcdata(self.container_info.Created or "?")%></td></tr>
-		<% if self.container_info.State.Status == "running" then %>
-			<tr><td width="33%"><%:Start time%></td><td><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></td></tr>
-			<tr><td width="33%"><%:Healthy%></td><td id="healthy"><%=pcdata(self.container_info.State and self.container_info.State.Health and self.container_info.State.Health.Status or "-")%></td></tr>
-			<tr><td width="33%"><%:CPU%></td><td id="loadavg"><%=self.calculate_cpu_percent(self.container_stats) or "-"%></td></tr>
-			<tr><td width="33%"><%:Memory%></td><td id="memory"><%=self.get_memory(self.container_stats) or "-"%></td></tr>
-			<tr><td width="33%"><%:Networks%></td><td id="networks"><%=self.get_rx_tx(self.container_stats) or "-"%></td></tr>
-		<% end %>
-	</table>
-</fieldset> -->
-<div class="cbi-section">
-	<h3><%:System%></h3>
-
-	<div class="table" width="100%">
-		<div class="tr"><div class="td left" width="33%"><%:ID%></div><div class="td left"><%=pcdata(self.container_info.Id or "?")%></div></div>
-		<div class="tr"><div class="td left" width="33%"><%:Name%></div><div class="td left"><%=pcdata(self.container_name or "?")%></div></div>
-		<div class="tr"><div class="td left" width="33%"><%:Status%></div><div class="td left"><%=pcdata(self.container_info.State and self.container_info.State.Status or "?")%></div></div>
-		<div class="tr"><div class="td left" width="33%"><%:Image%></div><div class="td left"><%=(self.container_info.Config.Image.. "<br>"..self.container_info.Image or "?")%></div></div>
-		<div class="tr"><div class="td left" width="33%"><%:Created%></div><div class="td left"><%=pcdata(self.container_info.Created or "?")%></div></div>
-		<% if self.container_info.State.Status == "running" then %>
-			<div class="tr"><div class="td left" width="33%"><%:Start time%></div><div class="td left"><%=pcdata(self.container_info.State and self.container_info.State.StartedAt or "?")%></div></div>
-			<div class="tr"><div class="td left" width="33%"><%:Healthy%></div><div class="td left"><%=pcdata(self.container_info.State and self.container_info.State.Health and self.container_info.State.Health.Status or "-")%></div></div>
-			<div class="tr"><div class="td left" width="33%"><%:CPU%></div><div class="td left"><%=self.calculate_cpu_percent(self.container_stats) or "-"%></div></div>
-			<div class="tr"><div class="td left" width="33%"><%:Memory%></div><div class="td left"><%=self.get_memory(self.container_stats) or "-"%></div></div>
-			<div class="tr"><div class="td left" width="33%"><%:Networks%></div><div class="td left"><%=self.get_rx_tx(self.container_stats) or "-"%></div></div>
-		<% end %>
-	</div>
-</div>
-
-<!-- <fieldset class="cbi-section">
-	<legend><%:Details%></legend>
-	<table width="100%" cellspacing="10">
-		<tr><td width="33%"><%:Ports%></td><td><%=(self.get_ports(self.container_info) or "-")%></td></tr>
-		<tr><td width="33%"><%:Links%></td><td><%=(self.get_links(self.container_info) or "-")%></td></tr>
-		<tr><td width="33%"><%:Env%></td><td><%=(self.get_env(self.container_info) or "-")%></td></tr>
-    <tr><td width="33%"><%:Command%></td><td><%=pcdata(self.get_command(self.container_info) or "-")%></td></tr>
-    <tr><td width="33%"><%:Mount/Volume%></td><td><%=(self.get_mounts(self.container_info) or "-")%></td></tr>
-    <tr><td width="33%"><%:Restart Policy%></td><td><%=pcdata(self.container_info.HostConfig and self.container_info.HostConfig.RestartPolicy and self.container_info.HostConfig.RestartPolicy.Name or "?")%></td></tr>
-	</table>
-</fieldset> -->
-
-<div class="cbi-section">
-	<h3><%:Details%></h3>
-
-	<div class="table" width="100%">
-		<div class="tr"><div class="td left" width="33%"><%:Ports%></div><div class="td left"><%=(self.get_ports(self.container_info) or "-")%></div></div>
-		<div class="tr"><div class="td left" width="33%"><%:Links%></div><div class="td left"><%=(self.get_links(self.container_info) or "-")%></div></div>
-		<div class="tr"><div class="td left" width="33%"><%:Env%></div><div class="td left"><%=(self.get_env(self.container_info) or "-")%></div></div>
-		<div class="tr"><div class="td left" width="33%"><%:Command%></div><div class="td left"><%=pcdata(self.get_command(self.container_info) or "-")%></div></div>
-		<div class="tr"><div class="td left" width="33%"><%:Mount/Volume%></div><div class="td left"><%=(self.get_mounts(self.container_info) or "-")%></div></div>
-			<div class="tr"><div class="td left" width="33%"><%:Restart Policy%></div><div class="td left"><%=pcdata(self.container_info.HostConfig and self.container_info.HostConfig.RestartPolicy and self.container_info.HostConfig.RestartPolicy.Name or "?")%></div></div>
-	</div>
-</div>
+<ul class="cbi-tabmenu">
+	<li  id="cbi-tab-container_info"><a id="a-cbi-tab-container_info" href=""><%:Info%></a></li>
+	<li id="cbi-tab-container_edit"><a id="a-cbi-tab-container_edit" href=""><%:Edit%></a></li>
+	<li  id="cbi-tab-container_stats"><a id="a-cbi-tab-container_stats" href=""><%:Stats%></a></li>
+	<li  id="cbi-tab-container_logs"><a id="a-cbi-tab-container_logs" href=""><%:Logs%></a></li>
+</ul>
+<script type="text/javascript">
+	let re = /\/admin\/docker\/container\//
+	let p = window.location.href
+	let path = p.split(re)
+	let container_id = path[1].split('/')[0] || path[1]
+	let action = path[1].split('/')[1] || "info"
+	let actions=["info","edit","stats","logs"]
+	actions.forEach(function(item) {
+		document.getElementById("a-cbi-tab-container_" + item).href= path[0]+"/admin/docker/container/"+container_id+'/'+item
+		if (action === item) {
+			document.getElementById("cbi-tab-container_" + item).className="cbi-tab"
+		}	else {
+			document.getElementById("cbi-tab-container_" + item).className="cbi-tab-disable"
+		}
+	})
+</script>

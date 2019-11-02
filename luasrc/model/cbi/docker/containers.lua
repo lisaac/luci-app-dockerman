@@ -73,7 +73,7 @@ container_id = c_table:option(DummyValue, "_id", translate("ID"))
 container_name = c_table:option(DummyValue, "_name", translate("Name"))
 container_name.template="cbi/dummyvalue"
 container_name.href = function (self, section)
-  return luci.dispatcher.build_url("admin/docker/container/" .. urlencode(self:cfgvalue(section)))
+  return luci.dispatcher.build_url("admin/docker/container/" .. urlencode(container_id:cfgvalue(section)))
 end
 container_status = c_table:option(DummyValue, "_status", translate("Status"))
 container_ip = c_table:option(DummyValue, "_network", translate("Network"))

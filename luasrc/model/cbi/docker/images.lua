@@ -117,7 +117,7 @@ btnremove.write = function(self, section)
       local msg = dk.images["remove"](dk, img)
       if msg.code ~= 200 then
         m.message = m.message .."\n" .. msg.code..": "..msg.body.message
-        luci.util.perror(msg.body.message)
+        -- luci.util.perror(msg.body.message)
       end
     end
     if m.message == "" then

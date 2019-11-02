@@ -15,14 +15,14 @@ function index()
   entry({"admin","docker","containers"},cbi("docker/containers", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Containers"),1).leaf=true
   entry({"admin","docker","networks"},cbi("docker/networks", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Networks"),3).leaf=true
   entry({"admin","docker","images"},cbi("docker/images", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Images"),2).leaf=true
-  entry({"admin","docker","logs"},call("action_logs"),_("Logs"),4)
+  entry({"admin","docker","events"},call("action_events"),_("Events"),4)
   entry({"admin","docker","newcontainer"},form("docker/newcontainer")).leaf=true
   entry({"admin","docker","newnetwork"},form("docker/newnetwork")).leaf=true
   entry({"admin","docker","container"},form("docker/container")).leaf=true
 end
 
 
-function action_logs()
+function action_events()
   local logs = ""
   local dk = docker.new()
   local query ={}
@@ -37,5 +37,5 @@ function action_logs()
       logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. v.Action .. " Image:".. (v.Actor.ID or "null").. " Image Name:" .. (v.Actor.Attributes.name or "null")
     end
   end
-  luci.template.render("docker/logs", {syslog=logs})
+  luci.template.render("docker/logs", {self={syslog = logs, title="Docker Events"}})
 end
