@@ -68,7 +68,8 @@ action_pull.write = function(self, section)
   if not tmp then
     _,_,server = server:find("([%.%w%-%_]+)")
   end
-  local x_auth = nixio.bin.b64encode(luci.json.encode({serveraddress= server}))
+  local json_stringify = luci.json and luci.json.encode or luci.jsonc.stringify
+  local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
   local msg = dk.images:create(nil, {fromImage=tag,_header={["X-Registry-Auth"]=x_auth}})
   if msg.code >=300 then
     m.message=msg.code..": "..msg.body.message
