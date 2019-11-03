@@ -24,8 +24,9 @@ jobs:
           [ -d $GITHUB_WORKSPACE/htdoc ] && cp -R $GITHUB_WORKSPACE/htdoc/* /tmp/luci-app-docker/www/
           mkdir -p /tmp/luci-app-docker/CONTROL
           cat >/tmp/luci-app-docker/CONTROL/control <<EOF
-          Package: luci-app-docker
+          Package: luci-app-docker-manager
           Version: ${TAG}
+          Depends: luci-lib-docker
           Architecture: all
           Maintainer: lisaac<lisaac.cn@gmail.com>
           Section: base
