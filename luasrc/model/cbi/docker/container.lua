@@ -21,37 +21,6 @@ if response.code == 200 then
 end
 local networks = dk.networks:list().body
 
-
-local calculate_cpu_percent = function(d)
-  if type(d) ~= "table" then return end
-  cpu_count = tonumber(d["cpu_stats"]["online_cpus"])
-  cpu_percent = 0.0
-  cpu_delta = tonumber(d["cpu_stats"]["cpu_usage"]["total_usage"]) - tonumber(d["precpu_stats"]["cpu_usage"]["total_usage"])
-    system_delta = tonumber(d["cpu_stats"]["system_cpu_usage"]) - tonumber(d["precpu_stats"]["system_cpu_usage"])
-  if system_delta > 0.0 then
-    cpu_percent = string.format("%.2f", cpu_delta / system_delta * 100.0 * cpu_count)
-  end
-  return cpu_percent .. "%"
-end
-
-local get_memory = function(d)
-  if type(d) ~= "table" then return end
-  limit = string.format("%.2f", tonumber(d["memory_stats"]["limit"]) / 1024 / 1024)
-  usage = string.format("%.2f", (tonumber(d["memory_stats"]["usage"]) - tonumber(d["memory_stats"]["stats"]["total_cache"])) / 1024 / 1024)
-  return usage .. "MB / " .. limit.. "MB" 
-end
-
-local get_rx_tx = function(d)
-  if type(d) ~="table" then return end
-  local data
-  if type(d["networks"]) == "table" then
-    for e, v in pairs(d["networks"]) do
-      data = (data and (data .. "<br>") or "") .. e .. "  Total Tx:" .. string.format("%.2f",(tonumber(v.tx_bytes)/1024/1024)) .. "MB  Total Rx: ".. string.format("%.2f",(tonumber(v.rx_bytes)/1024/1024)) .. "MB"
-    end
-  end
-  return data
-end
-
 local get_ports = function(d)
   local data
   if d.NetworkSettings and d.NetworkSettings.Ports then
@@ -114,7 +83,7 @@ local get_networks = function(d)
 end
 
 
-m=SimpleForm("docker", translate("Docker"), translate("Container"))
+m=SimpleForm("docker", translate("Docker Container"), container_info.Name:sub(2))
 m:append(Template("docker/container"))
 
 if action == "info" then 
@@ -159,6 +128,7 @@ if action == "info" then
 
 
   d_info = m:section(Table,table_info)
+  d_info.nodescr=true
   d_info.formvalue=function(self, section)
     return table_info
   end
@@ -168,6 +138,7 @@ if action == "info" then
     if table_info[section]._key == translate("Name") then
       self:reset_values()
       self.template = "cbi/value"
+      self.size = 30
       self.keylist = {}
       self.vallist = {}
       self.default=table_info[section]._value
@@ -175,6 +146,7 @@ if action == "info" then
     elseif table_info[section]._key == translate("Restart Policy") then
       self.template = "cbi/lvalue"
       self:reset_values()
+      self.size = nil
       self:value("no", "No")
       self:value("unless-stopped", "Unless stopped")
       self:value("always", "Always")
@@ -184,6 +156,7 @@ if action == "info" then
     elseif table_info[section]._key == translate("Connect Network") then
       self.template = "cbi/lvalue"
       self:reset_values()
+      self.size = nil
       for k,v in pairs(list_networks) do
         self:value(k,v)
       end
@@ -317,48 +290,36 @@ elseif action == "logs" then
   end
   logsection.title=translate("Container Logs")
   logsection.template="docker/logs"
+  m.submit = false
+	m.reset  = false
 elseif action == "stats" then
-  statsection= m:section(SimpleSection)
-  -- response = dk.containers:stats(container_id, {stream=false})
-  -- if response.code == 200 then
-  --   container_stats = response.body
-  -- end
-  statsection.template="docker/stats"
+  local response = dk.containers:top(container_id, {ps_args="-aux"})
+  if response.code == 200 then
+    container_top=response.body
+    table_top = container_top.Processes
+    stat_section = m:section(SimpleSection)
+    stat_section.container_id = container_id
+    stat_section.template="docker/stats"
+    top_section= m:section(Table, table_top, translate("TOP"))
+    top_section:option(DummyValue, 1, translate(container_top.Titles[1]))
+    top_section:option(DummyValue, 2, translate(container_top.Titles[2]))
+    top_section:option(DummyValue, 3, translate(container_top.Titles[3]))
+    top_section:option(DummyValue, 4, translate(container_top.Titles[4]))
+    top_section:option(DummyValue, 5, translate(container_top.Titles[5]))
+    top_section:option(DummyValue, 6, translate(container_top.Titles[6]))
+    top_section:option(DummyValue, 7, translate(container_top.Titles[7]))
+    top_section:option(DummyValue, 8, translate(container_top.Titles[8]))
+    top_section:option(DummyValue, 9, translate(container_top.Titles[9]))
+    top_section:option(DummyValue, 10, translate(container_top.Titles[10]))
+    top_section:option(DummyValue, 11, translate(container_top.Titles[11]))
+    -- top_section.nodescr=true
+  end
+  m.submit = false
+	m.reset  = false
 end
-
-
 
 m.handle = function(self, state, data)
   if state == FORM_VALID then
-    -- luci.util.perror(data)
-    -- key = ""
-    -- function PrintTable(table , level)
-    --   level = level or 1
-    --   local indent = ""
-    --   for i = 1, level do
-    --     indent = indent.."  "
-    --   end
-
-    --   if key ~= "" then
-    --     luci.util.perror(indent..key.." ".."=".." ".."{")
-    --   else
-    --     luci.util.perror(indent .. "{")
-    --   end
-
-    --   key = ""
-    --   for k,v in pairs(table) do
-    --     if type(v) == "table" then
-    --         key = k
-    --         PrintTable(v, level + 1)
-    --     else
-    --         local content = string.format("%s%s = %s", indent .. "  ",tostring(k), tostring(v))
-    --         luci.util.perror(content)  
-    --       end
-    --   end
-    --   luci.util.perror(indent .. "}")
-
-    -- end
-    -- PrintTable(data)
     local memory = data.memory
     if memory ~= 0 then
       _,_,n,unit = memory:find("([%d%.]+)([%l%u]+)")
