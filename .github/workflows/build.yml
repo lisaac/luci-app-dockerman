@@ -38,6 +38,7 @@ jobs:
           #!/bin/sh
           rm -rf /tmp/luci*
           EOF
+          chmod +x /tmp/luci-app-docker/CONTROL/postinst
           wget -O /tmp/ipkg-build https://raw.githubusercontent.com/openwrt/openwrt/master/scripts/ipkg-build && \
           chmod +x /tmp/ipkg-build && \
           /tmp/ipkg-build -o root -g root /tmp/luci-app-docker /tmp

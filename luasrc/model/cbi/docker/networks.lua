@@ -10,8 +10,8 @@ $Id$
 
 require "luci.util"
 local uci = luci.model.uci.cursor()
-local docker = require "luci.docker"
-local dk = docker.new({debug=true})
+local docker = require "luci.model.docker"
+local dk = docker.new()
 local dknetworks = dk.networks:list().body
 
 

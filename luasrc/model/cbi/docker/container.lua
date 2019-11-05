@@ -10,8 +10,8 @@ $Id$
 
 require "luci.util"
 local uci = luci.model.uci.cursor()
-local docker = require "luci.docker"
-local dk = docker.new({debug=true})
+local docker = require "luci.model.docker"
+local dk = docker.new()
 container_id = arg[1]
 local action = arg[2] or "info"
 
@@ -87,6 +87,8 @@ m=SimpleForm("docker", translate("Docker Container"), container_info.Name:sub(2)
 m:append(Template("docker/container"))
 
 if action == "info" then 
+  m.submit = false
+  m.reset  = false
   table_info = {
     ["01name"] = {_key = translate("Name"),  _value = container_info.Name:sub(2)  or "-", _button=translate("Update")},
     ["02id"] = {_key = translate("ID"),  _value = container_info.Id  or "-"},
@@ -132,7 +134,8 @@ if action == "info" then
   d_info.formvalue=function(self, section)
     return table_info
   end
-  dv_key = d_info:option(DummyValue, "_key")
+  dv_key = d_info:option(DummyValue, "_key", translate("Info"))
+  dv_key.width = "20%"
   dv_value = d_info:option(ListValue, "_value")
   dv_value.render = function(self, section, scope)
     if table_info[section]._key == translate("Name") then
@@ -266,7 +269,7 @@ elseif action == "edit" then
   d = editsection:option(Value, "memory", translate("Memory"), translate("Memory limit (format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g. Minimum is 4M."))
   d.placeholder = "128m"
   d.rmempty = true
-  d.default = container_info.HostConfig.Memory
+  d.default = (container_info.HostConfig.Memory / 1024 /1024) .. "M"
 
   d = editsection:option(Value, "blkioweight", translate("Block IO Weight"), translate("Block IO weight (relative weight) accepts a weight value between 10 and 1000."))
   d.placeholder = "500"
@@ -294,28 +297,33 @@ elseif action == "logs" then
 	m.reset  = false
 elseif action == "stats" then
   local response = dk.containers:top(container_id, {ps_args="-aux"})
+  local container_top
   if response.code == 200 then
     container_top=response.body
-    table_top = container_top.Processes
+  else
+    response = dk.containers:top(container_id)
+    if response.code == 200 then
+      container_top=response.body
+    end
+  end
+
+  if type(container_top) == "table" then
+    container_top=response.body
     stat_section = m:section(SimpleSection)
     stat_section.container_id = container_id
     stat_section.template="docker/stats"
-    top_section= m:section(Table, table_top, translate("TOP"))
-    top_section:option(DummyValue, 1, translate(container_top.Titles[1]))
-    top_section:option(DummyValue, 2, translate(container_top.Titles[2]))
-    top_section:option(DummyValue, 3, translate(container_top.Titles[3]))
-    top_section:option(DummyValue, 4, translate(container_top.Titles[4]))
-    top_section:option(DummyValue, 5, translate(container_top.Titles[5]))
-    top_section:option(DummyValue, 6, translate(container_top.Titles[6]))
-    top_section:option(DummyValue, 7, translate(container_top.Titles[7]))
-    top_section:option(DummyValue, 8, translate(container_top.Titles[8]))
-    top_section:option(DummyValue, 9, translate(container_top.Titles[9]))
-    top_section:option(DummyValue, 10, translate(container_top.Titles[10]))
-    top_section:option(DummyValue, 11, translate(container_top.Titles[11]))
-    -- top_section.nodescr=true
+    table_stats = {cpu={key="CPU Useage",value='-'},memory={key="Memory Useage",value='-'}}
+    stat_section = m:section(Table, table_stats, translate("Stats"))
+    stat_section:option(DummyValue, "key", translate("Stats")).width="33%"
+    
+    stat_section:option(DummyValue, "value")
+    top_section= m:section(Table, container_top.Processes, translate("TOP"))
+    for i, v in ipairs(container_top.Titles) do
+      top_section:option(DummyValue, i, translate(v))
   end
-  m.submit = false
-	m.reset  = false
+end
+m.submit = false
+m.reset  = false
 end
 
 m.handle = function(self, state, data)

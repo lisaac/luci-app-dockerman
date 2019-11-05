@@ -1,23 +1,8 @@
-<div class="cbi-section">
-	<h3><%:Stats%></h3>
-
-	<div class="table" id="table_stats" width="100%">
-		<div class="tr cbi-rowstyle-2"><div class="td left" width="33%"><%:CPU Useage%></div><div class="td left" id="cpu">-</div></div>
-		<div class="tr cbi-rowstyle-1"><div class="td left" width="33%"><%:Memory Useage%></div><div class="td left" id="memory">-</div></div>
-		<!-- <div class="tr"><div class="td left" width="33%"><%:Network TX/RX%></div><div class="td left" id="network">-</div></div> -->
-	</div>
-
-
-</div>
-
 
 <script type="text/javascript">//<![CDATA[
 	function progressbar(v, m, pc, np)
 	{
 		m = m || 100
-		// var vn = parseInt(v) || 0;
-		// var mn = parseInt(m) || 100;
-		// var pc = Math.floor((100 / mn) * vn);
 
 		return String.format(
 			'<div style="width:100%%; max-width:500px; position:relative; border:1px solid #999999">' +
@@ -43,33 +28,35 @@
 	function(x, info){
 		var e;
 
-		if (e = document.getElementById('cpu'))
+		if (e = document.getElementById('cbi-table-cpu-value'))
 			e.innerHTML = progressbar(
 				(info.cpu_percent), 100, (info.cpu_percent?info.cpu_percent:0));
-
-		if (e = document.getElementById('memory'))
+		if (e = document.getElementById('cbi-table-memory-value'))
 			e.innerHTML = progressbar(
 				niceBytes(info.memory.mem_useage),
 				niceBytes(info.memory.mem_limit),
 				((100 / (info.memory.mem_limit?info.memory.mem_limit:100)) * (info.memory.mem_useage?info.memory.mem_useage:0))
 			);
+
 		let num = 1
 		for (var key in info.bw_rxtx){
-			if (! document.getElementById(key)){
-				let tab = document.getElementById("table_stats")
+			if (! document.getElementById("cbi-table-network_"+key+"-value")){
+				let tab = document.getElementById("cbi-table-cpu").parentNode
 				num ++
-				let div='<div class="tr cbi-rowstyle-'+ (num%2===0 ? "2":"1") +'"><div class="td left" width="33%"><%:Network TX/RX%></div><div class="td left" id="'
-								+ key +
-								'">-</div></div>'
-				tab.insertAdjacentHTML('beforeend',div)
+				let div=document.getElementById('cbi-table-cpu').cloneNode(true);
+				div.id = "cbi-table-network_"+key; 
+				div.children[0].innerHTML = "<%:Network TX/RX%>: " +key
+				div.children[1].id="cbi-table-network_"+key+"-value"
+				tab.appendChild(div) 
 			}
-			e=document.getElementById(key)
+			e=document.getElementById("cbi-table-network_"+key+"-value")
 			e.innerHTML = progressbar(
 				niceBytes(info.bw_rxtx[key].bw_tx),
 				niceBytes(info.bw_rxtx[key].bw_rx),
 				((100 / (info.bw_rxtx[key].bw_rx?info.bw_rxtx[key].bw_rx:100)) * (info.bw_rxtx[key].bw_tx?info.bw_rxtx[key].bw_tx:0))>100 ? 100 :Math.floor((100 / (info.bw_rxtx[key].bw_rx?info.bw_rxtx[key].bw_rx:100)) * (info.bw_rxtx[key].bw_tx?info.bw_rxtx[key].bw_tx:0)) ,
 				true
 				);
-	}
+		}
+	
 	});
 //]]></script>

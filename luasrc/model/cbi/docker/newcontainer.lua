@@ -10,7 +10,7 @@ $Id$
 
 require "luci.util"
 local uci = luci.model.uci.cursor()
-local docker = require "luci.docker"
+local docker = require "luci.model.docker"
 local dk = docker.new()
 
 local images = dk.images:list().body

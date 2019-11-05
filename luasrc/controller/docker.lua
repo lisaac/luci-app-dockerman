@@ -1,18 +1,21 @@
 
 require "luci.util"
-local docker = require "luci.docker"
+local docker = require "luci.model.docker"
 local uci = require "luci.model.uci"
 
 module("luci.controller.docker",package.seeall)
 
 function index()
+  
+  entry({"admin", "docker"}, firstchild(), "Docker", 40).dependent = false
+  entry({"admin","docker","overview"},cbi("docker/overview"),_("Overview"),0).leaf=true
+
   socket = luci.model.uci.cursor().get("docker","local", "socket_path")
   if not nixio.fs.access(socket) then
     return
   end
-  local e
-  -- entry({"docker"},cbi("docker/overview"),_("Docker"))
-  entry({"admin", "docker"}, firstchild(), "Docker", 40).dependent = false
+  if (require "luci.model.docker").new():version().code ~= 200 then return end
+    
   entry({"admin","docker","containers"},cbi("docker/containers", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Containers"),1).leaf=true
   entry({"admin","docker","networks"},cbi("docker/networks", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Networks"),3).leaf=true
   entry({"admin","docker","images"},cbi("docker/images", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Images"),2).leaf=true
@@ -21,6 +24,12 @@ function index()
   entry({"admin","docker","newnetwork"},form("docker/newnetwork")).leaf=true
   entry({"admin","docker","container"},form("docker/container")).leaf=true
   entry({"admin","docker","container_stats"},call("action_get_container_stats")).leaf=true
+
+  -- for openwrt docker-ce by lean
+  if nixio.fs.access("/etc/config/dockerd") then
+    entry({"admin","services","docker"},alias("admin", "docker", "overview"))
+    entry({"admin","services","docker","status"},call("act_status")).leaf=true
+  end
 end
 
 
@@ -87,7 +96,7 @@ end
 
 function action_get_container_stats(container_id)
   if container_id then
-    local dk = docker.new({debug=true})
+    local dk = docker.new()
     local response = dk.containers:inspect(container_id)
     if response.code == 200 and response.body.State.Running then
       response = dk.containers:stats(container_id, {stream=false})
@@ -127,4 +136,11 @@ function action_get_container_stats(container_id)
     luci.http.prepare_content("text/plain")
 		luci.http.write("No container name or id")
   end
+end
+
+function act_status()
+  local e={}
+  e.running=luci.sys.call("pgrep /usr/bin/dockerd >/dev/null")==0
+  luci.http.prepare_content("application/json")
+  luci.http.write_json(e)
 end
