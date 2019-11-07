@@ -16,6 +16,11 @@ local dk = docker.new()
 m = SimpleForm("docker", translate("Docker"))
 m.redirect = luci.dispatcher.build_url("admin", "docker", "networks")
 
+docker_status = m:section(SimpleSection)
+docker_status.template="docker/apply_widget"
+docker_status.err=nixio.fs.readfile(dk.options.status_path)
+if docker_status then docker:clear_status() end
+
 s = m:section(SimpleSection, translate("New Network"))
 s.addremove = true
 s.anonymous = true
@@ -181,11 +186,14 @@ m.handle = function(self, state, data)
       create_body["Options"] = options
     end
 
+    docker:append_status("Network: " .. "create" .. " " .. create_body.Name .. "...")
     local msg = dk.networks:create(nil, nil, create_body)
     if msg.code == 201 then
+      docker:clear_status()
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
     else
-      m.message=msg.code..": "..msg.body.message
+      docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
+      luci.http.redirect(luci.dispatcher.build_url("admin/docker/newnetwork"))
     end
   end
 end

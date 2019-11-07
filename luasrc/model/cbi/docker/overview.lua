@@ -36,7 +36,7 @@ m2 = Map("docker", translate("Docker"))
 s = m2:section(NamedSection, "local", "section", translate("Setting"))
 
 socket_path = s:option(Value, "socket_path", translate("Socket Path"))
-status_path = s:option(Value, "status_path", translate("Debug Tempfile Path"), translate("Where you want to save the docker status file"))
+status_path = s:option(Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))
 debug = s:option(Flag, "debug", translate("Enable Debug"), translate("For debug, It shows all docker API actions of luci-app-docker in Debug Tempfile Path"))
 debug.enabled="true"
 debug.disabled="false"

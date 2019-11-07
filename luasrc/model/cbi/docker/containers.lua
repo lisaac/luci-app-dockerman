@@ -63,6 +63,12 @@ m = SimpleForm("docker", translate("Docker"))
 m.submit=false
 m.reset=false
 
+docker_status = m:section(SimpleSection)
+docker_status.template="docker/apply_widget"
+docker_status.err=nixio.fs.readfile(dk.options.status_path)
+-- luci.util.perror(docker_status.err)
+if docker_status then docker:clear_status() end
+
 c_table = m:section(Table, c_lists, translate("Containers"))
 c_table.nodescr=true
 -- v.template = "cbi/tblsection"
@@ -92,8 +98,7 @@ container_command = c_table:option(DummyValue, "_command", translate("Command"))
 container_selecter.write=function(self, section, value)
   c_lists[section]._selected = value
 end
-docker_status = m:section(SimpleSection)
-docker_status.template="docker/apply_widget"
+
 local start_stop_remove = function(m,cmd)
     -- luci.template.render("admin_uci/apply", {
 	-- 	changes = next(changes) and changes,
@@ -110,25 +115,22 @@ local start_stop_remove = function(m,cmd)
     end
   end
   if #c_selected >0 then
-
     -- luci.util.perror(dk.options.status_path)
     docker:clear_status()
-    m.message = ""
+    local success = true
     local file_docker_action_status=io.open(dk.options.status_path,"a+")
     for _,cont in ipairs(c_selected) do
       docker:append_status("Containers: " .. cmd .. " " .. cont .. "...")
       local msg = dk.containers[cmd](dk, cont)
       if msg.code >= 300 then
+        success = false
         docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
-        m.message = m.message .."\n" .. msg.code..": ".. (msg.body.message and msg.body.message or msg.message)
       else
         docker:append_status("done<br>")
       end
     end
-    docker:clear_status()
-    if m.message == "" then
-      luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
-    end
+    if success then docker:clear_status() end
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
   end
 end
 

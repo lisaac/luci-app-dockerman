@@ -79,13 +79,10 @@ action_pull.write = function(self, section)
     local msg = dk.images:create(nil, {fromImage=tag,_header={["X-Registry-Auth"]=x_auth}})
     if msg.code >=300 then
       docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
-      m.message=msg.code..": "..msg.body.message
-      docker:clear_status()
     else
       docker:append_status("done<br>")
-      docker:clear_status()
-      luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
     end
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
   end
 end
 
@@ -104,8 +101,12 @@ image_table:option(DummyValue, "_created", translate("Created"))
 image_selecter.write = function(self, section, value)
   image_list[section]._selected = value
 end
+
 docker_status = m:section(SimpleSection)
 docker_status.template="docker/apply_widget"
+docker_status.err=nixio.fs.readfile(dk.options.status_path)
+if docker_status then docker:clear_status() end
+
 action = m:section(Table,{{}})
 action.notitle=true
 action.rowcolors=false
@@ -126,23 +127,20 @@ btnremove.write = function(self, section)
     end
   end
   if next(image_selected) ~= nil then
-    m.message = ""
+    local success = true
     docker:clear_status()
     for _,img in ipairs(image_selected) do
       docker:append_status("Images: " .. "remove" .. " " .. img .. "...")
       local msg = dk.images["remove"](dk, img)
       if msg.code ~= 200 then
         docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
-        m.message = m.message .."\n" .. msg.code..": "..(msg.body.message and msg.body.message or msg.message)
-        -- luci.util.perror(msg.body.message)
+        success = false
       else
         docker:append_status("done<br>")
       end
     end
-    docker:clear_status()
-    if m.message == "" then
-      luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
-    end
+    if success then docker:clear_status() end
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
   end
 end
 return m

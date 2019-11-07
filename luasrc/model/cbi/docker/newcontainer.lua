@@ -23,6 +23,12 @@ m.redirect = luci.dispatcher.build_url("admin", "docker", "containers")
 -- m.reset = false
 -- m.submit = false
 -- new Container
+
+docker_status = m:section(SimpleSection)
+docker_status.template="docker/apply_widget"
+docker_status.err=nixio.fs.readfile(dk.options.status_path)
+if docker_status then docker:clear_status() end
+
 s = m:section(SimpleSection, translate("New Container"))
 s.addremove = true
 s.anonymous = true
@@ -124,20 +130,6 @@ d = s:option(DynamicList, "tmpfs", translate("Tmpfs"), translate("Mount tmpfs fi
 d.placeholder = "/run:rw,noexec,nosuid,size=65536k"
 d.rmempty = true
 d:depends("advance", 1)
-
--- 查看某值是否为表tbl中的value值
-function imagein(tbl, value)
-  if tbl == nil then
-      return false
-  end
-
-  for k, v in pairs(tbl) do
-    if v.RepoTags then
-      if (v.RepoTags[1] == value) then return true end
-    end
-  end
-  return false
-end
 
 m.handle = function(self, state, data)
   if state == FORM_VALID then
@@ -243,14 +235,14 @@ m.handle = function(self, state, data)
       create_body["HostConfig"]["Links"] = links
     end
 
-    if not imagein(images, image) then 
-      
-    end
+    docker:append_status("Container: " .. "create" .. " " .. name .. "...")
     local msg = dk.containers:create(name, nil, create_body)
     if msg.code == 201 then
+      docker:clear_status()
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
     else
-      m.message=msg.code..": "..msg.body.message
+      docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
+      luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
     end
   end
 end

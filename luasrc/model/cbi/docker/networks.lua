@@ -37,7 +37,6 @@ local get_networks = function ()
   return data
 end
 
-
 local network_list = get_networks()
 -- m = Map("docker", translate("Docker"))
 m = SimpleForm("docker", translate("Docker"))
@@ -58,7 +57,6 @@ for k, v in pairs(network_list) do
   end
 end
 
-
 network_name = network_table:option(DummyValue, "_name", translate("Name"))
 network_driver = network_table:option(DummyValue, "_driver", translate("Driver"))
 network_interface = network_table:option(DummyValue, "_interface", translate("Interface"))
@@ -71,6 +69,9 @@ end
 
 docker_status = m:section(SimpleSection)
 docker_status.template="docker/apply_widget"
+docker_status.err=nixio.fs.readfile(dk.options.status_path)
+if docker_status then docker:clear_status() end
+
 action = m:section(Table,{{}})
 action.notitle=true
 action.rowcolors=false
@@ -100,23 +101,22 @@ btnremove.write = function(self, section)
     end
   end
   if next(network_selected) ~= nil then
-    m.message = ""
+    local success = true
     docker:clear_status()
     for _,net in ipairs(network_selected) do
       docker:append_status("Networks: " .. "remove" .. " " .. net .. "...")
       local msg = dk.networks["remove"](dk, net)
       if msg.code >= 300 then
         docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
-        m.message = m.message .."\n" .. msg.code..": ".. (msg.body.message or msg.message)
-        -- luci.util.perror(msg.body.message)
+        success = false
       else
         docker:append_status("done<br>")
       end
     end
-    docker:clear_status()
-    if m.message == "" then
-      luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
+    if success then
+      docker:clear_status()
     end
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
   end
 end
 

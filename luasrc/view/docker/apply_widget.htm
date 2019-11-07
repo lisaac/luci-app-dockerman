@@ -49,7 +49,7 @@
 	    uci_apply_display = <%=math.max(luci.config and luci.config.apply and luci.config.apply.display or 1.5, 1)%>,
 			was_xhr_poll_running = false;
 
-function uci_status_message(type, content) {
+function docker_status_message(type, content) {
   document.getElementById('cbi_apply_overlay') || document.body.insertAdjacentHTML("beforeend",'<div id="cbi_apply_overlay"><div class="alert-message"></div></div>')
 	var overlay = document.getElementById('cbi_apply_overlay')
       message = overlay.querySelector('.alert-message');
@@ -82,29 +82,20 @@ var loading_msg="Loadding.."
 function uci_confirm_docker() {
 		var tt;
 
-		uci_status_message('notice');
+		docker_status_message('notice');
 
 		var call = function(r, resjson, duration) {
 			
       if (r && r.status === 200 ) {
 				var indicator = document.querySelector('.uci_change_indicator');
 				if (indicator) indicator.style.display = 'none';
-
-				uci_status_message('notice', '<%:Docker actions done.%>');
-
+				docker_status_message('notice', '<%:Docker actions done.%>');
 				window.clearTimeout(tt);
-				window.setTimeout(function() {
-					redirect_ok = window.location.href
-					<% if redirect_ok then -%>
-						location.href = decodeURIComponent('<%=luci.util.urlencode(redirect_ok)%>');
-					<%- else -%>
-						window.location = window.location.href.split('#')[0];
-					<% end %>
-				}, uci_apply_display * 1000);
 				return;
 			}
 			loading_msg = resjson?resjson.info:loading_msg
-			var delay = isNaN(duration) ? 0 : Math.max(1000 - duration, 0);
+			// var delay = isNaN(duration) ? 0 : Math.max(1000 - duration, 0);
+			var delay =1000
 			window.setTimeout(function() {
 				xhr.post('<%=url("admin/docker/confirm")%>', null, call, uci_apply_timeout * 1000);
 			}, delay);
@@ -113,7 +104,7 @@ function uci_confirm_docker() {
 		var tick = function() {
 			var now = Date.now();
 
-			uci_status_message('notice',
+			docker_status_message('notice',
 				'<img src="<%=resource%>/icons/loading.gif" alt="" style="vertical-align:middle" /> ' +
 				loading_msg);
 
@@ -131,19 +122,26 @@ function uci_confirm_docker() {
 	// })
 
 function fnSubmitForm(el){
-	console.log(el.id)
   if (el.id != "cbid.table.1._new") {
 		uci_confirm_docker()
 	}
 }
+
+<% if self.err then -%>
+	docker_status_message('warning', "<%=self.err%>");
+	document.getElementById('cbi_apply_overlay').addEventListener("click", (e)=>{
+		docker_status_message()
+	})
+<%- end %>
 
 window.onload= function (){
 var buttons = document.querySelectorAll('input[type="submit"]');
 [].slice.call(buttons).forEach(function (el) {
   el.onclick = fnSubmitForm.bind(this, el);
 });
+
+
+
 }
 
-
-	// })
 //]]></script>
