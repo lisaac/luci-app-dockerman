@@ -16,14 +16,15 @@ function index()
   end
   if (require "luci.model.docker").new():version().code ~= 200 then return end
     
-  entry({"admin","docker","containers"},cbi("docker/containers", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Containers"),1).leaf=true
-  entry({"admin","docker","networks"},cbi("docker/networks", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Networks"),3).leaf=true
-  entry({"admin","docker","images"},cbi("docker/images", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Images"),2).leaf=true
+  entry({"admin","docker","containers"},form("docker/containers"),_("Containers"),1).leaf=true
+  entry({"admin","docker","networks"},form("docker/networks"),_("Networks"),3).leaf=true
+  entry({"admin","docker","images"},form("docker/images"),_("Images"),2).leaf=true
   entry({"admin","docker","events"},call("action_events"),_("Events"),4)
   entry({"admin","docker","newcontainer"},form("docker/newcontainer")).leaf=true
   entry({"admin","docker","newnetwork"},form("docker/newnetwork")).leaf=true
   entry({"admin","docker","container"},form("docker/container")).leaf=true
   entry({"admin","docker","container_stats"},call("action_get_container_stats")).leaf=true
+  entry({"admin","docker","confirm"},call("action_confirm")).leaf=true
 
   -- for openwrt docker-ce by lean
   if nixio.fs.access("/etc/config/dockerd") then
@@ -136,6 +137,24 @@ function action_get_container_stats(container_id)
     luci.http.prepare_content("text/plain")
 		luci.http.write("No container name or id")
   end
+end
+
+function action_confirm()
+  local status_path=luci.model.uci.cursor().get("docker","local", "status_path")
+  local data = nixio.fs.readfile(status_path)
+  if data then
+    code = 202
+    msg = data
+    data = data
+  else
+    code = 200
+    msg = "finish"
+    data = "finish"
+  end
+  -- luci.util.perror(data)
+  luci.http.status(code, msg)
+  luci.http.prepare_content("application/json")
+  luci.http.write_json({info = data})
 end
 
 function act_status()

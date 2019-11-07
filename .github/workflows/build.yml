@@ -36,7 +36,7 @@ jobs:
           EOF
           cat >/tmp/luci-app-docker/CONTROL/postinst <<EOF
           #!/bin/sh
-          rm -rf /tmp/luci*
+          rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
           EOF
           chmod +x /tmp/luci-app-docker/CONTROL/postinst
           wget -O /tmp/ipkg-build https://raw.githubusercontent.com/openwrt/openwrt/master/scripts/ipkg-build && \

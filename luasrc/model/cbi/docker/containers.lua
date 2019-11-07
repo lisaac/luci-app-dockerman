@@ -58,7 +58,10 @@ end
 
 local c_lists = get_containers()
 -- list Containers
-m = Map("docker", translate("Docker"))
+-- m = Map("docker", translate("Docker"))
+m = SimpleForm("docker", translate("Docker"))
+m.submit=false
+m.reset=false
 
 c_table = m:section(Table, c_lists, translate("Containers"))
 c_table.nodescr=true
@@ -89,48 +92,14 @@ container_command = c_table:option(DummyValue, "_command", translate("Command"))
 container_selecter.write=function(self, section, value)
   c_lists[section]._selected = value
 end
---[[
-  btnstart = c_table:option(Button, "start", translate("Start"))
-  btnstart.inputstyle = "apply"
-  btnconfiguration = c_table:option(Button, "_configuration", translate("Configuration"))
-  btnconfiguration.inputstyle = "edit"
-  btnstop = c_table:option(Button, "stop", translate("Stop"))
-  btnstop.inputstyle = "reset"
-  btnremove = c_table:option(Button, "remove", translate("Remove"))
-  btnremove.inputstyle = "remove"
-  btnremove:depends("status", "Created")
-  btnremove:depends("status", "Exited")
-
-
-  btnstart.write = function(self, section)
-    if container_status:cfgvalue(section):find("^[UR]") then
-      if dk.containers:restart(container_name:cfgvalue(section)).code == 204 then
-        luci.http.redirect(luci.dispatcher.build_url("admin/system/docker/containers"))
-      else
-      end
-    else 
-      if dk.containers:start(container_name:cfgvalue(section)).code == 204 then
-        luci.http.redirect(luci.dispatcher.build_url("admin/system/docker/containers"))
-      else
-      end
-    end
-  end
-  btnconfiguration.write = function(self, section)
-    luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/" .. c_lists[section]._name))
-  end
-
-  btnremove.write = function(self, section)
-    if container_status:cfgvalue(section):find("^[UR]") then
-    else
-      if dk.containers:remove(container_name:cfgvalue(section)).code == 204 then
-        luci.http.redirect(luci.dispatcher.build_url("admin/system/docker/containers"))
-      else
-      end
-    end
-  end
-]]
-
+docker_status = m:section(SimpleSection)
+docker_status.template="docker/apply_widget"
 local start_stop_remove = function(m,cmd)
+    -- luci.template.render("admin_uci/apply", {
+	-- 	changes = next(changes) and changes,
+	-- 	configs = reload
+  -- })
+
   local c_selected = {}
   -- 遍历table中sectionid
   local c_table_sids = c_table:cfgsections()
@@ -141,14 +110,22 @@ local start_stop_remove = function(m,cmd)
     end
   end
   if #c_selected >0 then
+
+    -- luci.util.perror(dk.options.status_path)
+    docker:clear_status()
     m.message = ""
+    local file_docker_action_status=io.open(dk.options.status_path,"a+")
     for _,cont in ipairs(c_selected) do
+      docker:append_status("Containers: " .. cmd .. " " .. cont .. "...")
       local msg = dk.containers[cmd](dk, cont)
       if msg.code >= 300 then
-        m.message = m.message .."\n" .. msg.code..": "..msg.body.message
-        luci.util.perror(msg.body.message)
+        docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
+        m.message = m.message .."\n" .. msg.code..": ".. (msg.body.message and msg.body.message or msg.message)
+      else
+        docker:append_status("done<br>")
       end
     end
+    docker:clear_status()
     if m.message == "" then
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
     end
@@ -159,31 +136,33 @@ action = m:section(Table,{{}})
 action.notitle=true
 action.rowcolors=false
 action.template="cbi/nullsection"
+
 btnnew=action:option(Button, "_new")
 btnnew.inputtitle= translate("New")
 btnnew.template="cbi/inlinebutton"
 btnnew.inputstyle = "add"
+btnnew.forcewrite = true
 btnstart=action:option(Button, "_start")
 btnstart.template="cbi/inlinebutton"
 btnstart.inputtitle=translate("Start")
 btnstart.inputstyle = "apply"
+btnstart.forcewrite = true
 btnrestart=action:option(Button, "_restart")
 btnrestart.template="cbi/inlinebutton"
 btnrestart.inputtitle=translate("Restart")
 btnrestart.inputstyle = "reload"
+btnrestart.forcewrite = true
 btnstop=action:option(Button, "_stop")
 btnstop.template="cbi/inlinebutton"
 btnstop.inputtitle=translate("Stop")
 btnstop.inputstyle = "reset"
+btnstop.forcewrite = true
 btnremove=action:option(Button, "_remove")
 btnremove.template="cbi/inlinebutton"
 btnremove.inputtitle=translate("Remove")
 btnremove.inputstyle = "remove"
+btnremove.forcewrite = true
 btnnew.write = function(self, section)
-  -- luci.template.render("admin_uci/apply", {
-	-- 	changes = next(changes) and changes,
-	-- 	configs = reload
-  -- })
   luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
 end
 btnstart.write = function(self, section)
@@ -198,5 +177,7 @@ end
 btnstop.write = function(self, section)
   start_stop_remove(m,"stop")
 end
+
+
 
 return m

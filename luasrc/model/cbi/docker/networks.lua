@@ -39,7 +39,10 @@ end
 
 
 local network_list = get_networks()
-m = Map("docker", translate("Docker"))
+-- m = Map("docker", translate("Docker"))
+m = SimpleForm("docker", translate("Docker"))
+m.submit=false
+m.reset=false
 
 network_table = m:section(Table, network_list, translate("Networks"))
 network_table.nodescr=true
@@ -66,7 +69,8 @@ network_selecter.write = function(self, section, value)
   network_list[section]._selected = value
 end
 
-
+docker_status = m:section(SimpleSection)
+docker_status.template="docker/apply_widget"
 action = m:section(Table,{{}})
 action.notitle=true
 action.rowcolors=false
@@ -76,6 +80,7 @@ btnnew.inputtitle= translate("New")
 btnnew.template="cbi/inlinebutton"
 btnnew.notitle=true
 btnnew.inputstyle = "add"
+btnnew.forcewrite = true
 btnnew.write = function(self, section)
   luci.http.redirect(luci.dispatcher.build_url("admin/docker/newnetwork"))
 end
@@ -83,6 +88,7 @@ btnremove = action:option(Button, "_remove")
 btnremove.inputtitle= translate("Remove")
 btnremove.template="cbi/inlinebutton"
 btnremove.inputstyle = "remove"
+btnremove.forcewrite = true
 btnremove.write = function(self, section)
   local network_selected = {}
   -- 遍历table中sectionid
@@ -95,13 +101,19 @@ btnremove.write = function(self, section)
   end
   if next(network_selected) ~= nil then
     m.message = ""
+    docker:clear_status()
     for _,net in ipairs(network_selected) do
+      docker:append_status("Networks: " .. "remove" .. " " .. net .. "...")
       local msg = dk.networks["remove"](dk, net)
       if msg.code >= 300 then
-        m.message = m.message .."\n" .. msg.code..": "..msg.body.message
-        luci.util.perror(msg.body.message)
+        docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
+        m.message = m.message .."\n" .. msg.code..": ".. (msg.body.message or msg.message)
+        -- luci.util.perror(msg.body.message)
+      else
+        docker:append_status("done<br>")
       end
     end
+    docker:clear_status()
     if m.message == "" then
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
     end
