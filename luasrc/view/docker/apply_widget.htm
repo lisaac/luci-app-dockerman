@@ -1,5 +1,5 @@
 <style type="text/css">
-	#cbi_apply_overlay {
+	#docker_apply_overlay {
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -10,7 +10,7 @@
 		z-index: 20000;
 	}
 
-	#cbi_apply_overlay .alert-message {
+	#docker_apply_overlay .alert-message {
 		position: relative;
 		top: 10%;
 		width: 60%;
@@ -21,13 +21,13 @@
 		align-items: center;
 	}
 
-	#cbi_apply_overlay .alert-message > h4,
-	#cbi_apply_overlay .alert-message > p,
-	#cbi_apply_overlay .alert-message > div {
+	#docker_apply_overlay .alert-message > h4,
+	#docker_apply_overlay .alert-message > p,
+	#docker_apply_overlay .alert-message > div {
 		flex-basis: 100%;
 	}
 
-	#cbi_apply_overlay .alert-message > img {
+	#docker_apply_overlay .alert-message > img {
 		margin-right: 1em;
 		flex-basis: 32px;
 	}
@@ -37,7 +37,7 @@
 		height: 100vh;
 	}
 
-	body.apply-overlay-active #cbi_apply_overlay {
+	body.apply-overlay-active #docker_apply_overlay {
 		display: block;
 	}
 </style>
@@ -50,8 +50,8 @@
 			was_xhr_poll_running = false;
 
 function docker_status_message(type, content) {
-  document.getElementById('cbi_apply_overlay') || document.body.insertAdjacentHTML("beforeend",'<div id="cbi_apply_overlay"><div class="alert-message"></div></div>')
-	var overlay = document.getElementById('cbi_apply_overlay')
+  document.getElementById('docker_apply_overlay') || document.body.insertAdjacentHTML("beforeend",'<div id="docker_apply_overlay"><div class="alert-message"></div></div>')
+	var overlay = document.getElementById('docker_apply_overlay')
       message = overlay.querySelector('.alert-message');
 
   if (message && type) {
@@ -97,7 +97,7 @@ function uci_confirm_docker() {
 			// var delay = isNaN(duration) ? 0 : Math.max(1000 - duration, 0);
 			var delay =1000
 			window.setTimeout(function() {
-				xhr.post('<%=url("admin/docker/confirm")%>', null, call, uci_apply_timeout * 1000);
+				xhr.get('<%=url("admin/docker/confirm")%>', null, call, uci_apply_timeout * 1000);
 			}, delay);
 		};
 
@@ -129,7 +129,7 @@ function fnSubmitForm(el){
 
 <% if self.err then -%>
 	docker_status_message('warning', "<%=self.err%>");
-	document.getElementById('cbi_apply_overlay').addEventListener("click", (e)=>{
+	document.getElementById('docker_apply_overlay').addEventListener("click", (e)=>{
 		docker_status_message()
 	})
 <%- end %>
@@ -139,9 +139,6 @@ var buttons = document.querySelectorAll('input[type="submit"]');
 [].slice.call(buttons).forEach(function (el) {
   el.onclick = fnSubmitForm.bind(this, el);
 });
-
-
-
 }
 
 //]]></script>

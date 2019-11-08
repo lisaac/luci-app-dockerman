@@ -153,7 +153,6 @@ function action_confirm()
   if data then
     code = 202
     msg = data
-    data = data
   else
     code = 200
     msg = "finish"
