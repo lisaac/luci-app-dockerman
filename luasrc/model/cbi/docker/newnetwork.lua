@@ -187,12 +187,12 @@ m.handle = function(self, state, data)
     end
 
     docker:append_status("Network: " .. "create" .. " " .. create_body.Name .. "...")
-    local msg = dk.networks:create(nil, nil, create_body)
-    if msg.code == 201 then
+    local res = dk.networks:create(nil, nil, create_body)
+    if res and res.code == 201 then
       docker:clear_status()
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
     else
-      docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
+      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/newnetwork"))
     end
   end

@@ -83,8 +83,68 @@ local get_networks = function(d)
 end
 
 
-m=SimpleForm("docker", translate("Docker Container"), container_info.Name:sub(2))
-m:append(Template("docker/container"))
+local start_stop_remove = function(m,cmd)
+  docker:clear_status()
+  docker:append_status("Containers: " .. cmd .. " " .. container_id .. "...")
+  local res = dk.containers[cmd](dk, container_id)
+  if res and res.code >= 300 then
+    docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
+  else
+    docker:clear_status()
+  end
+  luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id))
+end
+
+m=SimpleForm("docker", container_info.Name:sub(2), translate("Docker Contaienr") )
+-- m:append(Template("docker/container"))
+docker_status = m:section(SimpleSection)
+docker_status.template="docker/apply_widget"
+docker_status.err=nixio.fs.readfile(dk.options.status_path)
+-- luci.util.perror(docker_status.err)
+if docker_status then docker:clear_status() end
+
+
+action_section = m:section(Table,{{}})
+action_section.notitle=true
+action_section.rowcolors=false
+action_section.template="cbi/nullsection"
+
+btnstart=action_section:option(Button, "_start")
+btnstart.template="cbi/inlinebutton"
+btnstart.inputtitle=translate("Start")
+btnstart.inputstyle = "apply"
+btnstart.forcewrite = true
+btnrestart=action_section:option(Button, "_restart")
+btnrestart.template="cbi/inlinebutton"
+btnrestart.inputtitle=translate("Restart")
+btnrestart.inputstyle = "reload"
+btnrestart.forcewrite = true
+btnstop=action_section:option(Button, "_stop")
+btnstop.template="cbi/inlinebutton"
+btnstop.inputtitle=translate("Stop")
+btnstop.inputstyle = "reset"
+btnstop.forcewrite = true
+btnremove=action_section:option(Button, "_remove")
+btnremove.template="cbi/inlinebutton"
+btnremove.inputtitle=translate("Remove")
+btnremove.inputstyle = "remove"
+btnremove.forcewrite = true
+
+btnstart.write = function(self, section)
+  start_stop_remove(m,"start")
+end
+btnrestart.write = function(self, section)
+  start_stop_remove(m,"restart")
+end
+btnremove.write = function(self, section)
+  start_stop_remove(m,"remove")
+end
+btnstop.write = function(self, section)
+  start_stop_remove(m,"stop")
+end
+
+tab_section = m:section(SimpleSection)
+tab_section.template="docker/container"
 
 if action == "info" then 
   m.submit = false
@@ -115,7 +175,6 @@ if action == "info" then
       list_networks[v.Name] = network_name
     end
   end
-
 
   if type(info_networks)== "table" then
     for k,v in pairs(info_networks) do
@@ -221,15 +280,19 @@ if action == "info" then
   btn_update.write = function(self, section, value)
     -- luci.util.perror(section)
     local res
+    docker:clear_status()
     if section == "01name" then
+      docker:append_status("Containers: rename " .. container_id .. "...")
       local new_name = table_info[section]._value
       res = dk.containers:rename(container_id,{name=new_name})
     elseif section == "08restart" then
+      docker:append_status("Containers: update " .. container_id .. "...")
       local new_restart = table_info[section]._value
       res = dk.containers:update(container_id, nil, {RestartPolicy = {Name = new_restart}})
     elseif table_info[section]._key == translate("Network") then
       local _,_,leave_network = table_info[section]._value:find("(.-) | .+")
       leave_network = leave_network or table_info[section]._value
+      docker:append_status("Network: disconnect " .. leave_network .. container_id .. "...")
       res = dk.networks:disconnect(leave_network, nil, {Container = container_id})
     elseif section == "15connect" then
       local connect_network = table_info[section]._value
@@ -242,13 +305,15 @@ if action == "info" then
             }
         } or nil
       end
+      docker:append_status("Network: connect " .. connect_network .. container_id .. "...")
       res = dk.networks:connect(connect_network, nil, {Container = container_id, EndpointConfig= network_opiton})
     end
-    if res and res.code < 300 then
-      luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id.."/info"))
+    if res and res.code > 300 then
+      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
     else
-      m.message=res and (res.code..": "..res.body.message) or "unknow err"
+      docker:clear_status()
     end
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id.."/info"))
   end
   
 -- info end
@@ -269,7 +334,7 @@ elseif action == "edit" then
   d = editsection:option(Value, "memory", translate("Memory"), translate("Memory limit (format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g. Minimum is 4M."))
   d.placeholder = "128m"
   d.rmempty = true
-  d.default = (container_info.HostConfig.Memory / 1024 /1024) .. "M"
+  d.default = container_info.HostConfig.Memory ~=0 and ((container_info.HostConfig.Memory / 1024 /1024) .. "M") or 0
 
   d = editsection:option(Value, "blkioweight", translate("Block IO Weight"), translate("Block IO weight (relative weight) accepts a weight value between 10 and 1000."))
   d.placeholder = "500"
@@ -277,6 +342,41 @@ elseif action == "edit" then
   d.datatype="uinteger"
   d.default = container_info.HostConfig.BlkioWeight
 
+  m.handle = function(self, state, data)
+    if state == FORM_VALID then
+      local memory = data.memory
+      if memory and memory ~= 0 then
+        _,_,n,unit = memory:find("([%d%.]+)([%l%u]+)")
+        if n then
+          unit = unit and unit:sub(1,1):upper() or "B"
+          if  unit == "M" then
+            memory = tonumber(n) * 1024 * 1024
+          elseif unit == "G" then
+            memory = tonumber(n) * 1024 * 1024 * 1024
+          elseif unit == "K" then
+            memory = tonumber(n) * 1024
+          else
+            memory = tonumber(n)
+          end
+        end
+      end
+      request_body = {
+        BlkioWeight = tonumber(data.blkioweight),
+        NanoCPUs = tonumber(data.cpus)*10^9,
+        Memory = tonumber(memory),
+        CpuShares = tonumber(data.cpushares)
+        }
+      docker:clear_status()
+      docker:append_status("Containers: update " .. container_id .. "...")
+      local res = dk.containers:update(container_id, nil, request_body)
+      if res and res.code >= 300 then
+        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
+      else
+        docker:clear_status()
+      end
+      luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id.."/edit"))
+    end
+  end
 elseif action == "logs" then
   logsection= m:section(SimpleSection)
   local logs = ""
@@ -326,36 +426,5 @@ m.submit = false
 m.reset  = false
 end
 
-m.handle = function(self, state, data)
-  if state == FORM_VALID then
-    local memory = data.memory
-    if memory ~= 0 then
-      _,_,n,unit = memory:find("([%d%.]+)([%l%u]+)")
-      if n then
-        unit = unit and unit:sub(1,1):upper() or "B"
-        if  unit == "M" then
-          memory = tonumber(n) * 1024 * 1024
-        elseif unit == "G" then
-          memory = tonumber(n) * 1024 * 1024 * 1024
-        elseif unit == "K" then
-          memory = tonumber(n) * 1024
-        else
-          memory = tonumber(n)
-        end
-      end
-    end
-    request_body = {
-      BlkioWeight = tonumber(data.blkioweight),
-      NanoCPUs = tonumber(data.cpus)*10^9,
-      Memory = tonumber(memory),
-      CpuShares = tonumber(data.cpushares)
-      }
-    local res = dk.containers:update(container_id, nil, request_body)
-    if res and res.code < 300 then
-      luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id.."/edit"))
-    else
-      m.message=res and (res.code..": "..res.body.message) or "unknow err"
-    end
-  end
-end
+
 return m

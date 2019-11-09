@@ -105,9 +105,9 @@ btnremove.write = function(self, section)
     docker:clear_status()
     for _,net in ipairs(network_selected) do
       docker:append_status("Networks: " .. "remove" .. " " .. net .. "...")
-      local msg = dk.networks["remove"](dk, net)
-      if msg.code >= 300 then
-        docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
+      local res = dk.networks["remove"](dk, net)
+      if res and res.code >= 300 then
+        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
         success = false
       else
         docker:append_status("done<br>")

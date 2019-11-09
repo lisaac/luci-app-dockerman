@@ -15,18 +15,23 @@ local dk = docker.new()
 
 function get_images()
   local images = dk.images:list().body
+  local containers = dk.containers:list(nil, {all=true}).body
   local data = {}
   for i, v in ipairs(images) do
     local index = v.Created .. v.Id
     data[index]={}
     data[index]["_selected"] = 0
     data[index]["_id"] = v.Id:sub(8,20)
-    data[index]["_containers"] = tostring(v.Containers)
     if v.RepoTags then
       data[index]["_tags"] = v.RepoTags[1]
     else 
       _,_, data[index]["_tags"] = v.RepoDigests[1]:find("^(.-)@.+")
       data[index]["_tags"]=data[index]["_tags"]..":none"
+    end
+    for ci,cv in ipairs(containers) do
+      if v.Id == cv.ImageID then
+        data[index]["_containers"] = (data[index]["_containers"] and (data[index]["_containers"] .. " | ") or "")..cv.Names[1]:sub(2)
+      end
     end
     data[index]["_size"] = string.format("%.2f", tostring(v.Size/1024/1024)).."MB"
     data[index]["_created"] = os.date("%Y/%m/%d %H:%M:%S",v.Created)
@@ -35,6 +40,7 @@ function get_images()
 end
 
 local image_list = get_images()
+
 -- m = Map("docker", translate("Docker"))
 m = SimpleForm("docker", translate("Docker"))
 m.submit=false
@@ -76,9 +82,9 @@ action_pull.write = function(self, section)
     docker:clear_status()
     docker:append_status("Images: " .. "pulling" .. " " .. tag .. "...")
     local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
-    local msg = dk.images:create(nil, {fromImage=tag,_header={["X-Registry-Auth"]=x_auth}})
-    if msg.code >=300 then
-      docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
+    local res = dk.images:create(nil, {fromImage=tag,_header={["X-Registry-Auth"]=x_auth}})
+    if res and res.code >=300 then
+      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
     else
       docker:append_status("done<br>")
     end
@@ -94,8 +100,8 @@ image_selecter.enabled = 1
 image_selecter.default = 0
 
 image_id = image_table:option(DummyValue, "_id", translate("ID"))
-image_table:option(DummyValue, "_containers", translate("Containers"))
 image_table:option(DummyValue, "_tags", translate("RepoTags"))
+image_table:option(DummyValue, "_containers", translate("Containers"))
 image_table:option(DummyValue, "_size", translate("Size"))
 image_table:option(DummyValue, "_created", translate("Created"))
 image_selecter.write = function(self, section, value)
