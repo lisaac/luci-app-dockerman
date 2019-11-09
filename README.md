@@ -7,6 +7,24 @@
 - luci-lib-json
 - [luci-lib-docker](https://github.com/lisaac/luci-lib-docker)
 
+### Compile/编译
+```bash
+./script/feeds update luci-lib-json
+./script/feeds install luci-lib-json
+git clone https://github.com/lisaac/luci-lib-docker.git package/luci-lib-docker
+git clone https://github.com/lisaac/luci-app-docker.git package/luci-app-docker
+
+#compile package only
+make package/luci-lib-json/compile V=99
+make package/luci-lib-docker/compile v=99
+make package/luci-app-docker/compile v=99
+
+#compile
+make menuconfig
+#choose LuCI ---> 3. Applications  ---> < > luci-app-docker-manager..... Docker Manager interface for LuCI ----> save
+make V=99
+```
+
 ### Download /下载
 - [ipk file](https://github.com/lisaac/luci-lib-docker/releases)
 
