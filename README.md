@@ -26,7 +26,7 @@ make V=99
 ```
 
 ### Download /下载
-- [ipk file](https://github.com/lisaac/luci-lib-docker/releases)
+- [ipk file](https://github.com/lisaac/luci-app-docker/releases)
 
 ### Screenshot/截图
 - Containers
