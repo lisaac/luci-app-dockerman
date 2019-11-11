@@ -12,6 +12,8 @@ require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
+local container_name = arg[1] or ""
+local image_name = arg[2] or ""
 
 local images = dk.images:list().body
 local networks = dk.networks:list().body
@@ -33,11 +35,12 @@ s = m:section(SimpleSection, translate("New Container"))
 s.addremove = true
 s.anonymous = true
 
-
 d = s:option(Value, "name", translate("Container Name"))
 d.rmempty = true
+d.default = container_name
 d = s:option(Value, "image", translate("Docker Image"))
 d.rmempty = true
+d.default = image_name
 
 for _, v in ipairs (images) do
   if v.RepoTags then
@@ -73,7 +76,6 @@ for _, v in ipairs (networks) do
     if v.Name ~= "none" and v.Name ~= "bridge" and v.Name ~= "host" then
       dip:depends("network", v.Name)
     end
-
   end
 end
 
@@ -146,7 +148,7 @@ m.handle = function(self, state, data)
     local cpushares = data.cpushares or 0
     local cpus = data.cpus or 0
     local blkioweight = data.blkioweight or 500
-    
+
     local portbindings = {}
     local exposedports = {}
     local tmpfs = {}
@@ -235,13 +237,37 @@ m.handle = function(self, state, data)
       create_body["HostConfig"]["Links"] = links
     end
 
+    docker:clear_status()
+    local exist_image = false
+    if image then
+      for _, v in ipairs (images) do
+        if v.RepoTags and v.RepoTags[1] == image then
+          exist_image = true
+          break
+        end
+      end
+      if not exist_image then
+        local server = "index.docker.io"
+        local json_stringify = luci.json and luci.json.encode or luci.jsonc.stringify
+        docker:append_status("Images: " .. "pulling" .. " " .. image .. "...")
+        local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
+        local res = dk.images:create(nil, {fromImage=image,_header={["X-Registry-Auth"]=x_auth}})
+        if res and res.code < 300 then
+          docker:append_status("done<br>")
+        else
+          docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
+          luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
+        end
+      end
+    end
+
     docker:append_status("Container: " .. "create" .. " " .. name .. "...")
     local res = dk.containers:create(name, nil, create_body)
     if res and res.code == 201 then
       docker:clear_status()
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
     else
-      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
+      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
     end
   end

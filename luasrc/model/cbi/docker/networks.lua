@@ -12,14 +12,15 @@ require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
-local dknetworks = dk.networks:list().body
-
+local networks
+local res = dk.networks:list()
+if res.code < 300 then networks = res.body else return end
 
 local get_networks = function ()
   local data = {}
 
-  if type(dknetworks) ~= "table" then return nil end
-  for i, v in ipairs(dknetworks) do
+  if type(networks) ~= "table" then return nil end
+  for i, v in ipairs(networks) do
     local index = v.Created .. v.Id
     data[index]={}
     data[index]["_selected"] = 0

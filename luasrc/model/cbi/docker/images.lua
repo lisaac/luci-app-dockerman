@@ -13,9 +13,13 @@ local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
 
+local containers, images
+local res = dk.images:list()
+if res.code <300 then images = res.body else return end
+res = dk.containers:list(nil, {all=true})
+if res.code <300 then containers = res.body else return end
+
 function get_images()
-  local images = dk.images:list().body
-  local containers = dk.containers:list(nil, {all=true}).body
   local data = {}
   for i, v in ipairs(images) do
     local index = v.Created .. v.Id

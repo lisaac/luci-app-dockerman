@@ -14,9 +14,13 @@ local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
 
-local images = dk.images:list().body
-local networks = dk.networks:list().body
-local containers = dk.containers:list(nil, {all=true}).body
+local images, networks, containers
+local res = dk.images:list()
+if res.code <300 then images = res.body else return end
+res = dk.networks:list()
+if res.code <300 then networks = res.body else return end
+res = dk.containers:list(nil, {all=true})
+if res.code <300 then containers = res.body else return end
 
 local urlencode = luci.http.protocol and luci.http.protocol.urlencode or luci.util.urlencode
 

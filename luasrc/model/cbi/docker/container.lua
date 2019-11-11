@@ -15,11 +15,12 @@ local dk = docker.new()
 container_id = arg[1]
 local action = arg[2] or "info"
 
-local response = dk.containers:inspect(container_id)
-if response.code == 200 then
-  container_info = response.body
-end
-local networks = dk.networks:list().body
+local images, networks, containers_info
+if not container_id then return end
+local res = dk.containers:inspect(container_id)
+if res.code < 300 then container_info = res.body else return end
+res = dk.networks:list()
+if res.code < 300 then networks = res.body else return end
 
 local get_ports = function(d)
   local data
@@ -92,7 +93,11 @@ local start_stop_remove = function(m,cmd)
   else
     docker:clear_status()
   end
-  luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id))
+  if cmd ~= "remove" then
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id))
+  else
+    luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
+  end
 end
 
 m=SimpleForm("docker", container_info.Name:sub(2), translate("Docker Contaienr") )
