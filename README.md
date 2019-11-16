@@ -9,8 +9,8 @@
 
 ### Compile/编译
 ```bash
-./script/feeds update luci-lib-json
-./script/feeds install luci-lib-json
+./scripts/feeds update luci-lib-json
+./scripts/feeds install luci-lib-json
 git clone https://github.com/lisaac/luci-lib-docker.git package/luci-lib-docker
 git clone https://github.com/lisaac/luci-app-docker.git package/luci-app-docker
 
