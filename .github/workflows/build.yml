@@ -24,7 +24,7 @@ jobs:
           [ -d $GITHUB_WORKSPACE/htdoc ] && cp -R $GITHUB_WORKSPACE/htdoc/* /tmp/luci-app-dockerman/www/
           mkdir -p /tmp/luci-app-dockerman/CONTROL
           cat >/tmp/luci-app-dockerman/CONTROL/control <<EOF
-          Package: luci-app-docker-manager
+          Package: luci-app-dockerman
           Version: ${TAG}
           Depends: luci-lib-docker
           Architecture: all
@@ -32,7 +32,7 @@ jobs:
           Section: base
           Priority: optional
           Description: Simple Docker manager interface
-          Source: http://github.com/lisaac/luci-app-docker
+          Source: http://github.com/lisaac/luci-app-dockerman
           EOF
           cat >/tmp/luci-app-dockerman/CONTROL/postinst <<EOF
           #!/bin/sh
@@ -41,7 +41,7 @@ jobs:
           chmod +x /tmp/luci-app-dockerman/CONTROL/postinst
           wget -O /tmp/ipkg-build https://raw.githubusercontent.com/openwrt/openwrt/master/scripts/ipkg-build && \
           chmod +x /tmp/ipkg-build && \
-          /tmp/ipkg-build -o root -g root /tmp/luci-app-docker /tmp
+          /tmp/ipkg-build -o root -g root /tmp/luci-app-dockerman /tmp
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1.0.0
@@ -59,6 +59,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: /tmp/luci-app-docker-manager_${{ steps.build_ipk.outputs.tag_name }}_all.ipk
-          asset_name: luci-app-docker-manager_${{ steps.build_ipk.outputs.tag_name }}_all.ipk
+          asset_path: /tmp/luci-app-dockerman_${{ steps.build_ipk.outputs.tag_name }}_all.ipk
+          asset_name: luci-app-dockerman_${{ steps.build_ipk.outputs.tag_name }}_all.ipk
           asset_content_type: application/octet-stream
