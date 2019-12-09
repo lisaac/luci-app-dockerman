@@ -18,12 +18,12 @@ jobs:
         run: |
           TAG=${GITHUB_REF#refs/tags/}
           echo ::set-output name=tag_name::${TAG}
-          mkdir -p /tmp/luci-app-docker/usr/lib/lua/luci /tmp/luci-app-docker/www/
-          [ -d $GITHUB_WORKSPACE/luasrc ] && cp -R $GITHUB_WORKSPACE/luasrc/* /tmp/luci-app-docker/usr/lib/lua/luci/
-          [ -d $GITHUB_WORKSPACE/root ] && cp -R $GITHUB_WORKSPACE/root/* /tmp/luci-app-docker/
-          [ -d $GITHUB_WORKSPACE/htdoc ] && cp -R $GITHUB_WORKSPACE/htdoc/* /tmp/luci-app-docker/www/
-          mkdir -p /tmp/luci-app-docker/CONTROL
-          cat >/tmp/luci-app-docker/CONTROL/control <<EOF
+          mkdir -p /tmp/luci-app-dockerman/usr/lib/lua/luci /tmp/luci-app-dockerman/www/
+          [ -d $GITHUB_WORKSPACE/luasrc ] && cp -R $GITHUB_WORKSPACE/luasrc/* /tmp/luci-app-dockerman/usr/lib/lua/luci/
+          [ -d $GITHUB_WORKSPACE/root ] && cp -R $GITHUB_WORKSPACE/root/* /tmp/luci-app-dockerman/
+          [ -d $GITHUB_WORKSPACE/htdoc ] && cp -R $GITHUB_WORKSPACE/htdoc/* /tmp/luci-app-dockerman/www/
+          mkdir -p /tmp/luci-app-dockerman/CONTROL
+          cat >/tmp/luci-app-dockerman/CONTROL/control <<EOF
           Package: luci-app-docker-manager
           Version: ${TAG}
           Depends: luci-lib-docker
@@ -34,11 +34,11 @@ jobs:
           Description: Simple Docker manager interface
           Source: http://github.com/lisaac/luci-app-docker
           EOF
-          cat >/tmp/luci-app-docker/CONTROL/postinst <<EOF
+          cat >/tmp/luci-app-dockerman/CONTROL/postinst <<EOF
           #!/bin/sh
           rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
           EOF
-          chmod +x /tmp/luci-app-docker/CONTROL/postinst
+          chmod +x /tmp/luci-app-dockerman/CONTROL/postinst
           wget -O /tmp/ipkg-build https://raw.githubusercontent.com/openwrt/openwrt/master/scripts/ipkg-build && \
           chmod +x /tmp/ipkg-build && \
           /tmp/ipkg-build -o root -g root /tmp/luci-app-docker /tmp

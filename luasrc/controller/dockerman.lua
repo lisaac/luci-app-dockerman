@@ -11,7 +11,7 @@ require "luci.util"
 local docker = require "luci.model.docker"
 local uci = require "luci.model.uci"
 
-module("luci.controller.docker",package.seeall)
+module("luci.controller.dockerman",package.seeall)
 
 function index()
   

@@ -1,9 +1,9 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=luci-app-docker-manager
+PKG_NAME:=luci-app-dockerman
 PKG_VERSION:=v0.0.7-beta
 PKG_RELEASE:=beta
-PKG_MAINTAINER:=lisaac <https://github.com/lisaac/luci-app-docker>
+PKG_MAINTAINER:=lisaac <https://github.com/lisaac/luci-app-dockerman>
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_LICENSE:=Apache-2.0
 

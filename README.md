@@ -12,38 +12,38 @@
 ./scripts/feeds update luci-lib-json
 ./scripts/feeds install luci-lib-json
 git clone https://github.com/lisaac/luci-lib-docker.git package/luci-lib-docker
-git clone https://github.com/lisaac/luci-app-docker.git package/luci-app-docker
+git clone https://github.com/lisaac/luci-app-dockerman.git package/luci-app-dockerman
 
 #compile package only
 make package/luci-lib-json/compile V=99
 make package/luci-lib-docker/compile v=99
-make package/luci-app-docker/compile v=99
+make package/luci-app-dockerman/compile v=99
 
 #compile
 make menuconfig
-#choose LuCI ---> 3. Applications  ---> < > luci-app-docker-manager..... Docker Manager interface for LuCI ----> save
+#choose LuCI ---> 3. Applications  ---> < > luci-app-dockerman..... Docker Manager interface for LuCI ----> save
 make V=99
 ```
 
 ### Download /下载
-- [ipk file](https://github.com/lisaac/luci-app-docker/releases)
+- [ipk file](https://github.com/lisaac/luci-app-dockerman/releases)
 
 ### Screenshot/截图
 - Containers
-![](https://raw.githubusercontent.com/lisaac/luci-app-docker/master/doc/containers.png)
+![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/containers.png)
 - Container Info
-![](https://raw.githubusercontent.com/lisaac/luci-app-docker/master/doc/container_info.png)
+![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/container_info.png)
 - Container Edit
-![](https://raw.githubusercontent.com/lisaac/luci-app-docker/master/doc/container_edit.png)
+![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/container_edit.png)
 - Container Stats
-![](https://raw.githubusercontent.com/lisaac/luci-app-docker/master/doc/container_stats.png)
+![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/container_stats.png)
 - Container Logs
-![](https://raw.githubusercontent.com/lisaac/luci-app-docker/master/doc/container_logs.png)
+![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/container_logs.png)
 - New Container
-![](https://raw.githubusercontent.com/lisaac/luci-app-docker/master/doc/new_container.png)
+![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/new_container.png)
 - Images
-![](https://raw.githubusercontent.com/lisaac/luci-app-docker/master/doc/images.png)
+![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/images.png)
 - Networks
-![](https://raw.githubusercontent.com/lisaac/luci-app-docker/master/doc/networks.png)
+![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/networks.png)
 - New Network
-![](https://raw.githubusercontent.com/lisaac/luci-app-docker/master/doc/new_network.png)
+![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/new_network.png)
