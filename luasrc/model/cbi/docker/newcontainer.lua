@@ -20,7 +20,7 @@ local networks = dk.networks:list().body
 local containers = dk.containers:list(nil, {all=true}).body
 
 
-m = SimpleForm("docker", translate("Docker"))
+local m = SimpleForm("docker", translate("Docker"))
 m.redirect = luci.dispatcher.build_url("admin", "docker", "containers")
 -- m.reset = false
 -- m.submit = false
@@ -31,11 +31,11 @@ docker_status.template="docker/apply_widget"
 docker_status.err=nixio.fs.readfile(dk.options.status_path)
 if docker_status then docker:clear_status() end
 
-s = m:section(SimpleSection, translate("New Container"))
+local s = m:section(SimpleSection, translate("New Container"))
 s.addremove = true
 s.anonymous = true
 
-d = s:option(Value, "name", translate("Container Name"))
+local d = s:option(Value, "name", translate("Container Name"))
 d.rmempty = true
 d.default = container_name
 d = s:option(Value, "image", translate("Docker Image"))
@@ -63,8 +63,9 @@ d = s:option(ListValue, "network", translate("Networks"))
 d.rmempty = true
 d.default = "bridge"
 
-dip = s:option(Value, "ip", translate("IPv4"))
+local dip = s:option(Value, "ip", translate("IPv4 Address"))
 dip.datatype="ip4addr"
+dip:depends("network", "nil")
 for _, v in ipairs (networks) do
   if v.Name then
     local parent = v.Options and v.Options.parent or nil
@@ -138,6 +139,9 @@ m.handle = function(self, state, data)
     local tmp
     local name = data.name
     local image = data.image
+    if not image:match(".-:.+") then
+      image = image .. ":latest"
+    end
     local privileged = data.privileged
     local restart = data.restart
     local env = data.env
