@@ -47,6 +47,7 @@ local image_list = get_images()
 
 -- m = Map("docker", translate("Docker"))
 m = SimpleForm("docker", translate("Docker"))
+m.tempalte = "cbi/xsimpleform"
 m.submit=false
 m.reset=false
 

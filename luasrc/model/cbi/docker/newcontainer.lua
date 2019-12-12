@@ -21,6 +21,7 @@ local containers = dk.containers:list(nil, {all=true}).body
 
 
 local m = SimpleForm("docker", translate("Docker"))
+m.tempalte = "cbi/xsimpleform"
 m.redirect = luci.dispatcher.build_url("admin", "docker", "containers")
 -- m.reset = false
 -- m.submit = false
