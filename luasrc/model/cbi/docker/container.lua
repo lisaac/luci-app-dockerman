@@ -62,6 +62,15 @@ local get_mounts = function(d)
   return data
 end
 
+local get_device = function(d)
+  local data
+  if d.HostConfig and d.HostConfig.Devices then
+    for _,v in ipairs(d.HostConfig.Devices) do
+      data = (data and (data .. "<br>") or "") .. v["PathOnHost"] .. ":" .. v["PathInContainer"] .. (v["CgroupPermissions"] ~= "" and (":" .. v["CgroupPermissions"]) or "")
+    end
+  end
+  return data
+end
 
 local get_links = function(d)
   local data
@@ -166,7 +175,9 @@ if action == "info" then
   table_info["06start"] = container_info.State.Status == "running" and {_key = translate("Start Time"),  _value = container_info.State and container_info.State.StartedAt or "-"} or {_key = translate("Finish Time"),  _value = container_info.State and container_info.State.FinishedAt or "-"}
   table_info["07healthy"] = {_key = translate("Healthy"),  _value = container_info.State and container_info.State.Health and container_info.State.Health.Status or "-"}
   table_info["08restart"] = {_key = translate("Restart Policy"),  _value = container_info.HostConfig and container_info.HostConfig.RestartPolicy and container_info.HostConfig.RestartPolicy.Name or "-", _button=translate("Update")}
+  table_info["09device"] = {_key = translate("Device"),  _value = get_device(container_info)  or "-"}
   table_info["09mount"] = {_key = translate("Mount/Volume"),  _value = get_mounts(container_info)  or "-"}
+
   table_info["10cmd"] = {_key = translate("Command"),  _value = get_command(container_info) or "-"}
   table_info["11env"] = {_key = translate("Env"),  _value = get_env(container_info)  or "-"}
   table_info["12ports"] = {_key = translate("Ports"),  _value = get_ports(container_info) or "-"}

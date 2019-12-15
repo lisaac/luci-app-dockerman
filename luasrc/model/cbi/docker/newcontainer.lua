@@ -12,8 +12,7 @@ require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
-local container_name = arg[1] or ""
-local image_name = arg[2] or ""
+local cmd_line = arg[1] or ""
 
 local images = dk.images:list().body
 local networks = dk.networks:list().body
@@ -38,10 +37,8 @@ s.anonymous = true
 
 local d = s:option(Value, "name", translate("Container Name"))
 d.rmempty = true
-d.default = container_name
 d = s:option(Value, "image", translate("Docker Image"))
 d.rmempty = true
-d.default = image_name
 
 for _, v in ipairs (images) do
   if v.RepoTags then
@@ -130,6 +127,11 @@ d.rmempty = true
 d:depends("advance", 1)
 d.datatype="uinteger"
 
+d = s:option(DynamicList, "device", translate("Device"))
+d.placeholder = "/dev/sda:/dev/xvdc:rwm"
+d.rmempty = true
+d:depends("advance", 1)
+
 d = s:option(DynamicList, "tmpfs", translate("Tmpfs"), translate("Mount tmpfs filesystems"))
 d.placeholder = "/run:rw,noexec,nosuid,size=65536k"
 d.rmempty = true
@@ -163,6 +165,29 @@ m.handle = function(self, state, data)
         local _,_, k,v1 = v:find("(.-):(.+)")
         if k and v1 then
           tmpfs[k]=v1
+        end
+      end
+    end
+
+    local device = {}
+    tmp = data.device
+    if type(tmp) == "table" then
+      for i, v in ipairs(tmp)do
+        local t = {}
+        local _,_, h, c, p = v:find("(.-):(.-):(.+)")
+        if h and c then
+          t['PathOnHost'] = h
+          t['PathInContainer'] = c
+          t['CgroupPermissions'] = p or nil
+        else
+          local _,_, h, c = v:find("(.-):(.+)")
+          if h and c then
+            t['PathOnHost'] = h
+            t['PathInContainer'] = c
+          end
+        end
+        if next(t) ~= nil then
+          table.insert( device, t )
         end
       end
     end
@@ -238,6 +263,10 @@ m.handle = function(self, state, data)
     if next(tmpfs) ~= nil then
       create_body["HostConfig"]["Tmpfs"] = tmpfs
     end
+    if next(device) ~= nil then
+      create_body["HostConfig"]["Devices"] = device
+    end
+
     if network == "bridge" and next(links) ~= nil then
       create_body["HostConfig"]["Links"] = links
     end
