@@ -47,3 +47,8 @@ make V=99
 ![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/networks.png)
 - New Network
 ![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/new_network.png)
+
+TODO:
+images: edit tag / import
+new container: device / analyze command line string
+container: upgrade / duplicate / download & upload files

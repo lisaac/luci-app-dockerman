@@ -16,19 +16,19 @@ local _docker = {}
 _docker.new = function(option)
   local option = option or {}
   options = {
-    socket_path = option.socket_path or uci.get("docker","local", "socket_path"),
-    debug = option.debug or uci.get("docker","local", "debug") == 'true' and true or false,
-    debug_path = option.debug_path or uci.get("docker","local", "debug_path")
+    socket_path = option.socket_path or uci:get("docker", "local", "socket_path"),
+    debug = option.debug or uci:get("docker", "local", "debug") == 'true' and true or false,
+    debug_path = option.debug_path or uci:get("docker", "local", "debug_path")
   }
   local _new = docker.new(options)
-  _new.options.status_path = uci.get("docker","local", "status_path")
+  _new.options.status_path = uci:get("docker", "local", "status_path")
   return _new
 end
 _docker.options={}
-_docker.options.status_path = uci.get("docker","local", "status_path")
+_docker.options.status_path = uci:get("docker", "local", "status_path")
 
 _docker.append_status=function(self,val)
-  local file_docker_action_status=io.open(self.options.status_path,"a+")
+  local file_docker_action_status=io.open(self.options.status_path, "a+")
   file_docker_action_status:write(val)
   file_docker_action_status:close()
 end

@@ -14,11 +14,11 @@ local uci = require "luci.model.uci"
 module("luci.controller.dockerman",package.seeall)
 
 function index()
-  
+
   entry({"admin", "docker"}, firstchild(), "Docker", 40).dependent = false
   entry({"admin","docker","overview"},cbi("docker/overview"),_("Overview"),0).leaf=true
 
-  socket = luci.model.uci.cursor().get("docker","local", "socket_path")
+  socket = luci.model.uci.cursor():get("docker", "local", "socket_path")
   if not nixio.fs.access(socket) then
     return
   end
@@ -148,7 +148,7 @@ function action_get_container_stats(container_id)
 end
 
 function action_confirm()
-  local status_path=luci.model.uci.cursor().get("docker","local", "status_path")
+  local status_path=luci.model.uci.cursor():get("docker", "local", "status_path")
   local data = nixio.fs.readfile(status_path)
   if data then
     code = 202
