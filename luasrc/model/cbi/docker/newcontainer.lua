@@ -12,12 +12,18 @@ require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
-local cmd_line = arg[1] or ""
+local cmd_line = arg[1]
 
 local images = dk.images:list().body
 local networks = dk.networks:list().body
 local containers = dk.containers:list(nil, {all=true}).body
-
+local def_name, def_image, def_privlieged, def_restart_policy, def_network, def_ip, def_link, def_env, def_mount, def_ports, def_cmd, def_cpus, def_cpushare, def_memory, def_blkioweight, def_device, def_tmpfs
+if cmd_line then
+  local cmd_line_table = {}
+  for w in cmd_line:gmatch("[^%s]+") do 
+    talbe.insert(cmd_line_table, w)
+  end
+end
 
 local m = SimpleForm("docker", translate("Docker"))
 m.tempalte = "cbi/xsimpleform"
@@ -57,26 +63,13 @@ d:value("always", "Always")
 d:value("on-failure", "On failure")
 d.default = "unless-stopped"
 
-d = s:option(ListValue, "network", translate("Networks"))
-d.rmempty = true
-d.default = "bridge"
+local d_network = s:option(ListValue, "network", translate("Networks"))
+d_network.rmempty = true
+d_network.default = "bridge"
 
-local dip = s:option(Value, "ip", translate("IPv4 Address"))
-dip.datatype="ip4addr"
-dip:depends("network", "nil")
-for _, v in ipairs (networks) do
-  if v.Name then
-    local parent = v.Options and v.Options.parent or nil
-    local ip = v.IPAM and v.IPAM.Config and v.IPAM.Config[1] and v.IPAM.Config[1].Subnet or nil
-    ipv6 =  v.IPAM and v.IPAM.Config and v.IPAM.Config[2] and v.IPAM.Config[2].Subnet or nil
-    local network_name = v.Name .. " | " .. v.Driver  .. (parent and (" | " .. parent) or "") .. (ip and (" | " .. ip) or "").. (ipv6 and (" | " .. ipv6) or "")
-    d:value(v.Name, network_name)
-
-    if v.Name ~= "none" and v.Name ~= "bridge" and v.Name ~= "host" then
-      dip:depends("network", v.Name)
-    end
-  end
-end
+local d_ip = s:option(Value, "ip", translate("IPv4 Address"))
+d_ip.datatype="ip4addr"
+d_ip:depends("network", "nil")
 
 d = s:option(DynamicList, "links", translate("Links with other containers"))
 d.placeholder = "container_name:alias"
@@ -91,9 +84,9 @@ d = s:option(DynamicList, "mount", translate("Bind Mount"))
 d.placeholder = "/media:/media:slave"
 d.rmempty = true
 
-d = s:option(DynamicList, "port", translate("Exposed Ports"))
-d.placeholder = "2200:22/tcp"
-d.rmempty = true
+local d_ports = s:option(DynamicList, "port", translate("Exposed Ports"))
+d_ports.placeholder = "2200:22/tcp"
+d_ports.rmempty = true
 
 d = s:option(Value, "command", translate("Run command"))
 d.placeholder = "/bin/sh init.sh"
@@ -136,6 +129,24 @@ d = s:option(DynamicList, "tmpfs", translate("Tmpfs"), translate("Mount tmpfs fi
 d.placeholder = "/run:rw,noexec,nosuid,size=65536k"
 d.rmempty = true
 d:depends("advance", 1)
+
+for _, v in ipairs (networks) do
+  if v.Name then
+    local parent = v.Options and v.Options.parent or nil
+    local ip = v.IPAM and v.IPAM.Config and v.IPAM.Config[1] and v.IPAM.Config[1].Subnet or nil
+    ipv6 =  v.IPAM and v.IPAM.Config and v.IPAM.Config[2] and v.IPAM.Config[2].Subnet or nil
+    local network_name = v.Name .. " | " .. v.Driver  .. (parent and (" | " .. parent) or "") .. (ip and (" | " .. ip) or "").. (ipv6 and (" | " .. ipv6) or "")
+    d_network:value(v.Name, network_name)
+
+    if v.Name ~= "none" and v.Name ~= "bridge" and v.Name ~= "host" then
+      d_ip:depends("network", v.Name)
+    end
+
+    if v.Driver == "bridge" then
+      d_ports:depends("network", v.Name)
+    end
+  end
+end
 
 m.handle = function(self, state, data)
   if state == FORM_VALID then

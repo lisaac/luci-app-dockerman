@@ -51,4 +51,5 @@ make V=99
 ### TODO:
 - images: edit_tag / import
 - new container: analyze command line string
+- new network: analyze command line string
 - container: upgrade / duplicate / download & upload files
