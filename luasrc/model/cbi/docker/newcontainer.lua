@@ -12,16 +12,78 @@ require "luci.util"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
-local cmd_line = arg[1]
-
+local cmd_line = table.concat(arg, '/')
 local images = dk.images:list().body
 local networks = dk.networks:list().body
 local containers = dk.containers:list(nil, {all=true}).body
-local def_name, def_image, def_privlieged, def_restart_policy, def_network, def_ip, def_link, def_env, def_mount, def_ports, def_cmd, def_cpus, def_cpushare, def_memory, def_blkioweight, def_device, def_tmpfs
+local default_config = { }
+--docker run -dit --name test -v /media:/media:rslave alpine tail -f /dev/null
 if cmd_line then
-  local cmd_line_table = {}
+  local key = nil
+  --cursor = 0: docker run
+  --cursor = 1: resloving para
+  --cursor = 2: resloving image
+  --cursor > 2: resloving command
+  local cursor = 0
   for w in cmd_line:gmatch("[^%s]+") do 
-    talbe.insert(cmd_line_table, w)
+    -- skip '\'
+    if w == '\\' then
+    -- start with '-'
+    elseif w:match("^%-+(.+)") and cursor <= 1 then
+      local v = w:match("^%-+.-=(.+)")
+      if v then
+        key = w:match("^%-+(.-)=.+"):lower()
+      else
+        key = w:match("^%-+(.+)"):lower()
+      end
+      if key == "v" or key == "volume" then
+        key = "mount"
+      elseif key == "p" then
+        key = "port"
+      elseif key == "e" then
+        key = "env"
+      elseif key == "net" then
+        key = "network"
+      elseif key == "cpu-shares" then
+        key = "cpushares"
+      elseif key == "m" then
+        key = "memory"
+      elseif key == "blkio-weight" then
+        key = "blkioweight"
+      elseif key == "privileged" then
+        default_config["privileged"] = 1
+      end
+      if v then
+        if key == "mount" or key == "link" or key == "env" or key == "port" or key == "device" or key == "tmpfs" then
+          if not default_config[key] then default_config[key] = {} end
+          table.insert( default_config[key], v )
+        else
+          default_config[key] = v
+        end
+      end
+    -- value
+    elseif key and type(key) == "string" then
+      if key == "mount" or key == "link" or key == "env" or key == "port" or key == "device" or key == "tmpfs" then
+        if not default_config[key] then default_config[key] = {} end
+        table.insert( default_config[key], w )
+      else
+        default_config[key] = w
+      end
+
+      if key == "cpus" or key == "cpushare" or key == "memory" or key == "blkioweight" or key == "device" or key == "tmpfs" then
+        default_config["advance"] = 1
+      end
+      key = nil
+      cursor = 1
+    --image and command
+    elseif cursor >= 1 and  key == nil then
+      if cursor == 1 then
+        default_config["image"] = w
+      elseif cursor > 1 then
+        default_config["command"] = (default_config["command"] and (default_config["command"] .. " " )or "")  .. w
+      end
+      cursor = cursor + 1
+    end
   end
 end
 
@@ -41,10 +103,16 @@ local s = m:section(SimpleSection, translate("New Container"))
 s.addremove = true
 s.anonymous = true
 
-local d = s:option(Value, "name", translate("Container Name"))
+local d = s:option(DummyValue,"cmd_line","Resolv CLI")
+d.rawhtml  = true
+d.template = "docker/resolv_container"
+
+d = s:option(Value, "name", translate("Container Name"))
 d.rmempty = true
+d.default = default_config.name or nil
 d = s:option(Value, "image", translate("Docker Image"))
 d.rmempty = true
+d.default = default_config.image or nil
 
 for _, v in ipairs (images) do
   if v.RepoTags then
@@ -53,6 +121,9 @@ for _, v in ipairs (images) do
 end
 d = s:option(Flag, "privileged", translate("Privileged"))
 d.rmempty = true
+d.disabled = 0
+d.enabled = 1
+d.default = default_config.privileged or 0
 
 d = s:option(ListValue, "restart", translate("Restart policy"))
 d.rmempty = true
@@ -61,74 +132,92 @@ d:value("no", "No")
 d:value("unless-stopped", "Unless stopped")
 d:value("always", "Always")
 d:value("on-failure", "On failure")
-d.default = "unless-stopped"
+d.default = default_config.restart or "unless-stopped"
 
 local d_network = s:option(ListValue, "network", translate("Networks"))
 d_network.rmempty = true
-d_network.default = "bridge"
+d_network.default = default_config.network or "bridge"
 
 local d_ip = s:option(Value, "ip", translate("IPv4 Address"))
 d_ip.datatype="ip4addr"
 d_ip:depends("network", "nil")
+d_ip.default = default_config.ip or nil
 
-d = s:option(DynamicList, "links", translate("Links with other containers"))
+d = s:option(DynamicList, "link", translate("Links with other containers"))
 d.placeholder = "container_name:alias"
 d.rmempty = true
 d:depends("network", "bridge")
+d.default = default_config.link or nil
 
 d = s:option(DynamicList, "env", translate("Environmental Variable"))
 d.placeholder = "TZ=Asia/Shanghai"
 d.rmempty = true
+d.default = default_config.env or nil
 
 d = s:option(DynamicList, "mount", translate("Bind Mount"))
 d.placeholder = "/media:/media:slave"
 d.rmempty = true
+d.default = default_config.mount or nil
 
 local d_ports = s:option(DynamicList, "port", translate("Exposed Ports"))
 d_ports.placeholder = "2200:22/tcp"
 d_ports.rmempty = true
+d_ports.default = default_config.port or nil
+
+d = s:option(Value, "user", translate("User"))
+d.placeholder = "1000:1000"
+d.rmempty = true
+d.default = default_config.user or nil
 
 d = s:option(Value, "command", translate("Run command"))
 d.placeholder = "/bin/sh init.sh"
 d.rmempty = true
+d.default = default_config.command or nil
 
 d = s:option(Flag, "advance", translate("Advance"))
 d.rmempty = true
 d.disabled = 0
 d.enabled = 1
+d.default = default_config.advance or 0
 
 d = s:option(Value, "cpus", translate("CPUs"), translate("Number of CPUs. Number is a fractional number. 0.000 means no limit."))
 d.placeholder = "1.5"
 d.rmempty = true
 d:depends("advance", 1)
 d.datatype="ufloat"
+d.default = default_config.cpus or nil
 
 d = s:option(Value, "cpushares", translate("CPU Shares Weight"), translate("CPU shares (relative weight, if 0 is set, the system will ignore the value and use the default of 1024."))
 d.placeholder = "1024"
 d.rmempty = true
 d:depends("advance", 1)
 d.datatype="uinteger"
+d.default = default_config.cpushares or nil
 
 d = s:option(Value, "memory", translate("Memory"), translate("Memory limit (format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g. Minimum is 4M."))
 d.placeholder = "128m"
 d.rmempty = true
 d:depends("advance", 1)
+d.default = default_config.memory or nil
 
 d = s:option(Value, "blkioweight", translate("Block IO Weight"), translate("Block IO weight (relative weight) accepts a weight value between 10 and 1000."))
 d.placeholder = "500"
 d.rmempty = true
 d:depends("advance", 1)
 d.datatype="uinteger"
+d.default = default_config.blkioweight or nil
 
 d = s:option(DynamicList, "device", translate("Device"))
 d.placeholder = "/dev/sda:/dev/xvdc:rwm"
 d.rmempty = true
 d:depends("advance", 1)
+d.default = default_config.device or nil
 
 d = s:option(DynamicList, "tmpfs", translate("Tmpfs"), translate("Mount tmpfs filesystems"))
 d.placeholder = "/run:rw,noexec,nosuid,size=65536k"
 d.rmempty = true
 d:depends("advance", 1)
+d.default = default_config.tmpfs or nil
 
 for _, v in ipairs (networks) do
   if v.Name then
@@ -153,6 +242,7 @@ m.handle = function(self, state, data)
     local tmp
     local name = data.name
     local image = data.image
+    local user = data.user
     if not image:match(".-:.+") then
       image = image .. ":latest"
     end
@@ -215,7 +305,7 @@ m.handle = function(self, state, data)
       end
     end
 
-    local links = data.links
+    local link = data.link
     tmp = data.command
     local command = {}
     if tmp ~= nil then
@@ -242,6 +332,7 @@ m.handle = function(self, state, data)
     local create_body={
       Hostname = name,
       Domainname = "",
+      User = user,
       Cmd = (#command ~= 0) and command or nil,
       Env = env,
       Image = image,
@@ -278,8 +369,8 @@ m.handle = function(self, state, data)
       create_body["HostConfig"]["Devices"] = device
     end
 
-    if network == "bridge" and next(links) ~= nil then
-      create_body["HostConfig"]["Links"] = links
+    if network == "bridge" and next(link) ~= nil then
+      create_body["HostConfig"]["Links"] = link
     end
 
     docker:clear_status()
