@@ -24,8 +24,8 @@ if res.code < 300 then networks = res.body else return end
 
 local get_ports = function(d)
   local data
-  if d.NetworkSettings and d.NetworkSettings.Ports then
-    for inter, out in pairs(d.NetworkSettings.Ports) do
+  if d.HostConfig and d.HostConfig.PortBindings then
+    for inter, out in pairs(d.HostConfig.PortBindings) do
       data = (data and (data .. "<br>") or "") .. out[1]["HostPort"] .. ":" .. inter 
     end
   end
@@ -151,6 +151,11 @@ btnupgrade.template="cbi/inlinebutton"
 btnupgrade.inputtitle=translate("Upgrade")
 btnupgrade.inputstyle = "reload"
 btnstop.forcewrite = true
+btnduplicate=action_section:option(Button, "_duplicate")
+btnduplicate.template="cbi/inlinebutton"
+btnduplicate.inputtitle=translate("Duplicate")
+btnduplicate.inputstyle = "add"
+btnstop.forcewrite = true
 btnremove=action_section:option(Button, "_remove")
 btnremove.template="cbi/inlinebutton"
 btnremove.inputtitle=translate("Remove")
@@ -171,6 +176,10 @@ btnremove.write = function(self, section)
 end
 btnstop.write = function(self, section)
   start_stop_remove(m,"stop")
+end
+btnduplicate.write = function(self, section)
+  local config = dk:containers_duplicate_config(container_id) or {}
+  luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer/"..luci.util.urlencode(luci.util.serialize_data(config):gsub("%s+", ""))))
 end
 
 tab_section = m:section(SimpleSection)

@@ -52,12 +52,38 @@ local table_subtract = function(t1, t2)
         found= true
         break
       end
-      if not found then
-        table.insert(res, v1)
+    end
+    if not found then
+      table.insert(res, v1)
+    end
+  end
+  return next(res) == nil and nil or res
+end
+
+local map_subtract = function(t1, t2)
+  if not t1 or next(t1) == nil then return nil end
+  if not t2 or next(t2) == nil then return t1 end
+  local res = {}
+  for k1, v1 in pairs(t1) do
+    local found = false
+    for k2, v2 in ipairs(t2) do
+      if k1 == k2 and luci.util.serialize_data(v1) == luci.util.serialize_data(v2) then
+        found= true
+        break
+      end
+    end
+    if not found then
+      if v1 and type(v1) == "table" then
+        if next(v1) == nil then 
+          res[k1] = { k = 'v' }
+        else
+          res[k1] = v1
+        end
       end
     end
   end
-  return res
+
+  return next(res) ~= nil and res or nil
 end
 
 -- return create_body, extra_network
@@ -70,10 +96,12 @@ local get_config = function(old_config, old_host_config, old_network_setting, im
 
   config.Env = table_subtract(config.Env, image_config.Env)
   config.Labels = table_subtract(config.Labels, image_config.Labels)
-  config.Volumes = table_subtract(config.Volumes, image_config.Volumes)
+  config.Volumes = map_subtract(config.Volumes, image_config.Volumes)
   -- subtract ports exposed in image from container
-  for p, v in ipairs(old_host_config.PortBindings) do
-    config.ExposedPorts[p] = { HostPort=v[1].HostPort }
+  if old_host_config.PortBindings and next(old_host_config.PortBindings) ~= nil then
+    for p, v in pairs(old_host_config.PortBindings) do
+      config.ExposedPorts[p] = { HostPort=v[1] and v[1].HostPort }
+    end
   end
 
   -- handle network config, we need only one network, extras need to network connect action
@@ -91,7 +119,7 @@ local get_config = function(old_config, old_host_config, old_network_setting, im
 
   -- handle hostconfig
   local host_config = old_host_config
-  if next(host_config.PortBindings) == nil then host_config.PortBindings = nil end
+  if host_config.PortBindings and next(host_config.PortBindings) == nil then host_config.PortBindings = nil end
   host_config.LogConfig = nil
 
   -- merge configs
@@ -140,7 +168,7 @@ local upgrade = function(self, container_id)
   end
 
   -- handle config
-  local image_config = self.images:inspect(image_name).body.Config
+  local image_config = self.images:inspect(old_image_id).body.Config
   local create_body, extra_network = get_config(old_config, old_host_config, old_network_setting, image_config)
 
   -- create new container
@@ -151,9 +179,9 @@ local upgrade = function(self, container_id)
 
   -- extra networks need to network connect action
   for k, v in pairs(extra_network) do
-    if next(v.IPAMConfig) == nil then v.IPAMConfig =nil end
-    if next(v.DriverOpts) == nil then v.DriverOpts =nil end
-    if next(v.Aliases) == nil then v.Aliases =nil end
+    if v.IPAMConfig and next(v.IPAMConfig) == nil then v.IPAMConfig =nil end
+    if v.DriverOpts and next(v.DriverOpts) == nil then v.DriverOpts =nil end
+    if v.Aliases and next(v.Aliases) == nil then v.Aliases =nil end
 
     _docker:append_status("Networks: Connect" .. " " .. container_name .. "...")
     res = self.networks:connect(k, nil, {Container = container_name, EndpointConfig = v})
@@ -167,13 +195,12 @@ end
 
 local duplicate_config = function (self, container_id)
   local container_info = self.containers:inspect(container_id)
-  if container_info.code > 300 and type(container_info.body) == "table" then return container_info end
-  local image_name = container_info.body.Config.Image
-  if not image_name:match(".-:.+") then image_name = image_name .. ":latest" end
+  if container_info.code > 300 and type(container_info.body) == "table" then return nil end
+  local old_image_id = container_info.body.Image
   local old_config = container_info.body.Config
   local old_host_config = container_info.body.HostConfig
   local old_network_setting = container_info.body.NetworkSettings.Networks or {}
-  local image_config = self.images:inspect(image_name).body.Config
+  local image_config = self.images:inspect(old_image_id).body.Config
   return get_config(old_config, old_host_config, old_network_setting, image_config)
 end
 

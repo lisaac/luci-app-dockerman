@@ -13,12 +13,14 @@ local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
 local cmd_line = table.concat(arg, '/')
-luci.util.perror(cmd_line)
+local create_body = {}
+
 local images = dk.images:list().body
 local networks = dk.networks:list().body
 local containers = dk.containers:list(nil, {all=true}).body
+
+-- reslvo default config
 local default_config = { }
---docker run -dit --name test -v /media:/media:rslave alpine tail -f /dev/null
 if cmd_line and cmd_line:match("^docker.+") then
   local key = nil
   --cursor = 0: docker run
@@ -86,6 +88,44 @@ if cmd_line and cmd_line:match("^docker.+") then
       cursor = cursor + 1
     end
   end
+elseif cmd_line and cmd_line:match("^{.+}$") then
+  create_body = luci.util.restore_data(cmd_line) or create_body
+  if not create_body.HostConfig then create_body.HostConfig = {} end
+  if next(create_body) ~= nil then
+    default_config.name = nil
+    default_config.image = create_body.Image
+    default_config.privileged = create_body.HostConfig.Privileged and 1 or 0
+    default_config.restart =  create_body.HostConfig.RestartPolicy and create_body.HostConfig.RestartPolicy.name or nil
+    default_config.network = create_body.HostConfig.NetworkMode == "default" and "bridge" or create_body.HostConfig.NetworkMode
+    default_config.ip = default_config.network and default_config.network ~= "bridge" and default_config.network ~= "host" and default_config.network ~= "null" and create_body.NetworkingConfig.EndpointsConfig[default_config.network].IPAMConfig and create_body.NetworkingConfig.EndpointsConfig[default_config.network].IPAMConfig.IPv4Address or nil
+    default_config.link = create_body.HostConfig.Links
+    default_config.env = create_body.Env
+    default_config.mount = create_body.HostConfig.Binds
+
+    if create_body.HostConfig.PortBindings and type(create_body.HostConfig.PortBindings) == "table" then
+      default_config.port = {}
+      for k, v in pairs(create_body.HostConfig.PortBindings) do
+        table.insert( default_config.port, v[1].HostPort..":"..k:match("^(%d+)/.+").."/"..k:match("^%d+/(.+)") )
+      end
+    end
+
+    default_config.user = create_body.User or nil
+    default_config.cmd = create_body.Cmd or nil
+    default_config.advance = 1
+    default_config.cpus = create_body.HostConfig.NanoCPUs
+    default_config.cpushares =  create_body.HostConfig.CpuShares
+    default_config.memory = create_body.HostConfig.Memory
+    default_config.blkioweight = create_body.HostConfig.BlkioWeight
+
+    if create_body.HostConfig.Devices and type(create_body.HostConfig.Devices) == "table" then
+      default_config.device = {}
+      for _, v in ipairs(create_body.HostConfig.Devices) do
+        table.insert( default_config.device, v.PathOnHost..":"..v.PathInContainer..(v.CgroupPermissions ~= "" and (":" .. v.CgroupPermissions) or "") )
+      end
+    end
+
+    default_config.tmpfs = create_body.HostConfig.Tmpfs
+  end
 end
 
 local m = SimpleForm("docker", translate("Docker"))
@@ -110,6 +150,7 @@ d.template = "docker/resolv_container"
 
 d = s:option(Value, "name", translate("Container Name"))
 d.rmempty = true
+
 d.default = default_config.name or nil
 d = s:option(Value, "image", translate("Docker Image"))
 d.rmempty = true
@@ -144,6 +185,11 @@ d_ip.datatype="ip4addr"
 d_ip:depends("network", "nil")
 d_ip.default = default_config.ip or nil
 
+d = s:option(Value, "user", translate("User"))
+d.placeholder = "1000:1000"
+d.rmempty = true
+d.default = default_config.user or nil
+
 d = s:option(DynamicList, "link", translate("Links with other containers"))
 d.template = "cbi/xdynlist"
 d.placeholder = "container_name:alias"
@@ -168,11 +214,6 @@ d_ports.template = "cbi/xdynlist"
 d_ports.placeholder = "2200:22/tcp"
 d_ports.rmempty = true
 d_ports.default = default_config.port or nil
-
-d = s:option(Value, "user", translate("User"))
-d.placeholder = "1000:1000"
-d.rmempty = true
-d.default = default_config.user or nil
 
 d = s:option(Value, "command", translate("Run command"))
 d.placeholder = "/bin/sh init.sh"
@@ -280,7 +321,7 @@ m.handle = function(self, state, data)
     local device = {}
     tmp = data.device
     if type(tmp) == "table" then
-      for i, v in ipairs(tmp)do
+      for i, v in ipairs(tmp) do
         local t = {}
         local _,_, h, c, p = v:find("(.-):(.-):(.+)")
         if h and c then
@@ -316,7 +357,7 @@ m.handle = function(self, state, data)
     tmp = data.command
     local command = {}
     if tmp ~= nil then
-      for v in string.gmatch(tmp, "[^%s]+") do 
+      for v in string.gmatch(tmp, "[^%s]+") do
         command[#command+1] = v
       end 
     end
@@ -336,39 +377,39 @@ m.handle = function(self, state, data)
       end
     end
 
-    local create_body={
-      Hostname = name,
-      Domainname = "",
-      User = user,
-      Cmd = (#command ~= 0) and command or nil,
-      Env = env,
-      Image = image,
-      Volumes = nil,
-      ExposedPorts = (next(exposedports) ~= nil) and exposedports or nil,
-      HostConfig = {
-        Binds = (#mount ~= 0) and mount or nil,
-        NetworkMode = network,
-        RestartPolicy ={
-          Name = restart,
-          MaximumRetryCount = 0
-        },
-        Privileged = privileged and true or false,
-        PortBindings = (next(portbindings) ~= nil) and portbindings or nil,
-        Memory = memory,
-        CpuShares = tonumber(cpushares),
-        NanoCPUs = tonumber(cpus) * 10 ^ 9,
-        BlkioWeight = tonumber(blkioweight)
-      },
-      NetworkingConfig = ip and {
-        EndpointsConfig = {
-          [network] = {
-            IPAMConfig = {
-              IPv4Address = ip
-            }
-          }
-        }
-      } or nil
-    }
+    create_body.Hostname = name
+    create_body.User = user
+    create_body.Cmd = (#command ~= 0) and command or nil
+    create_body.Env = env
+    create_body.Image = image
+    create_body.ExposedPorts = (next(exposedports) ~= nil) and exposedports or nil
+    create_body.HostConfig = create_body.HostConfig or {}
+    create_body.HostConfig.Binds = (#mount ~= 0) and mount or nil
+    create_body.HostConfig.NetworkMode = network
+    create_body.HostConfig.RestartPolicy = { Name = restart, MaximumRetryCount = 0 }
+    create_body.HostConfig.Privileged = privileged and true or false
+    create_body.HostConfig.PortBindings = (next(portbindings) ~= nil) and portbindings or nil
+    create_body.HostConfig.Memory = tonumber(memory)
+    create_body.HostConfig.CpuShares = tonumber(cpushares)
+    create_body.HostConfig.NanoCPUs = tonumber(cpus) * 10 ^ 9
+    create_body.HostConfig.BlkioWeight = tonumber(blkioweight)
+    if ip then
+      if create_body.NetworkingConfig and create_body.NetworkingConfig.EndpointsConfig and type(create_body.NetworkingConfig.EndpointsConfig) == "table" then
+        for k, v in pairs (create_body.NetworkingConfig.EndpointsConfig) do
+          if k == network and v.IPAMConfig and v.IPAMConfig.IPv4Address then
+            v.IPAMConfig.IPv4Address = ip
+          else
+            create_body.NetworkingConfig.EndpointsConfig = { [network] = { IPAMConfig = { IPv4Address = ip } } }
+          end
+          break
+        end
+      else
+        create_body.NetworkingConfig = { EndpointsConfig = { [network] = { IPAMConfig = { IPv4Address = ip } } } }
+      end
+    elseif not create_body.NetworkingConfig then
+      create_body.NetworkingConfig = nil
+    end
+
     if next(tmpfs) ~= nil then
       create_body["HostConfig"]["Tmpfs"] = tmpfs
     end
