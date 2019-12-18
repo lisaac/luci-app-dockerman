@@ -13,12 +13,13 @@ local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
 local cmd_line = table.concat(arg, '/')
+luci.util.perror(cmd_line)
 local images = dk.images:list().body
 local networks = dk.networks:list().body
 local containers = dk.containers:list(nil, {all=true}).body
 local default_config = { }
 --docker run -dit --name test -v /media:/media:rslave alpine tail -f /dev/null
-if cmd_line then
+if cmd_line and cmd_line:match("^docker.+") then
   local key = nil
   --cursor = 0: docker run
   --cursor = 1: resloving para
@@ -293,7 +294,7 @@ m.handle = function(self, state, data)
       end
     end
 
-    tmp = data.port
+    tmp = data.port or {}
     for i, v in ipairs(tmp) do
       for v1 ,v2 in string.gmatch(v, "(%d+):([^%s]+)") do
         local _,_,p= v2:find("^%d+/(%w+)")
@@ -357,7 +358,7 @@ m.handle = function(self, state, data)
           [network] = {
             IPAMConfig = {
               IPv4Address = ip
-              }
+            }
           }
         }
       } or nil

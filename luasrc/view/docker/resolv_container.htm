@@ -1,9 +1,9 @@
 <%+cbi/valueheader%>
 <script type="text/javascript">
   function resolv_container(op) {
-    var s = document.getElementById(op + '-status');
+    let s = document.getElementById(op + '-status');
     if (!s) return;
-    var cmd_line = prompt("Plese input <docker create> command line:", "");
+    let cmd_line = prompt("Plese input <docker create> command line:", "");
     if (cmd_line == null || cmd_line == "") {
       s.innerHTML = "<font color='red'>Canceled</font>";
       return;

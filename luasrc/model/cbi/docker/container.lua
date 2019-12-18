@@ -93,19 +93,25 @@ local get_networks = function(d)
 end
 
 
-local start_stop_remove = function(m,cmd)
+local start_stop_remove = function(m, cmd)
   docker:clear_status()
   docker:append_status("Containers: " .. cmd .. " " .. container_id .. "...")
-  local res = dk.containers[cmd](dk, container_id)
+  local res
+  if cmd ~= "upgrade" then
+    res = dk.containers[cmd](dk, container_id)
+  else
+    res = dk.containers_upgrade(dk, container_id)
+  end
   if res and res.code >= 300 then
     docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
-  else
-    docker:clear_status()
-  end
-  if cmd ~= "remove" then
     luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id))
   else
-    luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
+    docker:clear_status()
+    if cmd ~= "remove" and cmd ~= "upgrade" then
+      luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id))
+    else
+      luci.http.redirect(luci.dispatcher.build_url("admin/docker/containers"))
+    end
   end
 end
 
@@ -140,6 +146,11 @@ btnstop.template="cbi/inlinebutton"
 btnstop.inputtitle=translate("Stop")
 btnstop.inputstyle = "reset"
 btnstop.forcewrite = true
+btnupgrade=action_section:option(Button, "_upgrade")
+btnupgrade.template="cbi/inlinebutton"
+btnupgrade.inputtitle=translate("Upgrade")
+btnupgrade.inputstyle = "reload"
+btnstop.forcewrite = true
 btnremove=action_section:option(Button, "_remove")
 btnremove.template="cbi/inlinebutton"
 btnremove.inputtitle=translate("Remove")
@@ -151,6 +162,9 @@ btnstart.write = function(self, section)
 end
 btnrestart.write = function(self, section)
   start_stop_remove(m,"restart")
+end
+btnupgrade.write = function(self, section)
+  start_stop_remove(m,"upgrade")
 end
 btnremove.write = function(self, section)
   start_stop_remove(m,"remove")
