@@ -38,8 +38,8 @@ s.volumes_total = '-'
 local socket = luci.model.uci.cursor():get("docker", "local", "socket_path")
 if nixio.fs.access(socket) and (require "luci.model.docker").new():_ping().code == 200 then
   local dk = docker.new()
-  local containers_list = dk.containers:list(nil, {all=true}).body
-  local images_list = dk.images:list().body
+  -- local containers_list = dk.containers:list(nil, {all=true}).body
+  -- local images_list = dk.images:list().body
   local networks_list = dk.networks:list().body
   local docker_info = dk:info()
   -- docker_info_table['0OperatingSystem']._value = docker_info.body.OperatingSystem
@@ -52,17 +52,17 @@ if nixio.fs.access(socket) and (require "luci.model.docker").new():_ping().code 
   docker_info_table['7DockerRootDir']._value = docker_info.body.DockerRootDir
   docker_info_table['8IndexServerAddress']._value = docker_info.body.IndexServerAddress
 
-  s.images_used = 0
-  for i, v in ipairs(images_list) do
-    for ci,cv in ipairs(containers_list) do
-      if v.Id == cv.ImageID then
-        s.images_used = s.images_used + 1
-        break
-      end
-    end
-  end
+  -- s.images_used = 0
+  -- for i, v in ipairs(images_list) do
+  --   for ci,cv in ipairs(containers_list) do
+  --     if v.Id == cv.ImageID then
+  --       s.images_used = s.images_used + 1
+  --       break
+  --     end
+  --   end
+  -- end
   s.containers_running = tostring(docker_info.body.ContainersRunning)
-  s.images_used = tostring(s.images_used)
+  -- s.images_used = tostring(s.images_used)
   s.containers_total = tostring(docker_info.body.Containers)
   s.images_total = tostring(docker_info.body.Images)
   s.networks_total = tostring(#networks_list)
