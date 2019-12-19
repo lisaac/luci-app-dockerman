@@ -276,7 +276,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
       <div class="pure-u-3-5">
         <h4 style="text-align: right; font-size: 1rem"><%:Volumes%></h4>
         <h4 style="text-align: right;">
-          <%- if self.volumes_total ~= "-" then -%><a href="/cgi-bin/luci/admin/docker"><%- end -%>
+          <%- if self.volumes_total ~= "-" then -%><a href="/cgi-bin/luci/admin/docker/volumes"><%- end -%>
             <span style="font-size: 2rem; color: #2dce89;"><%=self.volumes_total%></span>
             <!-- <span style="font-size: 1rem; color: #8898aa !important;">/20</span> -->
             <%- if self.volumes_total ~= "-" then -%></a><%- end -%>

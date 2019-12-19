@@ -12,6 +12,17 @@ require "luci.util"
 local docker = require "luci.model.docker"
 local uci = require "luci.model.uci"
 
+function byte_format(byte)
+	local suff = {"B", "KB", "MB", "GB", "TB"}
+	for i=1, 5 do
+		if byte > 1024 and i < 5 then
+			byte = byte / 1024
+		else
+			return string.format("%.2f %s", byte, suff[i]) 
+		end 
+	end
+end
+
 local m = Map("docker", translate("Docker"))
 local docker_info_table = {}
 -- docker_info_table['0OperatingSystem'] = {_key=translate("Operating System"),_value='-'}
@@ -40,6 +51,7 @@ if nixio.fs.access(socket) and (require "luci.model.docker").new():_ping().code 
   local dk = docker.new()
   -- local containers_list = dk.containers:list(nil, {all=true}).body
   -- local images_list = dk.images:list().body
+  local volumes_list = dk.volumes:list().body.Volumes
   local networks_list = dk.networks:list().body
   local docker_info = dk:info()
   -- docker_info_table['0OperatingSystem']._value = docker_info.body.OperatingSystem
@@ -48,7 +60,7 @@ if nixio.fs.access(socket) and (require "luci.model.docker").new():_ping().code 
   docker_info_table['3ServerVersion']._value = docker_info.body.ServerVersion
   docker_info_table['4ApiVersion']._value = docker_info.headers["Api-Version"]
   docker_info_table['5NCPU']._value = tostring(docker_info.body.NCPU)
-  docker_info_table['6MemTotal']._value = tostring(docker_info.body.MemTotal)
+  docker_info_table['6MemTotal']._value = tostring(byte_format(docker_info.body.MemTotal))
   docker_info_table['7DockerRootDir']._value = docker_info.body.DockerRootDir
   docker_info_table['8IndexServerAddress']._value = docker_info.body.IndexServerAddress
 
@@ -66,6 +78,7 @@ if nixio.fs.access(socket) and (require "luci.model.docker").new():_ping().code 
   s.containers_total = tostring(docker_info.body.Containers)
   s.images_total = tostring(docker_info.body.Images)
   s.networks_total = tostring(#networks_list)
+  s.volumes_total = tostring(#volumes_list)
 end
 s.template = "docker/overview"
 
