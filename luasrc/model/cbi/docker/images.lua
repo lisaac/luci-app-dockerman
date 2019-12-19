@@ -34,7 +34,8 @@ function get_images()
     end
     for ci,cv in ipairs(containers) do
       if v.Id == cv.ImageID then
-        data[index]["_containers"] = (data[index]["_containers"] and (data[index]["_containers"] .. " | ") or "")..cv.Names[1]:sub(2)
+        data[index]["_containers"] = (data[index]["_containers"] and (data[index]["_containers"] .. " | ") or "")..
+        "<a href=/cgi-bin/luci/admin/docker/container/"..cv.Id.." >".. cv.Names[1]:sub(2).."</a>"
       end
     end
     data[index]["_size"] = string.format("%.2f", tostring(v.Size/1024/1024)).."MB"
@@ -106,7 +107,7 @@ image_selecter.default = 0
 
 image_id = image_table:option(DummyValue, "_id", translate("ID"))
 image_table:option(DummyValue, "_tags", translate("RepoTags"))
-image_table:option(DummyValue, "_containers", translate("Containers"))
+image_table:option(DummyValue, "_containers", translate("Containers")).rawhtml = true
 image_table:option(DummyValue, "_size", translate("Size"))
 image_table:option(DummyValue, "_created", translate("Created"))
 image_selecter.write = function(self, section, value)

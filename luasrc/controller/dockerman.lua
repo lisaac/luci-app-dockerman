@@ -18,12 +18,9 @@ function index()
   entry({"admin", "docker"}, firstchild(), "Docker", 40).dependent = false
   entry({"admin","docker","overview"},cbi("docker/overview"),_("Overview"),0).leaf=true
 
-  socket = luci.model.uci.cursor():get("docker", "local", "socket_path")
-  if not nixio.fs.access(socket) then
-    return
-  end
-  if (require "luci.model.docker").new():version().code ~= 200 then return end
-    
+  local socket = luci.model.uci.cursor():get("docker", "local", "socket_path")
+  if not nixio.fs.access(socket) then return end
+  if (require "luci.model.docker").new():_ping().code ~= 200 then return end
   entry({"admin","docker","containers"},form("docker/containers"),_("Containers"),1).leaf=true
   entry({"admin","docker","networks"},form("docker/networks"),_("Networks"),3).leaf=true
   entry({"admin","docker","images"},form("docker/images"),_("Images"),2).leaf=true
@@ -34,11 +31,6 @@ function index()
   entry({"admin","docker","container_stats"},call("action_get_container_stats")).leaf=true
   entry({"admin","docker","confirm"},call("action_confirm")).leaf=true
 
-  -- for openwrt docker-ce by lean
-  if nixio.fs.access("/etc/config/dockerd") then
-    entry({"admin","services","docker"},alias("admin", "docker", "overview"))
-    entry({"admin","services","docker","status"},call("act_status")).leaf=true
-  end
 end
 
 
@@ -162,11 +154,4 @@ function action_confirm()
   luci.http.status(code, msg)
   luci.http.prepare_content("application/json")
   luci.http.write_json({info = data})
-end
-
-function act_status()
-  local e={}
-  e.running=luci.sys.call("pgrep /usr/bin/dockerd >/dev/null")==0
-  luci.http.prepare_content("application/json")
-  luci.http.write_json(e)
 end
