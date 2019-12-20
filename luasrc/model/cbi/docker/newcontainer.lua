@@ -88,9 +88,9 @@ if cmd_line and cmd_line:match("^docker.+") then
       cursor = cursor + 1
     end
   end
-elseif cmd_line and cmd_line:match("^duplicate$") then
-  local duplicate_config = nixio.fs.readfile("/tmp/.luci_container_duplicate_config")
-  create_body = luci.util.restore_data(duplicate_config) or create_body
+elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
+  local container_id = cmd_line:match("^duplicate/(.+)")
+  local create_body = dk:containers_duplicate_config(container_id)
   if not create_body.HostConfig then create_body.HostConfig = {} end
   if next(create_body) ~= nil then
     default_config.name = nil
