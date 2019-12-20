@@ -90,7 +90,7 @@ if cmd_line and cmd_line:match("^docker.+") then
   end
 elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
   local container_id = cmd_line:match("^duplicate/(.+)")
-  local create_body = dk:containers_duplicate_config(container_id)
+  create_body = dk:containers_duplicate_config(container_id)
   if not create_body.HostConfig then create_body.HostConfig = {} end
   if next(create_body) ~= nil then
     default_config.name = nil
