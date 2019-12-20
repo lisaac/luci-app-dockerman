@@ -89,6 +89,7 @@ if cmd_line and cmd_line:match("^docker.+") then
     end
   end
 elseif cmd_line and cmd_line:match("^{.+}$") then
+  
   create_body = luci.util.restore_data(cmd_line) or create_body
   if not create_body.HostConfig then create_body.HostConfig = {} end
   if next(create_body) ~= nil then
@@ -110,7 +111,7 @@ elseif cmd_line and cmd_line:match("^{.+}$") then
     end
 
     default_config.user = create_body.User or nil
-    default_config.cmd = create_body.Cmd or nil
+    default_config.cmd = create_body.Cmd and type(create_body.Cmd) == "table" and table.concat(create_body.Cmd, " ") or nil
     default_config.advance = 1
     default_config.cpus = create_body.HostConfig.NanoCPUs
     default_config.cpushares =  create_body.HostConfig.CpuShares
@@ -151,16 +152,22 @@ d.template = "docker/resolv_container"
 d = s:option(Value, "name", translate("Container Name"))
 d.rmempty = true
 
+d = s:option(Flag, "_force_pull", translate("Always pull image first"))
+d.rmempty = true
+d.disabled = 0
+d.enabled = 1
+d.default = 0
+
 d.default = default_config.name or nil
 d = s:option(Value, "image", translate("Docker Image"))
 d.rmempty = true
 d.default = default_config.image or nil
-
 for _, v in ipairs (images) do
   if v.RepoTags then
     d:value(v.RepoTags[1], v.RepoTags[1])
   end
 end
+
 d = s:option(Flag, "privileged", translate("Privileged"))
 d.rmempty = true
 d.disabled = 0
@@ -218,7 +225,7 @@ d_ports.default = default_config.port or nil
 d = s:option(Value, "command", translate("Run command"))
 d.placeholder = "/bin/sh init.sh"
 d.rmempty = true
-d.default = default_config.command or nil
+d.default = default_config.cmd or nil
 
 d = s:option(Flag, "advance", translate("Advance"))
 d.rmempty = true
@@ -420,7 +427,19 @@ m.handle = function(self, state, data)
     if network == "bridge" and next(link) ~= nil then
       create_body["HostConfig"]["Links"] = link
     end
-
+    local pull_image = function(image)
+      local server = "index.docker.io"
+      local json_stringify = luci.json and luci.json.encode or luci.jsonc.stringify
+      docker:append_status("Images: " .. "pulling" .. " " .. image .. "...")
+      local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
+      local res = dk.images:create(nil, {fromImage=image,_header={["X-Registry-Auth"]=x_auth}})
+      if res and res.code < 300 then
+        docker:append_status("done<br>")
+      else
+        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
+        luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
+      end
+    end
     docker:clear_status()
     local exist_image = false
     if image then
@@ -431,17 +450,9 @@ m.handle = function(self, state, data)
         end
       end
       if not exist_image then
-        local server = "index.docker.io"
-        local json_stringify = luci.json and luci.json.encode or luci.jsonc.stringify
-        docker:append_status("Images: " .. "pulling" .. " " .. image .. "...")
-        local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
-        local res = dk.images:create(nil, {fromImage=image,_header={["X-Registry-Auth"]=x_auth}})
-        if res and res.code < 300 then
-          docker:append_status("done<br>")
-        else
-          docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
-          luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
-        end
+        pull_image(image)
+      elseif data._force_pull == 1 then
+        pull_image(image)
       end
     end
 

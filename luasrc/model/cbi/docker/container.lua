@@ -178,8 +178,9 @@ btnstop.write = function(self, section)
   start_stop_remove(m,"stop")
 end
 btnduplicate.write = function(self, section)
+  local urlencode = luci.http.protocol and luci.http.protocol.urlencode or luci.util.urlencode
   local config = dk:containers_duplicate_config(container_id) or {}
-  luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer/"..luci.util.urlencode(luci.util.serialize_data(config):gsub("%s+", ""))))
+  luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer/"..urlencode(luci.util.serialize_data(config):gsub("%s+", ""))))
 end
 
 tab_section = m:section(SimpleSection)
