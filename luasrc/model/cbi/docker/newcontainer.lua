@@ -88,9 +88,9 @@ if cmd_line and cmd_line:match("^docker.+") then
       cursor = cursor + 1
     end
   end
-elseif cmd_line and cmd_line:match("^{.+}$") then
-  
-  create_body = luci.util.restore_data(cmd_line) or create_body
+elseif cmd_line and cmd_line:match("^duplicate$") then
+  local duplicate_config = nixio.fs.readfile("/tmp/.luci_container_duplicate_config")
+  create_body = luci.util.restore_data(duplicate_config) or create_body
   if not create_body.HostConfig then create_body.HostConfig = {} end
   if next(create_body) ~= nil then
     default_config.name = nil
@@ -111,7 +111,7 @@ elseif cmd_line and cmd_line:match("^{.+}$") then
     end
 
     default_config.user = create_body.User or nil
-    default_config.cmd = create_body.Cmd and type(create_body.Cmd) == "table" and table.concat(create_body.Cmd, " ") or nil
+    default_config.command = create_body.Cmd and type(create_body.Cmd) == "table" and table.concat(create_body.Cmd, " ") or nil
     default_config.advance = 1
     default_config.cpus = create_body.HostConfig.NanoCPUs
     default_config.cpushares =  create_body.HostConfig.CpuShares
@@ -225,7 +225,7 @@ d_ports.default = default_config.port or nil
 d = s:option(Value, "command", translate("Run command"))
 d.placeholder = "/bin/sh init.sh"
 d.rmempty = true
-d.default = default_config.cmd or nil
+d.default = default_config.command or nil
 
 d = s:option(Flag, "advance", translate("Advance"))
 d.rmempty = true

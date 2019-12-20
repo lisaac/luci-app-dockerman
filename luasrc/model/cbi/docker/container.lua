@@ -179,8 +179,10 @@ btnstop.write = function(self, section)
 end
 btnduplicate.write = function(self, section)
   local urlencode = luci.http.protocol and luci.http.protocol.urlencode or luci.util.urlencode
+  -- nixio.fs.remove("/tmp/.luci_container_duplicate_config")
   local config = dk:containers_duplicate_config(container_id) or {}
-  luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer/"..urlencode(luci.util.serialize_data(config):gsub("%s+", ""))))
+  nixio.fs.writefile("/tmp/.luci_container_duplicate_config", luci.util.serialize_data(config))
+  luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer/duplicate"))
 end
 
 tab_section = m:section(SimpleSection)
