@@ -1,4 +1,4 @@
-# Docker Manager interface for LuCI (WIP)
+# Docker Manager interface for LuCI
 
 ## 适用于 LuCI 的 Docker 管理插件
 用于管理 Docker 容器、镜像、网络，适用于自带 Docker 的 Openwrt系统、运行在 Docker 中的 openwrt 或 [LuCI-in-docker](https://github.com/lisaac/luci-in-docker).
