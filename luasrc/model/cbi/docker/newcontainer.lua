@@ -146,7 +146,7 @@ elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
 end
 
 local m = SimpleForm("docker", translate("Docker"))
-m.tempalte = "cbi/xsimpleform"
+m.template = "docker/cbi/xsimpleform"
 m.redirect = luci.dispatcher.build_url("admin", "docker", "containers")
 -- m.reset = false
 -- m.submit = false
