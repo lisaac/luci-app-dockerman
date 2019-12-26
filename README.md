@@ -21,7 +21,7 @@ make package/luci-app-dockerman/compile v=99
 
 #compile
 make menuconfig
-#choose LuCI ---> 3. Applications  ---> < > luci-app-dockerman..... Docker Manager interface for LuCI ----> save
+#choose LuCI ---> 3. Applications  ---> <*> luci-app-dockerman..... Docker Manager interface for LuCI ----> save
 make V=99
 ```
 
