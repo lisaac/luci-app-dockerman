@@ -48,6 +48,9 @@ make V=99
 - New Network
 ![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/new_network.png)
 
+### Thanks
+- Chinese translation by [401626436](https://www.right.com.cn/forum/space-uid-382335.html)
+
 ### TODO:
 - images: edit_tag / import
 - new network: analyze command line string

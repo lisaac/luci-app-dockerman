@@ -22,6 +22,15 @@ jobs:
           [ -d $GITHUB_WORKSPACE/luasrc ] && cp -R $GITHUB_WORKSPACE/luasrc/* /tmp/luci-app-dockerman/usr/lib/lua/luci/
           [ -d $GITHUB_WORKSPACE/root ] && cp -R $GITHUB_WORKSPACE/root/* /tmp/luci-app-dockerman/
           [ -d $GITHUB_WORKSPACE/htdoc ] && cp -R $GITHUB_WORKSPACE/htdoc/* /tmp/luci-app-dockerman/www/
+          [ -d $GITHUB_WORKSPACE/htdoc ] && cp -R $GITHUB_WORKSPACE/htdoc/* /tmp/luci-app-dockerman/www/
+                    [ -d $GITHUB_WORKSPACE/po ] && 
+          sudo -E apt-get -y install gcc make && \
+          mkdir -p /tmp/po2lmo && mkdir -p /tmp/luci-app-dockerman/usr/lib/lua/luci/i18n/ && \
+          wget -O /tmp/po2lmo/po2lmo.c https://raw.githubusercontent.com/openwrt/luci/master/modules/luci-base/src/po2lmo.c && \
+          wget -O /tmp/po2lmo/Makefile https://raw.githubusercontent.com/openwrt/luci/master/modules/luci-base/src/Makefile && \
+          wget -O /tmp/po2lmo/template_lmo.h https://raw.githubusercontent.com/openwrt/luci/master/modules/luci-base/src/template_lmo.h && \
+          wget -O /tmp/po2lmo/template_lmo.c https://raw.githubusercontent.com/openwrt/luci/master/modules/luci-base/src/template_lmo.c && \
+          cd /tmp/po2lmo && make po2lmo && ./po2lmo $GITHUB_WORKSPACE/po/zh-cn/dockerman.po /tmp/luci-app-dockerman/usr/lib/lua/luci/i18n/dockerman.zh-cn.lmo
           mkdir -p /tmp/luci-app-dockerman/CONTROL
           cat >/tmp/luci-app-dockerman/CONTROL/control <<EOF
           Package: luci-app-dockerman
