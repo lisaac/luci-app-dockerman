@@ -36,7 +36,7 @@ jobs:
           Version: ${TAG}
           Depends: luci-lib-docker
           Architecture: all
-          Maintainer: lisaac<lisaac.cn@gmail.com>
+          Maintainer: lisaac<https://github.com/lisaac/luci-app-dockerman>
           Section: base
           Priority: optional
           Description: Simple Docker manager interface
