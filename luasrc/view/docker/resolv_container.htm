@@ -12,7 +12,7 @@
       s.innerHTML = "<font color='red'>Command line Error</font>";
       return;
     }
-    window.location.href = "newcontainer/" + encodeURI(cmd_line)
+    window.location.href = "/cgi-bin/luci/admin/docker/newcontainer/" + encodeURI(cmd_line)
   }
 </script>
 <input type="button" class="cbi-button cbi-button-apply" value="<%:Command line%>" onclick="resolv_container('<%=self.option%>')" />
