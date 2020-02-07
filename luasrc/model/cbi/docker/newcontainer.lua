@@ -330,7 +330,7 @@ end
 m.handle = function(self, state, data)
   if state ~= FORM_VALID then return end
   local tmp
-  local name = data.name
+  local name = data.name or ("luci_" .. os.date("%Y%m%d%H%M%S"))
   local tty = type(data.tty) == "number" and (data.tty == 1 and true or false) or default_config.tty or false
   local interactive = type(data.interactive) == "number" and (data.interactive == 1 and true or false) or default_config.interactive or false
   local image = data.image
