@@ -25,19 +25,19 @@
   }
 
   #dialog_reslov .dialog_line {
-    margin-top:10px;
-    margin-bottom:10px;
-    margin-left:20px;
-    margin-right:20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 20px;
+    margin-right: 20px;
   }
 
-  #dialog_reslov .dialog_box > h4,
-  #dialog_reslov .dialog_box > p,
-  #dialog_reslov .dialog_box > div {
+  #dialog_reslov .dialog_box>h4,
+  #dialog_reslov .dialog_box>p,
+  #dialog_reslov .dialog_box>div {
     flex-basis: 100%;
   }
 
-  #dialog_reslov .dialog_box > img {
+  #dialog_reslov .dialog_box>img {
     margin-right: 1em;
     flex-basis: 32px;
   }
@@ -54,7 +54,9 @@
 <script type="text/javascript">
   function close_reslov_dialog() {
     document.body.classList.remove('dialog-reslov-active');
+    document.documentElement.style.overflowY = 'scroll';
   }
+
   function reslov_container(op) {
     let s = document.getElementById(op + '-status');
     if (!s) return;
@@ -64,19 +66,26 @@
       close_reslov_dialog()
       return;
     }
-    if (! cmd_line.match("^docker")) {
+    if (!cmd_line.match(/^docker\s+(run|create)/)) {
       s.innerHTML = "<font color='red'><%:Command line Error%></font>";
       close_reslov_dialog()
       return;
     }
+    let reg_space = /\s+/g
+    let reg_muti_line= /\\\s*\n/g
+    let reg_rem =/(?<!\\)`#.+(?<!\\)`/g  // the command has `# `
+    cmd_line = cmd_line.replace(reg_rem, " ").replace(reg_muti_line, " ").replace(reg_space, " ")
+    console.log(cmd_line)
     window.location.href = "/cgi-bin/luci/admin/docker/newcontainer/" + encodeURI(cmd_line)
   }
 
   function show_reslov_dialog(op) {
-    document.getElementById('dialog_reslov') ||  document.body.insertAdjacentHTML("beforeend",'<div id="dialog_reslov"><div class="dialog_box"><div class="dialog_line"></div><div class="dialog_line"><h5><%:Plese input <docker create/run> command line:%></h5></div><div class="dialog_line"><textarea class="cbi-input-textarea" id="dialog_reslov_text" style="width: 100%; height:100%;" rows="15"></textarea></div><div class="dialog_line"><input type="button" class="cbi-button cbi-button-apply" type="submit" value="<%:Submit%>" onclick="reslov_container(\''+ op +'\')" /> <input type="button" class="cbi-button cbi-button-apply" type="reset" value="<%:Cancel%>" onclick="close_reslov_dialog()" /></div></div></div>')
+    document.getElementById('dialog_reslov') || document.body.insertAdjacentHTML("beforeend", '<div id="dialog_reslov"><div class="dialog_box"><div class="dialog_line"></div><div class="dialog_line"><h5><%:Plese input <docker create/run> command line:%></h5></div><div class="dialog_line"><textarea class="cbi-input-textarea" id="dialog_reslov_text" style="width: 100%; height:100%;" rows="15"></textarea></div><div class="dialog_line"><input type="button" class="cbi-button cbi-button-apply" type="submit" value="<%:Submit%>" onclick="reslov_container(\'' + op + '\')" /> <input type="button" class="cbi-button cbi-button-reset" type="reset" value="<%:Cancel%>" onclick="close_reslov_dialog()" /></div></div></div>')
     document.body.classList.add('dialog-reslov-active');
+    document.documentElement.style.overflowY = 'hidden';
   }
 </script>
-<input type="button" class="cbi-button cbi-button-apply" value="<%:Command line%>" onclick="show_reslov_dialog('<%=self.option%>')" />
+<input type="button" class="cbi-button cbi-button-apply" value="<%:Command line%>"
+  onclick="show_reslov_dialog('<%=self.option%>')" />
 <span id="<%=self.option%>-status"></span>
 <%+cbi/valuefooter%>
