@@ -11,8 +11,8 @@
 ```bash
 ./scripts/feeds update luci-lib-json
 ./scripts/feeds install luci-lib-json
-git clone https://github.com/lisaac/luci-lib-docker.git package/luci-lib-docker
-git clone https://github.com/lisaac/luci-app-dockerman.git package/luci-app-dockerman
+wget https://raw.githubusercontent.com/lisaac/luci-lib-docker/master/Makefile -P package/luci-lib-docker
+wget https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/Makefile -P package/luci-app-dockerman
 
 #compile package only
 make package/luci-lib-json/compile V=99

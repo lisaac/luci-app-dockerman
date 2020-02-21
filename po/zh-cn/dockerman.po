@@ -328,5 +328,8 @@ msgstr "结束时间"
 msgid "Command line Error"
 msgstr "命令行错误"
 
-msgid "Canceled"
-msgstr "已取消"
+msgid "Host Name"
+msgstr "主机名称"
+
+msgid "The hostname to use for the container"
+msgstr "容器使用的主机名"

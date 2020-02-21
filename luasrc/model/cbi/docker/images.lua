@@ -57,7 +57,10 @@ tag_name.template="docker/cbi/inlinevalue"
 tag_name.placeholder="lisaac/luci:latest"
 local registry = pull_section:option(Value, "_registry")
 registry.template="docker/cbi/inlinevalue"
-registry:value("index.docker.io", "DockerHub")
+registry:value("index.docker.io", "Docker Hub")
+registry:value("hub-mirror.c.163.com", "163 Mirror")
+registry:value("mirror.ccs.tencentyun.com", "Tencent Mirror")
+registry:value("docker.mirrors.ustc.edu.cn", "USTC Mirror")
 local action_pull = pull_section:option(Button, "_pull")
 action_pull.inputtitle= translate("Pull")
 action_pull.template="docker/cbi/inlinebutton"
@@ -81,7 +84,7 @@ action_pull.write = function(self, section)
     _,_,server = server:find("([%.%w%-%_]+)")
   end
   local json_stringify = luci.json and luci.json.encode or luci.jsonc.stringify
-  if tag then
+  if tag and tag ~= "" then
     docker:clear_status()
     docker:append_status("Images: " .. "pulling" .. " " .. tag .. "...")
     local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
@@ -91,8 +94,10 @@ action_pull.write = function(self, section)
     else
       docker:append_status("done<br>")
     end
-    luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
+  else
+    docker:append_status("fail code: 400 please input the name of image name!")
   end
+  luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
 end
 
 image_table = m:section(Table, image_list, translate("Images"))
