@@ -13,7 +13,7 @@ local _docker = {}
 local update_image = function(self, image_name)
   local server = "index.docker.io"
 
-  local json_stringify = luci.json and luci.json.encode or luci.jsonc.stringify
+  local json_stringify = luci.jsonc and luci.jsonc.stringify
   _docker:append_status("Images: " .. "pulling" .. " " .. image_name .. "...")
   local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
   local res = self.images:create(nil, {fromImage=image_name, _header={["X-Registry-Auth"]=x_auth}})

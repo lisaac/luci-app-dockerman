@@ -83,7 +83,7 @@ action_pull.write = function(self, section)
   if not tmp then
     _,_,server = server:find("([%.%w%-%_]+)")
   end
-  local json_stringify = luci.json and luci.json.encode or luci.jsonc.stringify
+  local json_stringify = luci.jsonc and luci.jsonc.stringify
   if tag and tag ~= "" then
     docker:clear_status()
     docker:append_status("Images: " .. "pulling" .. " " .. tag .. "...")
