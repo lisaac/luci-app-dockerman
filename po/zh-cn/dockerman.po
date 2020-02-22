@@ -253,8 +253,8 @@ msgstr "保存docker status文件的位置"
 msgid "Enable Debug"
 msgstr "启用调试"
 
-msgid "For debug, It shows all docker API actions of luci-app-dockermab in Debug Tempfile Path"
-msgstr "用于调试，它在调试临时文件路径中显示 luci-app-dockermab 的所有docker API操作"
+msgid "For debug, It shows all docker API actions of luci-app-dockerman in Debug Tempfile Path"
+msgstr "用于调试，在调试临时文件路径中显示 luci-app-dockerman 的所有 Docker API 操作"
 
 msgid "Debug Tempfile Path"
 msgstr "调试临时文件路径"
