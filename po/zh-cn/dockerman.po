@@ -333,3 +333,21 @@ msgstr "主机名称"
 
 msgid "The hostname to use for the container"
 msgstr "容器使用的主机名"
+
+msgid "File"
+msgstr "文件"
+
+msgid "Upload"
+msgstr "上传"
+
+msgid "Download"
+msgstr "下载"
+
+msgid "Path"
+msgstr "路径"
+
+msgid "Upload Error"
+msgstr "上传错误"
+
+msgid "Upload Success"
+msgstr "上传成功"
