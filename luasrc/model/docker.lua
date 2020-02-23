@@ -126,10 +126,10 @@ local get_config = function(old_config, old_host_config, old_network_setting, im
   return create_body, extra_network
 end
 
-local upgrade = function(self, container_id)
+local upgrade = function(self, request)
   _docker:clear_status()
   -- get image name, image id, container name, configuration information
-  local container_info = self.containers:inspect({id = container_id})
+  local container_info = self.containers:inspect({id = request.id})
   if container_info.code > 300 and type(container_info.body) == "table" then
     return container_info
   end
@@ -189,8 +189,8 @@ local upgrade = function(self, container_id)
   return res
 end
 
-local duplicate_config = function (self, container_id)
-  local container_info = self.containers:inspect({id = container_id})
+local duplicate_config = function (self, request)
+  local container_info = self.containers:inspect({id = request.id})
   if container_info.code > 300 and type(container_info.body) == "table" then return nil end
   local old_image_id = container_info.body.Image
   local old_config = container_info.body.Config
