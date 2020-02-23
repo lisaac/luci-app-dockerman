@@ -37,7 +37,7 @@ function action_events()
   local dk = docker.new()
   local query ={}
   query["until"] = os.time()
-	local events = dk:events(nil, query)
+	local events = dk:events({query = query})
   for _, v in ipairs(events.body) do
     if v.Type == "container" then
       logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. (v.Action or "null") .. " Container ID:"..  (v.Actor.ID or "null") .. " Container Name:" .. (v.Actor.Attributes.name or "null")
@@ -47,7 +47,7 @@ function action_events()
       logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. v.Action .. " Image:".. (v.Actor.ID or "null").. " Image Name:" .. (v.Actor.Attributes.name or "null")
     end
   end
-  luci.template.render("docker/logs", {self={syslog = logs, title="Docker Events"}})
+  luci.template.render("dockerman/logs", {self={syslog = logs, title="Docker Events"}})
 end
 
 local calculate_cpu_percent = function(d)
