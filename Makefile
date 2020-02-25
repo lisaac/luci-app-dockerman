@@ -38,7 +38,7 @@ endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
-rm -fr /tmp/luci-indexcache /tmp/luci-modulecache
+rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
 endef
 
 define Package/$(PKG_NAME)/install
