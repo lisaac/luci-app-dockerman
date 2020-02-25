@@ -241,11 +241,11 @@ msgstr "Docker根目录"
 msgid "Index Server Address"
 msgstr "默认服务器地址"
 
-msgid "Socket Path"
-msgstr "Socket路径"
+msgid "Docker Socket Path"
+msgstr "Docker Socket 路径"
 
 msgid "Action Status Tempfile Path"
-msgstr "docker 动作状态的临时文件路径"
+msgstr "Docker 操作状态临时文件路径"
 
 msgid "Where you want to save the docker status file"
 msgstr "保存docker status文件的位置"
@@ -351,3 +351,12 @@ msgstr "上传错误"
 
 msgid "Upload Success"
 msgstr "上传成功"
+
+msgid "Remote Endpoint"
+msgstr "远程节点"
+
+msgid "Remote Host"
+msgstr "远程节点域名"
+
+msgid "Remote Port"
+msgstr "远程节点端口"

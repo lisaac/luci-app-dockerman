@@ -202,8 +202,11 @@ end
 
 _docker.new = function(option)
   local option = option or {}
+  local remote = uci:get("dockerman", "local", "remote_endpoint")
   options = {
-    socket_path = option.socket_path or uci:get("dockerman", "local", "socket_path"),
+    socket_path = (remote == nil) and (option.socket_path or uci:get("dockerman", "local", "socket_path")) or nil,
+    host = (remote == "true") and (option.host or uci:get("dockerman", "local", "remote_host")) or nil,
+    port = (remote == "true") and (option.port or uci:get("dockerman", "local", "remote_port")) or nil,
     debug = option.debug or uci:get("dockerman", "local", "debug") == 'true' and true or false,
     debug_path = option.debug_path or uci:get("dockerman", "local", "debug_path")
   }

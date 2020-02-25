@@ -30,7 +30,7 @@ docker_info_table['6MemTotal'] = {_key=translate("Total Memory"),_value='-'}
 docker_info_table['7DockerRootDir'] = {_key=translate("Docker Root Dir"),_value='-'}
 docker_info_table['8IndexServerAddress'] = {_key=translate("Index Server Address"),_value='-'}
 
-s = m:section(Table, docker_info_table)
+local s = m:section(Table, docker_info_table)
 s:option(DummyValue, "_key", translate("Info"))
 s:option(DummyValue, "_value")
 
@@ -41,8 +41,8 @@ s.containers_total = '-'
 s.images_total = '-'
 s.networks_total = '-'
 s.volumes_total = '-'
-local socket = luci.model.uci.cursor():get("dockerman", "local", "socket_path")
-if nixio.fs.access(socket) and (require "luci.model.docker").new():_ping().code == 200 then
+-- local socket = luci.model.uci.cursor():get("dockerman", "local", "socket_path")
+if (require "luci.model.docker").new():_ping().code == 200 then
   local dk = docker.new()
   local containers_list = dk.containers:list({query = {all=true}}).body
   local images_list = dk.images:list().body
@@ -81,11 +81,27 @@ s.template = "dockerman/overview"
 
 s = m:section(NamedSection, "local", "section", translate("Setting"))
 
-socket_path = s:option(Value, "socket_path", translate("Socket Path"))
-status_path = s:option(Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))
-debug = s:option(Flag, "debug", translate("Enable Debug"), translate("For debug, It shows all docker API actions of luci-app-dockerman in Debug Tempfile Path"))
+local remote_endpoint = s:option(Flag, "remote_endpoint", translate("Remote Endpoint"))
+remote_endpoint.rmempty = true
+remote_endpoint.enabled = "true"
+
+local socket_path = s:option(Value, "socket_path", translate("Docker Socket Path"))
+socket_path:depends("remote_endpoint", "")
+socket_path.default = "/var/run/docker.sock"
+socket_path.placeholder = "/var/run/docker.sock"
+
+local remote_host = s:option(Value, "remote_host", translate("Remote Host"))
+remote_host:depends("remote_endpoint", "true")
+remote_host.placeholder = "10.1.1.2"
+
+local remote_port = s:option(Value, "remote_port", translate("Remote Port"))
+remote_port:depends("remote_endpoint", "true")
+remote_port.placeholder = "2375"
+
+local status_path = s:option(Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))
+local debug = s:option(Flag, "debug", translate("Enable Debug"), translate("For debug, It shows all docker API actions of luci-app-dockerman in Debug Tempfile Path"))
 debug.enabled="true"
 debug.disabled="false"
-debug_path = s:option(Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
+local debug_path = s:option(Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
 
 return m
