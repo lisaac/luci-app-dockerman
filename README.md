@@ -11,8 +11,10 @@
 ```bash
 ./scripts/feeds update luci-lib-jsonc
 ./scripts/feeds install luci-lib-jsonc
-wget https://raw.githubusercontent.com/lisaac/luci-lib-docker/master/Makefile -P package/luci-lib-docker
-wget https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/Makefile -P package/luci-app-dockerman
+mkdir -p package/luci-lib-docker && \
+wget https://raw.githubusercontent.com/lisaac/luci-lib-docker/master/Makefile -O package/luci-lib-docker/Makefile
+mkdir -p package/luci-app-dockerman && \
+wget https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/Makefile -O package/luci-app-dockerman/Makefile
 
 #compile package only
 make package/luci-lib-jsonc/compile V=99
