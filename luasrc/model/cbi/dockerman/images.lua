@@ -100,6 +100,10 @@ action_pull.write = function(self, section)
   luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
 end
 
+local import_section = m:section(SimpleSection, translate("Import Images"))
+local im = import_section:option(DummyValue, "_image_import")
+im.template = "dockerman/images_import"
+
 image_table = m:section(Table, image_list, translate("Images"))
 
 image_selecter = image_table:option(Flag, "_selected","")
@@ -146,17 +150,17 @@ local remove_action = function(force)
   end
 end
 
-docker_status = m:section(SimpleSection)
+local docker_status = m:section(SimpleSection)
 docker_status.template = "dockerman/apply_widget"
 docker_status.err=nixio.fs.readfile(dk.options.status_path)
 if docker_status.err then docker:clear_status() end
 
-action = m:section(Table,{{}})
+local action = m:section(Table,{{}})
 action.notitle=true
 action.rowcolors=false
 action.template="cbi/nullsection"
 
-btnremove = action:option(Button, "remove")
+local btnremove = action:option(Button, "remove")
 btnremove.inputtitle= translate("Remove")
 btnremove.template = "dockerman/cbi/inlinebutton"
 btnremove.inputstyle = "remove"
@@ -165,12 +169,51 @@ btnremove.write = function(self, section)
   remove_action()
 end
 
-btnforceremove = action:option(Button, "forceremove")
+local btnforceremove = action:option(Button, "forceremove")
 btnforceremove.inputtitle= translate("Force Remove")
 btnforceremove.template = "dockerman/cbi/inlinebutton"
 btnforceremove.inputstyle = "remove"
 btnforceremove.forcewrite = true
 btnforceremove.write = function(self, section)
   remove_action(true)
+end
+
+local btnexport = action:option(Button, "export")
+btnexport.inputtitle= translate("Export")
+btnexport.template = "dockerman/cbi/inlinebutton"
+btnexport.inputstyle = "edit"
+btnexport.forcewrite = true
+btnexport.write = function (self, section)
+  local image_selected = {}
+  local image_table_sids = image_table:cfgsections()
+  for _, image_table_sid in ipairs(image_table_sids) do
+    if image_list[image_table_sid]._selected == 1 then
+      image_selected[#image_selected+1] = image_id:cfgvalue(image_table_sid)
+    end
+  end
+  if next(image_selected) ~= nil then
+    local names
+    for _,img in ipairs(image_selected) do
+      names = names and (names .. "&names=".. img) or img
+    end
+    local first
+    local cb = function(res, chunk)
+      if res.code == 200 then
+        if not first then
+          first = true
+          luci.http.header('Content-Disposition', 'inline; filename="images.tar"')
+          luci.http.header('Content-Type', 'application\/x-tar')
+        end
+        luci.ltn12.pump.all(chunk, luci.http.write)
+      else
+        if not first then
+          first = true
+          luci.http.prepare_content("text/plain")
+        end
+        luci.ltn12.pump.all(chunk, luci.http.write)
+      end
+    end
+    local res = dk.images:get({query = {names = names}}, cb)
+  end
 end
 return m

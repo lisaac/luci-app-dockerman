@@ -56,5 +56,5 @@ make V=99
 - Chinese translation by [401626436](https://www.right.com.cn/forum/space-uid-382335.html)
 
 ### TODO:
-- images: edit_tag / import
+- images: edit_tag
 - new network: analyze command line string

@@ -35,6 +35,8 @@ function index()
   entry({"admin","docker","container_stats"},call("action_get_container_stats")).leaf=true
   entry({"admin","docker","container_get_archive"},call("download_archive")).leaf=true
   entry({"admin","docker","container_put_archive"},call("upload_archive")).leaf=true
+  entry({"admin","docker","images_export"},call("export_images")).leaf=true
+  entry({"admin","docker","images_import"},call("import_images")).leaf=true
   entry({"admin","docker","confirm"},call("action_confirm")).leaf=true
 
 end
@@ -202,6 +204,52 @@ function upload_archive(container_id)
   end
 
   local res = dk.containers:put_archive({id = container_id, query = {path = path}, body = rec_send})
+  local msg = res and res.body and res.body.message or nil
+  luci.http.status(res.code, msg)
+  luci.http.prepare_content("application/json")
+  luci.http.write_json({message = msg})
+end
+
+function export_images(container_id)
+  local names = luci.http.formvalue("names")
+  local dk = docker.new()
+  local first
+
+  local cb = function(res, chunk)
+    if res.code == 200 then
+      if not first then
+        first = true
+        luci.http.header('Content-Disposition', 'inline; filename="images.tar"')
+        luci.http.header('Content-Type', 'application\/x-tar')
+      end
+      luci.ltn12.pump.all(chunk, luci.http.write)
+    else
+      if not first then
+        first = true
+        luci.http.prepare_content("text/plain")
+      end
+      luci.ltn12.pump.all(chunk, luci.http.write)
+    end
+  end
+
+  local res = dk.images:get({id = container_id, query = {names = names}}, cb)
+end
+
+
+function import_images()
+  local path = luci.http.formvalue("upload-path")
+  local dk = docker.new()
+  local ltn12 = require "luci.ltn12"
+
+  rec_send = function(sinkout)
+    luci.http.setfilehandler(function (meta, chunk, eof)
+      if chunk then
+        ltn12.pump.step(ltn12.source.string(chunk), sinkout)
+      end
+    end)
+  end
+
+  local res = dk.images:load({body = rec_send})
   local msg = res and res.body and res.body.message or nil
   luci.http.status(res.code, msg)
   luci.http.prepare_content("application/json")

@@ -343,6 +343,12 @@ msgstr "上传"
 msgid "Download"
 msgstr "下载"
 
+msgid "Import"
+msgstr "导入"
+
+msgid "Export"
+msgstr "导出"
+
 msgid "Path"
 msgstr "路径"
 
