@@ -40,6 +40,7 @@ if cmd_line and cmd_line:match("^docker.+") then
   --cursor = 2: resloving image
   --cursor > 2: resloving command
   local cursor = 0
+  default_config["advance"] = 1
   for w in cmd_line:gmatch("[^%s]+") do 
     -- skip '\'
     if w == '\\' then
@@ -104,7 +105,7 @@ if cmd_line and cmd_line:match("^docker.+") then
       end
       --key=value
       if val then
-        if key == "mount" or key == "link" or key == "env" or key == "dns" or key == "port" or key == "device" or key == "tmpfs" then
+        if key == "mount" or key == "link" or key == "env" or key == "dns" or key == "port" or key == "device" or key == "tmpfs" or key == "sysctl" then
           if not default_config[key] then default_config[key] = {} end
           table.insert( default_config[key], val )
           if is_quot_complete(val) then
@@ -132,7 +133,7 @@ if cmd_line and cmd_line:match("^docker.+") then
       cursor = 1
     -- value
     elseif key and type(key) == "string" and cursor == 1 then
-      if key == "mount" or key == "link" or key == "env" or key == "dns" or key == "port" or key == "device" or key == "tmpfs" then
+      if key == "mount" or key == "link" or key == "env" or key == "dns" or key == "port" or key == "device" or key == "tmpfs" or key == "sysctl" then
         if not default_config[key] then default_config[key] = {} end
         table.insert( default_config[key], w )
         if is_quot_complete(w) then
@@ -154,9 +155,9 @@ if cmd_line and cmd_line:match("^docker.+") then
           _key = key
         end
       end
-      if key == "cpus" or key == "cpushare" or key == "memory" or key == "blkioweight" or key == "device" or key == "tmpfs" then
-        default_config["advance"] = 1
-      end
+      -- if key == "cpus" or key == "cpushare" or key == "memory" or key == "blkioweight" or key == "device" or key == "tmpfs" then
+      --   default_config["advance"] = 1
+      -- end
       key = nil
       cursor = 1
     --image and command
@@ -189,6 +190,7 @@ elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
     default_config.env = create_body.Env
     default_config.dns = create_body.HostConfig.Dns
     default_config.mount = create_body.HostConfig.Binds
+    default_config.sysctl = create_body.HostConfig.Sysctls
 
     if create_body.HostConfig.PortBindings and type(create_body.HostConfig.PortBindings) == "table" then
       default_config.port = {}
@@ -357,6 +359,13 @@ d.rmempty = true
 d:depends("advance", 1)
 d.default = default_config.tmpfs or nil
 
+d = s:option(DynamicList, "sysctl", translate("Sysctl(--sysctl)"), translate("Sysctls (kernel parameters) options"))
+d.template = "dockerman/cbi/xdynlist"
+d.placeholder = "net.ipv4.ip_forward=1"
+d.rmempty = true
+d:depends("advance", 1)
+d.default = default_config.sysctl or nil
+
 d = s:option(Value, "cpus", translate("CPUs"), translate("Number of CPUs. Number is a fractional number. 0.000 means no limit."))
 d.placeholder = "1.5"
 d.rmempty = true
@@ -419,6 +428,16 @@ m.handle = function(self, state, data)
   local restart = data.restart
   local env = data.env
   local dns = data.dns
+  local sysctl = {}
+  tmp = data.sysctl
+  if type(tmp) == "table" then
+    for i, v in ipairs(tmp) do
+      local k,v1 = v:match("(.-)=(.+)")
+      if k and v1 then
+        sysctl[k]=v1
+      end
+    end
+  end
   local network = data.network
   local ip = (network ~= "bridge" and network ~= "host" and network ~= "none") and data.ip or nil
   local mount = data.mount
@@ -542,9 +561,10 @@ m.handle = function(self, state, data)
     -- no ip + no duplicate config
     create_body.NetworkingConfig = nil
   end
-
+luci.util.perror(luci.jsonc.stringify(sysctl))
   create_body["HostConfig"]["Tmpfs"] = (next(tmpfs) ~= nil) and tmpfs or nil
   create_body["HostConfig"]["Devices"] = (next(device) ~= nil) and device or nil
+  create_body["HostConfig"]["Sysctls"] = (next(sysctl) ~= nil) and sysctl or nil
 
   if network == "bridge" and next(link) ~= nil then
     create_body["HostConfig"]["Links"] = link
