@@ -366,3 +366,12 @@ msgstr "远程节点域名"
 
 msgid "Remote Port"
 msgstr "远程节点端口"
+
+msgid "Import Images"
+msgstr "导入镜像"
+
+msgid "Load"
+msgstr "载入"
+
+msgid "Save"
+msgstr "保存"

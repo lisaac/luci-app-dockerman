@@ -178,12 +178,12 @@ btnforceremove.write = function(self, section)
   remove_action(true)
 end
 
-local btnexport = action:option(Button, "export")
-btnexport.inputtitle= translate("Export")
-btnexport.template = "dockerman/cbi/inlinebutton"
-btnexport.inputstyle = "edit"
-btnexport.forcewrite = true
-btnexport.write = function (self, section)
+local btnsave = action:option(Button, "save")
+btnsave.inputtitle= translate("Save")
+btnsave.template = "dockerman/cbi/inlinebutton"
+btnsave.inputstyle = "edit"
+btnsave.forcewrite = true
+btnsave.write = function (self, section)
   local image_selected = {}
   local image_table_sids = image_table:cfgsections()
   for _, image_table_sid in ipairs(image_table_sids) do
@@ -213,7 +213,20 @@ btnexport.write = function (self, section)
         luci.ltn12.pump.all(chunk, luci.http.write)
       end
     end
-    local res = dk.images:get({query = {names = names}}, cb)
+    docker:clear_status()
+    docker:append_status("Images: " .. "save" .. " " .. table.concat(image_selected, ",") .. "...")
+    local msg = dk.images:get({query = {names = names}}, cb)
+    if msg.code ~= 200 then
+      docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")
+      success = false
+    else
+      docker:clear_status()
+    end
   end
 end
+
+local btnload = action:option(Button, "load")
+btnload.inputtitle= translate("Load")
+btnload.template = "dockerman/image_load"
+btnload.inputstyle = "add"
 return m

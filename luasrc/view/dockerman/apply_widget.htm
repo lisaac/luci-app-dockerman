@@ -87,6 +87,7 @@ function uci_confirm_docker() {
         var indicator = document.querySelector('.uci_change_indicator');
         if (indicator) indicator.style.display = 'none';
         docker_status_message('notice', '<%:Docker actions done.%>');
+        document.body.classList.remove('apply-overlay-active');
         window.clearTimeout(tt);
         return;
       }

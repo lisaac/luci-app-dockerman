@@ -35,7 +35,8 @@ function index()
   entry({"admin","docker","container_stats"},call("action_get_container_stats")).leaf=true
   entry({"admin","docker","container_get_archive"},call("download_archive")).leaf=true
   entry({"admin","docker","container_put_archive"},call("upload_archive")).leaf=true
-  entry({"admin","docker","images_export"},call("export_images")).leaf=true
+  entry({"admin","docker","images_save"},call("save_images")).leaf=true
+  entry({"admin","docker","images_load"},call("load_images")).leaf=true
   entry({"admin","docker","images_import"},call("import_images")).leaf=true
   entry({"admin","docker","confirm"},call("action_confirm")).leaf=true
 
@@ -210,7 +211,7 @@ function upload_archive(container_id)
   luci.http.write_json({message = msg})
 end
 
-function export_images(container_id)
+function save_images(container_id)
   local names = luci.http.formvalue("names")
   local dk = docker.new()
   local first
@@ -236,7 +237,7 @@ function export_images(container_id)
 end
 
 
-function import_images()
+function load_images()
   local path = luci.http.formvalue("upload-path")
   local dk = docker.new()
   local ltn12 = require "luci.ltn12"
@@ -250,6 +251,29 @@ function import_images()
   end
 
   local res = dk.images:load({body = rec_send})
+  local msg = res and res.body and res.body.message or nil
+  luci.http.status(res.code, msg)
+  luci.http.prepare_content("application/json")
+  luci.http.write_json({message = msg})
+end
+
+function import_images()
+  local src = luci.http.formvalue("src")
+  local itag = luci.http.formvalue("tag")
+  local dk = docker.new()
+  local ltn12 = require "luci.ltn12"
+
+  rec_send = function(sinkout)
+    luci.http.setfilehandler(function (meta, chunk, eof)
+      if chunk then
+        ltn12.pump.step(ltn12.source.string(chunk), sinkout)
+      end
+    end)
+  end
+
+  local repo = itag and itag:match("^([^:]+)")
+  local tag = itag and itag:match("^[^:]-:([^:]+)")
+  local res = dk.images:create({query = {fromSrc = src or "-", repo = repo or nil, tag = tag or nil }, body = not src and rec_send or nil})
   local msg = res and res.body and res.body.message or nil
   luci.http.status(res.code, msg)
   luci.http.prepare_content("application/json")
