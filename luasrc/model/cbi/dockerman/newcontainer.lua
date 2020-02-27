@@ -190,7 +190,13 @@ elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
     default_config.env = create_body.Env
     default_config.dns = create_body.HostConfig.Dns
     default_config.mount = create_body.HostConfig.Binds
-    default_config.sysctl = create_body.HostConfig.Sysctls
+
+    if create_body.HostConfig.Sysctls and type(create_body.HostConfig.Sysctls) == "table" then
+      default_config.sysctl = {}
+      for k, v in pairs(create_body.HostConfig.Sysctls) do
+        table.insert( default_config.sysctl, k.."="..v )
+      end
+    end
 
     if create_body.HostConfig.PortBindings and type(create_body.HostConfig.PortBindings) == "table" then
       default_config.port = {}
@@ -213,8 +219,12 @@ elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
         table.insert( default_config.device, v.PathOnHost..":"..v.PathInContainer..(v.CgroupPermissions ~= "" and (":" .. v.CgroupPermissions) or "") )
       end
     end
-
-    default_config.tmpfs = create_body.HostConfig.Tmpfs
+    if create_body.HostConfig.Tmpfs and type(create_body.HostConfig.Tmpfs) == "table" then
+      default_config.tmpfs = {}
+      for k, v in pairs(create_body.HostConfig.Tmpfs) do
+        table.insert( default_config.tmpfs, k .. (v~="" and ":" or "")..v )
+      end
+    end
   end
 end
 
@@ -452,8 +462,9 @@ m.handle = function(self, state, data)
   tmp = data.tmpfs
   if type(tmp) == "table" then
     for i, v in ipairs(tmp)do
-      local _,_, k,v1 = v:find("(.-):(.+)")
-      if k and v1 then
+      local k= v:match("([^:]+)")
+      local v1 = v:match(".-:([^:]+)") or ""
+      if k then
         tmpfs[k]=v1
       end
     end
@@ -561,7 +572,6 @@ m.handle = function(self, state, data)
     -- no ip + no duplicate config
     create_body.NetworkingConfig = nil
   end
-luci.util.perror(luci.jsonc.stringify(sysctl))
   create_body["HostConfig"]["Tmpfs"] = (next(tmpfs) ~= nil) and tmpfs or nil
   create_body["HostConfig"]["Devices"] = (next(device) ~= nil) and device or nil
   create_body["HostConfig"]["Sysctls"] = (next(sysctl) ~= nil) and sysctl or nil

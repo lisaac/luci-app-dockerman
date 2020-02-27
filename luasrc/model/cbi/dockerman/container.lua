@@ -94,6 +94,36 @@ local get_links = function(d)
   return data
 end
 
+local get_tmpfs = function(d)
+  local data
+  if d.HostConfig and d.HostConfig.Tmpfs then
+    for k, v in pairs(d.HostConfig.Tmpfs) do
+      data = (data and (data .. "<br>") or "") .. k .. (v~="" and ":" or "")..v
+    end
+  end
+  return data
+end
+
+local get_dns = function(d)
+  local data
+  if d.HostConfig and d.HostConfig.Dns then
+    for _, v in ipairs(d.HostConfig.Dns) do
+      data = (data and (data .. "<br>") or "") .. v
+    end
+  end
+  return data
+end
+
+local get_sysctl = function(d)
+  local data
+  if d.HostConfig and d.HostConfig.Sysctls then
+    for k, v in pairs(d.HostConfig.Sysctls) do
+      data = (data and (data .. "<br>") or "") .. k..":"..v
+    end
+  end
+  return data
+end
+
 local get_networks = function(d)
   local data={}
   if d.NetworkSettings and d.NetworkSettings.Networks and type(d.NetworkSettings.Networks) == "table" then
@@ -209,13 +239,16 @@ if action == "info" then
   table_info["06start"] = container_info.State.Status == "running" and {_key = translate("Start Time"),  _value = container_info.State and container_info.State.StartedAt or "-"} or {_key = translate("Finish Time"),  _value = container_info.State and container_info.State.FinishedAt or "-"}
   table_info["07healthy"] = {_key = translate("Healthy"),  _value = container_info.State and container_info.State.Health and container_info.State.Health.Status or "-"}
   table_info["08restart"] = {_key = translate("Restart Policy"),  _value = container_info.HostConfig and container_info.HostConfig.RestartPolicy and container_info.HostConfig.RestartPolicy.Name or "-", _button=translate("Update")}
-  table_info["09device"] = {_key = translate("Device"),  _value = get_device(container_info)  or "-"}
+  table_info["081user"] = {_key = translate("User"),  _value = container_info.Config and (container_info.Config.User ~="" and container_info.Config.User or "-") or "-"}
   table_info["09mount"] = {_key = translate("Mount/Volume"),  _value = get_mounts(container_info)  or "-"}
-
   table_info["10cmd"] = {_key = translate("Command"),  _value = get_command(container_info) or "-"}
   table_info["11env"] = {_key = translate("Env"),  _value = get_env(container_info)  or "-"}
   table_info["12ports"] = {_key = translate("Ports"),  _value = get_ports(container_info) or "-"}
   table_info["13links"] = {_key = translate("Links"),  _value = get_links(container_info)  or "-"}
+  table_info["14device"] = {_key = translate("Device"),  _value = get_device(container_info)  or "-"}
+  table_info["15tmpfs"] = {_key = translate("Tmpfs"),  _value = get_tmpfs(container_info)  or "-"}
+  table_info["16dns"] = {_key = translate("DNS"),  _value = get_dns(container_info)  or "-"}
+  table_info["17sysctl"] = {_key = translate("Sysctl"),  _value = get_sysctl(container_info)  or "-"}
   info_networks = get_networks(container_info)
   list_networks = {}
   for _, v in ipairs (networks) do
