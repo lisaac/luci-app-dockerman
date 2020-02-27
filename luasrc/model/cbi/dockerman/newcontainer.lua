@@ -4,7 +4,6 @@ Copyright 2019 lisaac <https://github.com/lisaac/luci-app-dockerman>
 ]]--
 
 require "luci.util"
-require "math"
 local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
@@ -16,22 +15,26 @@ local networks = dk.networks:list().body
 local containers = dk.containers:list({query = {all=true}}).body
 
 local is_quot_complete = function(str)
+  require "math"
   if not str then return true end
   local num = 0, w
-  for w in str:gmatch("[\"\']") do
+  for w in str:gmatch("\"") do
     num = num + 1
   end
-  if math.fmod(num, 2) ~= 0 then
-    return false
-  else
-    return true
+  if math.fmod(num, 2) ~= 0 then return false end
+  num = 0
+  for w in str:gmatch("\'") do
+    num = num + 1
   end
+  if math.fmod(num, 2) ~= 0 then return false end
+  return true
 end
 
 -- reslvo default config
 local default_config = { }
 if cmd_line and cmd_line:match("^docker.+") then
-  local key = nil, _key
+  local key = nil
+  local _key = nil
   --cursor = 0: docker run
   --cursor = 1: resloving para
   --cursor = 2: resloving image
@@ -83,11 +86,9 @@ if cmd_line and cmd_line:match("^docker.+") then
         key = "port"
       elseif key == "e" then
         key = "env"
-      elseif key == "dns" then
-        key = "dns"
       elseif key == "net" then
         key = "network"
-      elseif key == "h" or key == "hostname" then
+      elseif key == "h" then
         key = "hostname"
       elseif key == "cpu-shares" then
         key = "cpushares"
@@ -106,20 +107,26 @@ if cmd_line and cmd_line:match("^docker.+") then
         if key == "mount" or key == "link" or key == "env" or key == "dns" or key == "port" or key == "device" or key == "tmpfs" then
           if not default_config[key] then default_config[key] = {} end
           table.insert( default_config[key], val )
+          if is_quot_complete(val) then
           -- clear quotation marks
-          default_config[key][#default_config[key]] = default_config[key][#default_config[key]]:gsub("[\"\']", "")
+            default_config[key][#default_config[key]] = default_config[key][#default_config[key]]:gsub("[\"\']", "")
+            _key=nil
+          else
+            _key=key
+          end
+          key = nil
         else
           default_config[key] = val
-          -- clear quotation marks
-          default_config[key] = default_config[key]:gsub("[\"\']", "")
+          -- if there are " or ' in val and separate by space, we need keep the _key to link with next w
+          if is_quot_complete(val) then
+            -- clear quotation marks
+            default_config[key] = default_config[key]:gsub("[\"\']", "")
+            _key = nil
+          else
+            _key = key
+          end
+
         end
-        -- if there are " or ' in val and separate by space, we need keep the _key to link with next w
-        if is_quot_complete(val) then
-          _key = nil
-        else
-          _key = key
-        end
-        -- clear key
         key = nil
       end
       cursor = 1
@@ -128,21 +135,27 @@ if cmd_line and cmd_line:match("^docker.+") then
       if key == "mount" or key == "link" or key == "env" or key == "dns" or key == "port" or key == "device" or key == "tmpfs" then
         if not default_config[key] then default_config[key] = {} end
         table.insert( default_config[key], w )
-        -- clear quotation marks
-        default_config[key][#default_config[key]] = default_config[key][#default_config[key]]:gsub("[\"\']", "")
+        if is_quot_complete(w) then
+          _key = nil
+          -- clear quotation marks
+          default_config[key][#default_config[key]] = default_config[key][#default_config[key]]:gsub("[\"\']", "")
+        else
+          _key = key
+        end
+        key = nil
       else
         default_config[key] = w
-        -- clear quotation marks
-        default_config[key] = default_config[key]:gsub("[\"\']", "")
+              -- if there are " or ' in val and separate by space, we need keep the _key to link with next w
+        if is_quot_complete(w) then
+          _key = nil
+           -- clear quotation marks
+          default_config[key] = default_config[key]:gsub("[\"\']", "")
+        else
+          _key = key
+        end
       end
       if key == "cpus" or key == "cpushare" or key == "memory" or key == "blkioweight" or key == "device" or key == "tmpfs" then
         default_config["advance"] = 1
-      end
-      -- if there are " or ' in val and separate by space, we need keep the _key to link with next w
-      if is_quot_complete(w) then
-        _key = nil
-      else
-        _key = key
       end
       key = nil
       cursor = 1

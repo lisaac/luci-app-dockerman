@@ -62,6 +62,7 @@
     if (cmd_line == null || cmd_line == "") {
       return
     }
+    cmd_line = cmd_line.replace(/(^\s*)/g,"")
     if (!cmd_line.match(/^docker\s+(run|create)/)) {
       s.innerHTML = "<font color='red'><%:Command line Error%></font>"
       return
