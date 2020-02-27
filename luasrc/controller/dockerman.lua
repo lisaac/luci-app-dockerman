@@ -346,7 +346,7 @@ function untag_image(tag)
     else
       luci.http.status(500, "Cannot remove the last tag")
       luci.http.prepare_content("application/json")
-      luci.http.write_json({message = "no tag Cannot remove the last tag"})
+      luci.http.write_json({message = "Cannot remove the last tag"})
     end
   else
     luci.http.status(res.code, msg)

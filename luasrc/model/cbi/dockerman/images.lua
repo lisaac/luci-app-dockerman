@@ -21,7 +21,7 @@ function get_images()
     data[index]={}
     data[index]["_selected"] = 0
     data[index]["id"] = v.Id:sub(8)
-    data[index]["_id"] = '<a href="javascript:new_tag(\''..v.Id:sub(8,20)..'\')" class="dockerman-link" title="'..translate("Aadd new tag")..'">' .. v.Id:sub(8,20) .. '</a>'
+    data[index]["_id"] = '<a href="javascript:new_tag(\''..v.Id:sub(8,20)..'\')" class="dockerman-link" title="'..translate("New tag")..'">' .. v.Id:sub(8,20) .. '</a>'
     if v.RepoTags and next(v.RepoTags)~=nil then
       for i, v1 in ipairs(v.RepoTags) do
         data[index]["_tags"] =(data[index]["_tags"] and ( data[index]["_tags"] .. "<br\>" )or "") .. 
@@ -36,7 +36,7 @@ function get_images()
     for ci,cv in ipairs(containers) do
       if v.Id == cv.ImageID then
         data[index]["_containers"] = (data[index]["_containers"] and (data[index]["_containers"] .. " | ") or "")..
-        '<a href='..luci.dispatcher.build_url("admin/docker/container/"..cv.Id)..'   class="dockerman_link" title="'..translate("Container detail")..'">'.. cv.Names[1]:sub(2).."</a>"
+        '<a href='..luci.dispatcher.build_url("admin/docker/container/"..cv.Id)..' class="dockerman_link" title="'..translate("Container detail")..'">'.. cv.Names[1]:sub(2).."</a>"
       end
     end
     data[index]["_size"] = string.format("%.2f", tostring(v.Size/1024/1024)).."MB"

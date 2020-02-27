@@ -375,3 +375,18 @@ msgstr "载入"
 
 msgid "Save"
 msgstr "保存"
+
+msgid "Remove tag"
+msgstr "移除镜像标签"
+
+msgid "New tag"
+msgstr "新镜像标签"
+
+msgid "Container detail"
+msgstr "容器详情"
+
+msgid "Please input new tag"
+msgstr "请输入新镜像标签名称"
+
+msgid "Error"
+msgstr "错误"
