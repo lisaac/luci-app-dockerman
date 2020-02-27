@@ -324,7 +324,7 @@ if action == "info" then
       self.template = "cbi/button"
       Button.render(self, section, scope)
     else 
-      self.template = "dockerman/cbi/dummyvalue"
+      self.template = "cbi/dvalue"
       self.default=""
       DummyValue.render(self, section, scope)
     end

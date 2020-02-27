@@ -38,6 +38,9 @@ function index()
   entry({"admin","docker","images_save"},call("save_images")).leaf=true
   entry({"admin","docker","images_load"},call("load_images")).leaf=true
   entry({"admin","docker","images_import"},call("import_images")).leaf=true
+  entry({"admin","docker","images_get_tags"},call("get_image_tags")).leaf=true
+  entry({"admin","docker","images_tag"},call("tag_image")).leaf=true
+  entry({"admin","docker","images_untag"},call("untag_image")).leaf=true
   entry({"admin","docker","confirm"},call("action_confirm")).leaf=true
 
 end
@@ -48,7 +51,7 @@ function action_events()
   local dk = docker.new()
   local query ={}
   query["until"] = os.time()
-	local events = dk:events({query = query})
+  local events = dk:events({query = query})
   for _, v in ipairs(events.body) do
     if v.Type == "container" then
       logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. (v.Action or "null") .. " Container ID:"..  (v.Actor.ID or "null") .. " Container Name:" .. (v.Actor.Attributes.name or "null")
@@ -144,7 +147,7 @@ function action_get_container_stats(container_id)
   else
     luci.http.status(404, "No container name or id")
     luci.http.prepare_content("text/plain")
-		luci.http.write("No container name or id")
+    luci.http.write("No container name or id")
   end
 end
 
@@ -236,7 +239,6 @@ function save_images(container_id)
   local res = dk.images:get({id = container_id, query = {names = names}}, cb)
 end
 
-
 function load_images()
   local path = luci.http.formvalue("upload-path")
   local dk = docker.new()
@@ -278,4 +280,78 @@ function import_images()
   luci.http.status(res.code, msg)
   luci.http.prepare_content("application/json")
   luci.http.write_json({message = msg})
+end
+
+function get_image_tags(image_id)
+  if not image_id then 
+    luci.http.status(400, "no image id")
+    luci.http.prepare_content("application/json")
+    luci.http.write_json({message = "no image id"})
+    return
+  end
+  local dk = docker.new()
+  local res = dk.images:inspect({id = image_id})
+  luci.http.status(res.code, msg)
+  luci.http.prepare_content("application/json")
+  if res.code == 200 then
+    local tags = res.body.RepoTags
+    luci.http.write_json({tags = tags})
+  else
+    local msg = res and res.body and res.body.message or nil
+    luci.http.write_json({message = msg})
+  end
+end
+
+function tag_image(image_id)
+  local src = luci.http.formvalue("tag")
+  local image_id = image_id or luci.http.formvalue("id")
+  if type(src) ~= "string" or not image_id then
+    luci.http.status(400, "no image id or tag")
+    luci.http.prepare_content("application/json")
+    luci.http.write_json({message = "no image id or tag"})
+    return
+  end
+  local repo = src:match("^([^:]+)")
+  local tag = src:match("^[^:]-:([^:]+)")
+  local dk = docker.new()
+  local res = dk.images:tag({id = image_id, query={repo=repo, tag=tag}})
+  luci.http.status(res.code, msg)
+  luci.http.prepare_content("application/json")
+  if res.code == 201 then
+    local tags = res.body.RepoTags
+    luci.http.write_json({tags = tags})
+  else
+    local msg = res and res.body and res.body.message or nil
+    luci.http.write_json({message = msg})
+  end
+end
+
+function untag_image(tag)
+  local tag = tag or luci.http.formvalue("tag")
+  if not tag then 
+    luci.http.status(400, "no tag name")
+    luci.http.prepare_content("application/json")
+    luci.http.write_json({message = "no tag name"})
+    return
+  end
+  local dk = docker.new()
+  local res = dk.images:inspect({name = tag})
+  if res.code == 200 then
+    local tags = res.body.RepoTags
+    if #tags > 1 then
+      local r = dk.images:remove({name = tag})
+      luci.http.status(res.code, msg)
+      luci.http.prepare_content("application/json")
+      luci.http.write_json({message = msg})
+    else
+      luci.http.status(500, "Cannot remove the last tag")
+      luci.http.prepare_content("application/json")
+      luci.http.write_json({message = "no tag Cannot remove the last tag"})
+    end
+  else
+    luci.http.status(res.code, msg)
+    luci.http.prepare_content("application/json")
+    local msg = res and res.body and res.body.message or nil
+    luci.http.write_json({message = msg})
+  end
 end

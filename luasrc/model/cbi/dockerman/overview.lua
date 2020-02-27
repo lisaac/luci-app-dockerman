@@ -93,10 +93,12 @@ socket_path.placeholder = "/var/run/docker.sock"
 local remote_host = s:option(Value, "remote_host", translate("Remote Host"))
 remote_host:depends("remote_endpoint", "true")
 remote_host.placeholder = "10.1.1.2"
+remote_endpoint.rmempty = true
 
 local remote_port = s:option(Value, "remote_port", translate("Remote Port"))
 remote_port:depends("remote_endpoint", "true")
 remote_port.placeholder = "2375"
+remote_endpoint.rmempty = true
 
 local status_path = s:option(Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))
 local debug = s:option(Flag, "debug", translate("Enable Debug"), translate("For debug, It shows all docker API actions of luci-app-dockerman in Debug Tempfile Path"))

@@ -20,19 +20,23 @@ function get_images()
     local index = v.Created .. v.Id
     data[index]={}
     data[index]["_selected"] = 0
-    data[index]["_id"] = v.Id:sub(8,20)
-    if v.RepoTags then
+    data[index]["id"] = v.Id:sub(8)
+    data[index]["_id"] = '<a href="javascript:new_tag(\''..v.Id:sub(8,20)..'\')" class="dockerman-link" title="'..translate("Aadd new tag")..'">' .. v.Id:sub(8,20) .. '</a>'
+    if v.RepoTags and next(v.RepoTags)~=nil then
       for i, v1 in ipairs(v.RepoTags) do
-        data[index]["_tags"] =(data[index]["_tags"] and ( data[index]["_tags"] .. "<br\>" )or "") .. v1
+        data[index]["_tags"] =(data[index]["_tags"] and ( data[index]["_tags"] .. "<br\>" )or "") .. 
+        '<a href="javascript:un_tag(\''..v1..'\')" class="dockerman_link" title="'..translate("Remove tag")..'" >' .. v1 .. '</a>'
       end
-    else 
-      _,_, data[index]["_tags"] = v.RepoDigests[1]:find("^(.-)@.+")
-      data[index]["_tags"]=data[index]["_tags"]..":none"
+    else
+      data[index]["_tags"] = v.RepoDigests[1] and v.RepoDigests[1]:match("^(.-)@.+")
+      data[index]["_tags"] = (data[index]["_tags"] and data[index]["_tags"] or  "<none>" ).. ":<none>"
     end
+    data[index]["_tags"] = data[index]["_tags"]:gsub("<none>","&lt;none&gt;")
+    -- data[index]["_tags"] = '<a href="javascript:handle_tag(\''..data[index]["_id"]..'\')">' .. data[index]["_tags"] .. '</a>'
     for ci,cv in ipairs(containers) do
       if v.Id == cv.ImageID then
         data[index]["_containers"] = (data[index]["_containers"] and (data[index]["_containers"] .. " | ") or "")..
-        "<a href=/cgi-bin/luci/admin/docker/container/"..cv.Id.." >".. cv.Names[1]:sub(2).."</a>"
+        '<a href='..luci.dispatcher.build_url("admin/docker/container/"..cv.Id)..'   class="dockerman_link" title="'..translate("Container detail")..'">'.. cv.Names[1]:sub(2).."</a>"
       end
     end
     data[index]["_size"] = string.format("%.2f", tostring(v.Size/1024/1024)).."MB"
@@ -104,14 +108,15 @@ local import_section = m:section(SimpleSection, translate("Import Images"))
 local im = import_section:option(DummyValue, "_image_import")
 im.template = "dockerman/images_import"
 
-image_table = m:section(Table, image_list, translate("Images"))
+local image_table = m:section(Table, image_list, translate("Images"))
 
-image_selecter = image_table:option(Flag, "_selected","")
+local image_selecter = image_table:option(Flag, "_selected","")
 image_selecter.disabled = 0
 image_selecter.enabled = 1
 image_selecter.default = 0
 
-image_id = image_table:option(DummyValue, "_id", translate("ID"))
+local image_id = image_table:option(DummyValue, "_id", translate("ID"))
+image_id.rawhtml = true
 image_table:option(DummyValue, "_tags", translate("RepoTags")).rawhtml = true
 image_table:option(DummyValue, "_containers", translate("Containers")).rawhtml = true
 image_table:option(DummyValue, "_size", translate("Size"))
@@ -127,7 +132,7 @@ local remove_action = function(force)
   for _, image_table_sid in ipairs(image_table_sids) do
     -- 得到选中项的名字
     if image_list[image_table_sid]._selected == 1 then
-      image_selected[#image_selected+1] = image_id:cfgvalue(image_table_sid)
+      image_selected[#image_selected+1] = image_list[image_table_sid].id --image_id:cfgvalue(image_table_sid)
     end
   end
   if next(image_selected) ~= nil then
@@ -188,7 +193,7 @@ btnsave.write = function (self, section)
   local image_table_sids = image_table:cfgsections()
   for _, image_table_sid in ipairs(image_table_sids) do
     if image_list[image_table_sid]._selected == 1 then
-      image_selected[#image_selected+1] = image_id:cfgvalue(image_table_sid)
+      image_selected[#image_selected+1] = image_list[image_table_sid].id --image_id:cfgvalue(image_table_sid)
     end
   end
   if next(image_selected) ~= nil then
