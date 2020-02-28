@@ -1,10 +1,8 @@
-<div id="upload-container" class="cbi-value cbi-value-last">
-  <input type="text" class="cbi-input-text" name="isrc" placeholder="http://host/image.tar" id="isrc" />
-  <input type="text" class="cbi-input-text" name="itag" placeholder="repository:tag" id="itag" />
-  <div style="display: inline-block;">
-    <input type="button"" class=" cbi-button cbi-button-add" id="btnimport" name="import" value="<%:Import%>" />
-    <input type="file" id="file_import" style="visibility:hidden" />
-  </div>
+<input type="text" class="cbi-input-text" name="isrc" placeholder="http://host/image.tar" id="isrc" />
+<input type="text" class="cbi-input-text" name="itag" placeholder="repository:tag" id="itag" />
+<div style="display: inline-block;">
+  <input type="button"" class=" cbi-button cbi-button-add" id="btnimport" name="import" value="<%:Import%>" />
+  <input type="file" id="file_import" style="visibility:hidden; position: absolute;top: 0px; left: 0px;" />
 </div>
 
 <script type="text/javascript">
@@ -72,7 +70,9 @@
         })
     }
   }
+
   let un_tag = function (tag) {
+    if (tag.match("<none>")) return
     if (confirm("<%:Remove tag%>: " + tag + " ?")) {
       (new XHR()).post('<%=url('admin/docker/images_untag')%>',
         { tag: tag },
@@ -85,6 +85,5 @@
           }
         })
     }
-          
   }
 </script>
