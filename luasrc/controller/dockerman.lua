@@ -42,9 +42,7 @@ function index()
   entry({"admin","docker","images_tag"},call("tag_image")).leaf=true
   entry({"admin","docker","images_untag"},call("untag_image")).leaf=true
   entry({"admin","docker","confirm"},call("action_confirm")).leaf=true
-
 end
-
 
 function action_events()
   local logs = ""
@@ -52,13 +50,15 @@ function action_events()
   local query ={}
   query["until"] = os.time()
   local events = dk:events({query = query})
-  for _, v in ipairs(events.body) do
-    if v.Type == "container" then
-      logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. (v.Action or "null") .. " Container ID:"..  (v.Actor.ID or "null") .. " Container Name:" .. (v.Actor.Attributes.name or "null")
-    elseif v.Type == "network" then
-      logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. v.Action .. " Container ID:"..( v.Actor.Attributes.container or "null" ) .. " Network Name:" .. (v.Actor.Attributes.name or "null") .. " Network type:".. v.Actor.Attributes.type or ""
-    elseif v.Type == "image" then
-      logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. v.Action .. " Image:".. (v.Actor.ID or "null").. " Image Name:" .. (v.Actor.Attributes.name or "null")
+  if events.code == 200 then
+    for _, v in ipairs(events.body) do
+      if v and v.Type == "container" then
+        logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. (v.Action or "null") .. " Container ID:"..  (v.Actor.ID or "null") .. " Container Name:" .. (v.Actor.Attributes.name or "null")
+      elseif v.Type == "network" then
+        logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. v.Action .. " Container ID:"..( v.Actor.Attributes.container or "null" ) .. " Network Name:" .. (v.Actor.Attributes.name or "null") .. " Network type:".. v.Actor.Attributes.type or ""
+      elseif v.Type == "image" then
+        logs = (logs ~= "" and (logs .. "\n") or logs) .. "[" .. os.date("%Y-%m-%d %H:%M:%S", v.time) .."] "..v.Type.. " " .. v.Action .. " Image:".. (v.Actor.ID or "null").. " Image Name:" .. (v.Actor.Attributes.name or "null")
+      end
     end
   end
   luci.template.render("dockerman/logs", {self={syslog = logs, title="Docker Events"}})
@@ -235,8 +235,13 @@ function save_images(container_id)
       luci.ltn12.pump.all(chunk, luci.http.write)
     end
   end
-
+  docker:clear_status()
+  docker:append_status("Images: " .. "save" .. " " .. container_id .. "...")
   local res = dk.images:get({id = container_id, query = {names = names}}, cb)
+  docker:clear_status()
+  luci.http.status(res.code, msg)
+  luci.http.prepare_content("application/json")
+  luci.http.write_json({message = msg})
 end
 
 function load_images()
@@ -252,8 +257,11 @@ function load_images()
     end)
   end
 
+  docker:clear_status()
+  docker:append_status("Images: " .. "Loading...")
   local res = dk.images:load({body = rec_send})
   local msg = res and res.body and res.body.message or nil
+  docker:clear_status()
   luci.http.status(res.code, msg)
   luci.http.prepare_content("application/json")
   luci.http.write_json({message = msg})
@@ -273,9 +281,12 @@ function import_images()
     end)
   end
 
+  docker:clear_status()
+  docker:append_status("Images: " .. "Improt".. " ".. itag .."...")
   local repo = itag and itag:match("^([^:]+)")
   local tag = itag and itag:match("^[^:]-:([^:]+)")
   local res = dk.images:create({query = {fromSrc = src or "-", repo = repo or nil, tag = tag or nil }, body = not src and rec_send or nil})
+  docker:clear_status()
   local msg = res and res.body and res.body.message or nil
   luci.http.status(res.code, msg)
   luci.http.prepare_content("application/json")

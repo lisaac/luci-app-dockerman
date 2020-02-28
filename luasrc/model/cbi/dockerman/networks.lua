@@ -97,7 +97,7 @@ btnremove.write = function(self, section)
   for _, network_table_sid in ipairs(network_table_sids) do
     -- 得到选中项的名字
     if network_list[network_table_sid]._selected == 1 then
-      network_selected[#network_selected+1] = network_name:cfgvalue(network_table_sid)
+      network_selected[#network_selected+1] = network_list[network_table_sid]._id --network_name:cfgvalue(network_table_sid)
     end
   end
   if next(network_selected) ~= nil then

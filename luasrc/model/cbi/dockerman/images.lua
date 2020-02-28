@@ -219,7 +219,7 @@ btnsave.write = function (self, section)
       end
     end
     docker:clear_status()
-    docker:append_status("Images: " .. "save" .. " " .. table.concat(image_selected, ",") .. "...")
+    docker:append_status("Images: " .. "save" .. " " .. table.concat(image_selected, "<br/>") .. "...")
     local msg = dk.images:get({query = {names = names}}, cb)
     if msg.code ~= 200 then
       docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "<br>")

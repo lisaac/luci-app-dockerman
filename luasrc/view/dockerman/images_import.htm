@@ -14,18 +14,23 @@
       document.getElementById("file_import").click()
       return
     } else {
-      (new XHR()).post('<%=url('admin/docker/images_import')%>',
-        { src: valISrc.value, tag: valITag.value },
-        function (r) {
-          if (r.status == 200) {
-            fileimport.value = ''
-            alert("<%:Upload Success%> !")
-            location.reload()
-          }
-          else {
-            alert("<%:Upload Error%>:" + r.statusText)
-          }
-        })
+      let formData = new FormData()
+      formData.append('src', valISrc.value)
+      formData.append('tag', valITag.value)
+      let xhr = new XMLHttpRequest()
+      uci_confirm_docker()
+      xhr.open("POST", "/cgi-bin/luci/admin/docker/images_import", true)
+      xhr.onload = function () {
+        if (xhr.status == 200) {
+          fileimport.value = ''
+          alert("<%:Upload Success%> !")
+          location.reload()
+        }
+        else {
+          alert("<%:Upload Error%>:" + xhr.statusText)
+        }
+      }
+      xhr.send(formData)
     }
   }
   let fileimport = document.getElementById('file_import')
@@ -41,6 +46,7 @@
     formData.append('tag', valITag.value)
     formData.append('upload-archive', fileimport.files[0])
     let xhr = new XMLHttpRequest()
+    uci_confirm_docker()
     xhr.open("POST", "/cgi-bin/luci/admin/docker/images_import", true)
     xhr.onload = function () {
       if (xhr.status == 200) {
