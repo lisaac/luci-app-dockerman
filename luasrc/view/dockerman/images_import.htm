@@ -1,0 +1,90 @@
+<div id="upload-container" class="cbi-value cbi-value-last">
+  <input type="text" class="cbi-input-text" name="isrc" placeholder="http://host/image.tar" id="isrc" />
+  <input type="text" class="cbi-input-text" name="itag" placeholder="repository:tag" id="itag" />
+  <div style="display: inline-block;">
+    <input type="button"" class=" cbi-button cbi-button-add" id="btnimport" name="import" value="<%:Import%>" />
+    <input type="file" id="file_import" style="visibility:hidden" />
+  </div>
+</div>
+
+<script type="text/javascript">
+  let btnImport = document.getElementById('btnimport')
+  let valISrc = document.getElementById('isrc')
+  let valITag = document.getElementById('itag')
+  btnImport.onclick = function (e) {
+    if (valISrc.value == "") {
+      document.getElementById("file_import").click()
+      return
+    } else {
+      (new XHR()).post('<%=url('admin/docker/images_import')%>',
+        { src: valISrc.value, tag: valITag.value },
+        function (r) {
+          if (r.status == 200) {
+            fileimport.value = ''
+            alert("<%:Upload Success%> !")
+            location.reload()
+          }
+          else {
+            alert("<%:Upload Error%>:" + r.statusText)
+          }
+        })
+    }
+  }
+  let fileimport = document.getElementById('file_import')
+  fileimport.onchange = function (e) {
+    let fileimport = document.getElementById('file_import')
+    if (!fileimport.value) {
+      return
+    }
+    let valITag = document.getElementById('itag')
+    let fileName = fileimport.files[0].name
+    let formData = new FormData()
+    formData.append('upload-filename', fileName)
+    formData.append('tag', valITag.value)
+    formData.append('upload-archive', fileimport.files[0])
+    let xhr = new XMLHttpRequest()
+    xhr.open("POST", "/cgi-bin/luci/admin/docker/images_import", true)
+    xhr.onload = function () {
+      if (xhr.status == 200) {
+        fileimport.value = ''
+        alert("<%:Upload Success%> !")
+        location.reload()
+      }
+      else {
+        alert("<%:Upload Error%>:" + xhr.statusText)
+      }
+    }
+    xhr.send(formData)
+  }
+
+  let new_tag = function (image_id) {
+    let new_tag = prompt("<%:New tag%>\n<%:Image%>" + "ID: " + image_id + "\n<%:Please input new tag%>:", "")
+    if (new_tag) {
+      (new XHR()).post('<%=url('admin/docker/images_tag')%>',
+        { id: image_id, tag: new_tag },
+        function (r) {
+          if (r.status == 201) {
+            location.reload()
+          }
+          else {
+            alert("<%:Error%>:" + r.statusText)
+          }
+        })
+    }
+  }
+  let un_tag = function (tag) {
+    if (confirm("<%:Remove tag%>: " + tag + " ?")) {
+      (new XHR()).post('<%=url('admin/docker/images_untag')%>',
+        { tag: tag },
+        function (r) {
+          if (r.status == 200) {
+            location.reload()
+          }
+          else {
+            alert("<%:Error%>: " + r.statusText)
+          }
+        })
+    }
+          
+  }
+</script>
