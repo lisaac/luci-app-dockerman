@@ -28,8 +28,8 @@ msgstr "停止"
 msgid "Upgrade"
 msgstr "升级容器"
 
-msgid "Duplicate"
-msgstr "复制容器"
+msgid "Duplicate/Edit"
+msgstr "复制/编辑容器"
 
 msgid "Remove"
 msgstr "移除"
