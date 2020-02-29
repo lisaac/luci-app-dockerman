@@ -1,7 +1,11 @@
-<%+header%>
+<% if self.title == "Events" then %>	
+<%+header%>	<%+header%>
 <h2><a id="content" name="content"><%:Docker%></a></h2>
 <legend><%:Events%></legend>
+<% end %>
 <div id="content_syslog">
 <textarea readonly="readonly" wrap="off" rows="<%=self.syslog:cmatch("\n")+2%>" id="syslog"><%=self.syslog:pcdata()%></textarea>
 </div>
-<%+footer%>
+<% if self.title == "Events" then %>	<%+footer%> 
+<%+footer%>	
+<% end %> 

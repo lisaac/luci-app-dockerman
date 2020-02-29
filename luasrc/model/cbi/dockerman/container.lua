@@ -355,6 +355,7 @@ if action == "info" then
     if table_info[section]._button and table_info[section]._value ~= nil then
       btn_update.inputtitle=table_info[section]._button
       self.template = "cbi/button"
+      self.inputstyle = "edit"
       Button.render(self, section, scope)
     else 
       self.template = "cbi/dvalue"

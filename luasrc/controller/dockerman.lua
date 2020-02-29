@@ -61,7 +61,7 @@ function action_events()
       end
     end
   end
-  luci.template.render("dockerman/logs", {self={syslog = logs, title="Docker Events"}})
+  luci.template.render("dockerman/logs", {self={syslog = logs, title="Events"}})
 end
 
 local calculate_cpu_percent = function(d)
