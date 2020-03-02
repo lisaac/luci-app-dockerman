@@ -36,9 +36,9 @@ if cmd_line and cmd_line:match("^docker.+") then
   local key = nil
   local _key = nil
   --cursor = 0: docker run
-  --cursor = 1: resloving para
-  --cursor = 2: resloving image
-  --cursor > 2: resloving command
+  --cursor = 1: resolving para
+  --cursor = 2: resolving image
+  --cursor > 2: resolving command
   local cursor = 0
   default_config["advance"] = 1
   for w in cmd_line:gmatch("[^%s]+") do 
@@ -245,9 +245,9 @@ local s = m:section(SimpleSection, translate("New Container"))
 s.addremove = true
 s.anonymous = true
 
-local d = s:option(DummyValue,"cmd_line", translate("Resolv CLI"))
+local d = s:option(DummyValue,"cmd_line", translate("Resolve CLI"))
 d.rawhtml  = true
-d.template = "dockerman/resolv_container"
+d.template = "dockerman/newcontainer_resolve"
 
 d = s:option(Value, "name", translate("Container Name"))
 d.rmempty = true

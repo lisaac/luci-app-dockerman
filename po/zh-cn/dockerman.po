@@ -139,7 +139,7 @@ msgstr "网关"
 msgid "New"
 msgstr "新建"
 
-msgid "Resolv CLI"
+msgid "Resolve CLI"
 msgstr "解析命令行"
 
 msgid "Docker Image"

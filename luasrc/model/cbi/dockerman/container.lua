@@ -490,9 +490,9 @@ elseif action == "logs" then
 elseif action == "console" then
   m.submit = false
   m.reset  = false
-  local cmd_dokcer = luci.util.exec("which docker")
+  local cmd_docker = luci.util.exec("which docker")
   local cmd_ttyd = luci.util.exec("which ttyd")
-  if not cmd_dokcer or not cmd_ttyd then return end
+  if not cmd_docker or not cmd_ttyd or cmd_docker:match("^%s+$") or cmd_ttyd:match("^%s+$") then return end
   local consolesection= m:section(SimpleSection)
   local cmd = "/bin/sh"
   local uid
@@ -518,6 +518,9 @@ elseif action == "console" then
     Button.render(self, section, scope)
   end
   btn_connect.write = function(self, section)
+    local cmd_docker = luci.util.exec("which docker"):match("^.+docker") or nil
+    local cmd_ttyd = luci.util.exec("which ttyd"):match("^.+ttyd") or nil
+    if not cmd_docker or not cmd_ttyd or cmd_docker:match("^%s+$") or cmd_ttyd:match("^%s+$") then return end
     local kill_ttyd = 'netstat -lnpt | grep ":7682[ \t].*ttyd$" | awk \'{print $7}\' | awk -F\'/\' \'{print "kill -9 " $1}\' | sh > /dev/null'
     local hosts
     local remote = uci:get("dockerman", "local", "remote_endpoint")
@@ -532,13 +535,13 @@ elseif action == "console" then
       return
     end
 
-    local start_cmd = cmd_ttyd .. ' -d 2 -p 7682 '.. cmd_dokcer .. ' -H "'.. hosts ..'" exec -it ' .. (uid and uid ~= "" and (" -u ".. uid  .. ' ') or "").. container_id .. ' ' .. cmd .. ' &'
+    local start_cmd = cmd_ttyd .. ' -d 2 -p 7682 '.. cmd_docker .. ' -H "'.. hosts ..'" exec -it ' .. (uid and uid ~= "" and (" -u ".. uid  .. ' ') or "").. container_id .. ' ' .. cmd .. ' &'
     local res = luci.util.exec(start_cmd)
     if not res or res:match("^%s+$") then
       -- no err, show the console
       local console = consolesection:option(DummyValue, "console")
       console.container_id = container_id
-      console.template = "dockerman/console"
+      console.template = "dockerman/container_console"
     end
   end
 
@@ -558,7 +561,7 @@ elseif action == "stats" then
     container_top=response.body
     stat_section = m:section(SimpleSection)
     stat_section.container_id = container_id
-    stat_section.template = "dockerman/stats"
+    stat_section.template = "dockerman/container_stats"
     table_stats = {cpu={key=translate("CPU Useage"),value='-'},memory={key=translate("Memory Useage"),value='-'}}
     stat_section = m:section(Table, table_stats, translate("Stats"))
     stat_section:option(DummyValue, "key", translate("Stats")).width="33%"
