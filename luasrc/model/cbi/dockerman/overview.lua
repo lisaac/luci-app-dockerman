@@ -98,6 +98,7 @@ remote_endpoint.rmempty = true
 local remote_port = s:option(Value, "remote_port", translate("Remote Port"))
 remote_port:depends("remote_endpoint", "true")
 remote_port.placeholder = "2375"
+remote_port.default = "2375"
 remote_endpoint.rmempty = true
 
 local status_path = s:option(Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))

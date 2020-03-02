@@ -390,3 +390,6 @@ msgstr "请输入新镜像标签名称"
 
 msgid "Error"
 msgstr "错误"
+
+msgid "Console"
+msgstr "控制台"

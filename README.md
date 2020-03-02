@@ -4,8 +4,10 @@
 用于管理 Docker 容器、镜像、网络，适用于自带 Docker 的 Openwrt系统、运行在 Docker 中的 openwrt 或 [LuCI-in-docker](https://github.com/lisaac/luci-in-docker).
 
 ### Depends/依赖
-- luci-lib-json
+- docker-ce (optional, since you can use it as a remote docker client)
+- luci-lib-jsonc
 - [luci-lib-docker](https://github.com/lisaac/luci-lib-docker)
+- ttyd (optional, use for container console)
 
 ### Compile/编译
 ```bash

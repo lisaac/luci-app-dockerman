@@ -199,7 +199,7 @@ function upload_archive(container_id)
   local dk = docker.new()
   local ltn12 = require "luci.ltn12"
 
-  rec_send = function(sinkout)
+  local rec_send = function(sinkout)
     luci.http.setfilehandler(function (meta, chunk, eof)
       if chunk then
         ltn12.pump.step(ltn12.source.string(chunk), sinkout)
@@ -249,7 +249,7 @@ function load_images()
   local dk = docker.new()
   local ltn12 = require "luci.ltn12"
 
-  rec_send = function(sinkout)
+  local rec_send = function(sinkout)
     luci.http.setfilehandler(function (meta, chunk, eof)
       if chunk then
         ltn12.pump.step(ltn12.source.string(chunk), sinkout)
@@ -273,7 +273,7 @@ function import_images()
   local dk = docker.new()
   local ltn12 = require "luci.ltn12"
 
-  rec_send = function(sinkout)
+  local rec_send = function(sinkout)
     luci.http.setfilehandler(function (meta, chunk, eof)
       if chunk then
         ltn12.pump.step(ltn12.source.string(chunk), sinkout)

@@ -68,16 +68,17 @@ if cmd_line and cmd_line:match("^docker.+") then
       --key=value
       local val
       key, val = w:match("^%-+(.-)=(.+)")
-      -- -dit
-      if not key then key = w:match("^%-+(.+)") end
 
       if not key then
-        key = w:match("^%-(.+)")
+        key = w:match("^%-([^-]+)")
+        -- -dit
         if key:match("i") or key:match("t") or key:match("d") then
           if key:match("i") then default_config["interactive"] = true end
           if key:match("t") then default_config["tty"] = true end
           -- clear key
           key = nil
+        else
+          key = w:match("^%-+(.+)")
         end
       end
 

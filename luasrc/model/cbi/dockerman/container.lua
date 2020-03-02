@@ -10,7 +10,7 @@ local dk = docker.new()
 container_id = arg[1]
 local action = arg[2] or "info"
 
-local images, networks, containers_info
+local images, networks, container_info
 if not container_id then return end
 local res = dk.containers:inspect({id = container_id})
 if res.code < 300 then container_info = res.body else return end
@@ -487,6 +487,61 @@ elseif action == "logs" then
   logsection.template = "dockerman/logs"
   m.submit = false
   m.reset  = false
+elseif action == "console" then
+  m.submit = false
+  m.reset  = false
+  local cmd_dokcer = luci.util.exec("which docker")
+  local cmd_ttyd = luci.util.exec("which ttyd")
+  if not cmd_dokcer or not cmd_ttyd then return end
+  local consolesection= m:section(SimpleSection)
+  local cmd = "/bin/sh"
+  local uid
+  local vcommand = consolesection:option(Value, "command", translate("Command"))
+  vcommand:value("/bin/sh", "/bin/sh")
+  vcommand:value("/bin/ash", "/bin/ash")
+  vcommand:value("/bin/bash", "/bin/bash")
+  vcommand.default = "/bin/sh"
+  vcommand.forcewrite = true
+  vcommand.write = function(self, section, value)
+    cmd = value
+  end
+  local vuid = consolesection:option(Value, "uid", translate("UID"))
+  vuid.forcewrite = true
+  vuid.write = function(self, section, value)
+    uid = value
+  end
+  local btn_connect = consolesection:option(Button, "connect")
+  btn_connect.render = function(self, section, scope)
+    self.inputstyle = "add"
+    self.title = " "
+    self.inputtitle = translate("Connect")
+    Button.render(self, section, scope)
+  end
+  btn_connect.write = function(self, section)
+    local kill_ttyd = 'netstat -lnpt | grep ":7682[ \t].*ttyd$" | awk \'{print $7}\' | awk -F\'/\' \'{print "kill -9 " $1}\' | sh > /dev/null'
+    local hosts
+    local remote = uci:get("dockerman", "local", "remote_endpoint")
+    local socket_path = (remote == nil) and  uci:get("dockerman", "local", "socket_path") or nil
+    local host = (remote == "true") and uci:get("dockerman", "local", "remote_host") or nil
+    local port = (remote == "true") and uci:get("dockerman", "local", "remote_port") or nil
+    if remote and host and port then
+      hosts = host .. ':'.. port
+    elseif socket_path then
+      hosts = "unix://" .. socket_path
+    else
+      return
+    end
+
+    local start_cmd = cmd_ttyd .. ' -d 2 -p 7682 '.. cmd_dokcer .. ' -H "'.. hosts ..'" exec -it ' .. (uid and uid ~= "" and (" -u ".. uid  .. ' ') or "").. container_id .. ' ' .. cmd .. ' &'
+    local res = luci.util.exec(start_cmd)
+    if not res or res:match("^%s+$") then
+      -- no err, show the console
+      local console = consolesection:option(DummyValue, "console")
+      console.container_id = container_id
+      console.template = "dockerman/console"
+    end
+  end
+
 elseif action == "stats" then
   local response = dk.containers:top({id = container_id, query = {ps_args="-aux"}})
   local container_top
