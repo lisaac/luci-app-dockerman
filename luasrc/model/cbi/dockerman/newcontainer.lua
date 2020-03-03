@@ -72,7 +72,7 @@ if cmd_line and cmd_line:match("^docker.+") then
       if not key then
         key = w:match("^%-([^-]+)")
         -- -dit
-        if key:match("i") or key:match("t") or key:match("d") then
+        if key and (key:match("i") or key:match("t") or key:match("d")) then
           if key:match("i") then default_config["interactive"] = true end
           if key:match("t") then default_config["tty"] = true end
           -- clear key
