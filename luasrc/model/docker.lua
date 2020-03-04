@@ -18,9 +18,9 @@ local update_image = function(self, image_name)
   local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
   local res = self.images:create({query = {fromImage=image_name}, header={["X-Registry-Auth"]=x_auth}})
   if res and res.code < 300 then
-    _docker:append_status("done<br>")
+    _docker:append_status("done\n")
   else
-    _docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
+    _docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
   end
   new_image_id = self.images:inspect({name = image_name}).body.Id
   return new_image_id, res
@@ -165,7 +165,7 @@ local upgrade = function(self, request)
   _docker:append_status("Container: " .. "Stop" .. " " .. container_name .. "...")
   res = self.containers:stop({name = container_name})
   if res and res.code < 305 then
-    _docker:append_status("done<br>")
+    _docker:append_status("done\n")
   else
     return res
   end
@@ -173,7 +173,7 @@ local upgrade = function(self, request)
   _docker:append_status("Container: rename" .. " " .. container_name .. " to ".. container_name .. "_old ...")
   res = self.containers:rename({name = container_name, query = { name = container_name .. "_old" }})
   if res and res.code < 300 then
-    _docker:append_status("done<br>")
+    _docker:append_status("done\n")
   else
     return res
   end
@@ -186,7 +186,7 @@ local upgrade = function(self, request)
   _docker:append_status("Container: Create" .. " " .. container_name .. "...")
   res = self.containers:create({name = container_name, body = create_body})
   if res and res.code > 300 then return res end
-  _docker:append_status("done<br>")
+  _docker:append_status("done\n")
 
   -- extra networks need to network connect action
   for k, v in pairs(extra_network) do
@@ -197,7 +197,7 @@ local upgrade = function(self, request)
     res = self.networks:connect({id = k, body = {Container = container_name, EndpointConfig = v}})
     if res.code > 300 then return res end
 
-    _docker:append_status("done<br>")
+    _docker:append_status("done\n")
   end
   _docker:clear_status()
   return res
@@ -239,8 +239,42 @@ _docker.append_status=function(self,val)
   file_docker_action_status:close()
 end
 
+_docker.write_status=function(self,val)
+  local file_docker_action_status=io.open(self.options.status_path, "w+")
+  file_docker_action_status:write(val)
+  file_docker_action_status:close()
+end
+
+_docker.read_status=function(self)
+  return nixio.fs.readfile(self.options.status_path)
+end
+
 _docker.clear_status=function(self)
   nixio.fs.remove(self.options.status_path)
+end
+
+_docker.pull_image_show_status_cb = function(res, source)
+  local json_parse = luci.jsonc.parse
+  if res.code ~= 200 then return end
+  while true do
+    local source_step = source()
+    if source_step then
+      local step = json_parse(source_step)
+      if type(step) == "table" then
+        local buf = _docker:read_status()
+        local num
+        step.id = step.id or step.status
+        local str = step.id .. ": " .. step.status .. (step.progress and (" " .. step.progress) or "").."\n"
+        buf, num = buf:gsub(step.id .. ".-\n", str)
+        if num == 0 then
+          buf = buf .. str
+        end
+        _docker:write_status(buf)
+      end
+    else
+      return
+    end
+  end
 end
 
 return _docker

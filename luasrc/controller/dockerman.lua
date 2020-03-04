@@ -154,6 +154,8 @@ end
 function action_confirm()
   local status_path=luci.model.uci.cursor():get("dockerman", "local", "status_path")
   local data = nixio.fs.readfile(status_path)
+  data = data:gsub("\n","<br>")
+  data = data:gsub(" ","&nbsp;")
   if data then
     code = 202
     msg = data

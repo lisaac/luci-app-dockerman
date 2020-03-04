@@ -203,6 +203,7 @@ m.redirect = luci.dispatcher.build_url("admin", "docker", "containers")
 docker_status = m:section(SimpleSection)
 docker_status.template = "dockerman/apply_widget"
 docker_status.err=nixio.fs.readfile(dk.options.status_path)
+docker_status.err=docker_status.err and docker_status.err:gsub("\n","<br>"):gsub(" ","&nbsp;")
 if docker_status.err then docker:clear_status() end
 
 local s = m:section(SimpleSection, translate("New Container"))
@@ -551,9 +552,9 @@ m.handle = function(self, state, data)
     local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
     local res = dk.images:create({query = {fromImage=image}, header={["X-Registry-Auth"]=x_auth}})
     if res and res.code == 200 then
-      docker:append_status("done<br>")
+      docker:append_status("done\n")
     else
-      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
+      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
     end
   end

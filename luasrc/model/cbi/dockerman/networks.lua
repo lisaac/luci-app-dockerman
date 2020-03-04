@@ -70,6 +70,7 @@ end
 docker_status = m:section(SimpleSection)
 docker_status.template = "dockerman/apply_widget"
 docker_status.err=nixio.fs.readfile(dk.options.status_path)
+docker_status.err=docker_status.err and docker_status.err:gsub("\n","<br>"):gsub(" ","&nbsp;")
 if docker_status.err then docker:clear_status() end
 
 action = m:section(Table,{{}})
@@ -107,10 +108,10 @@ btnremove.write = function(self, section)
       docker:append_status("Networks: " .. "remove" .. " " .. net .. "...")
       local res = dk.networks["remove"](dk, {id = net})
       if res and res.code >= 300 then
-        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
+        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
         success = false
       else
-        docker:append_status("done<br>")
+        docker:append_status("done\n")
       end
     end
     if success then

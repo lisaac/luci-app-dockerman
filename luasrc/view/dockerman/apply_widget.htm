@@ -103,8 +103,8 @@ function uci_confirm_docker() {
       var now = Date.now();
 
       docker_status_message('notice',
-        '<img src="<%=resource%>/icons/loading.gif" alt="" style="vertical-align:middle" /> ' +
-        loading_msg);
+        '<img src="<%=resource%>/icons/loading.gif" alt="" style="vertical-align:middle" /> <span style="font-family: \'Courier New\', Courier, monospace;">' +
+        loading_msg + '</span>');
 
       tt = window.setTimeout(tick, 200);
       ts = now;

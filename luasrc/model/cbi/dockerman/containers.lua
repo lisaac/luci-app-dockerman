@@ -76,7 +76,7 @@ m.reset=false
 docker_status = m:section(SimpleSection)
 docker_status.template = "dockerman/apply_widget"
 docker_status.err=nixio.fs.readfile(dk.options.status_path)
--- luci.util.perror(docker_status.err)
+docker_status.err=docker_status.err and docker_status.err:gsub("\n","<br>"):gsub(" ","&nbsp;")
 if docker_status.err then docker:clear_status() end
 
 c_table = m:section(Table, c_lists, translate("Containers"))
@@ -126,9 +126,9 @@ local start_stop_remove = function(m,cmd)
       local res = dk.containers[cmd](dk, {id = cont})
       if res and res.code >= 300 then
         success = false
-        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
+        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
       else
-        docker:append_status("done<br>")
+        docker:append_status("done\n")
       end
     end
     if success then docker:clear_status() end

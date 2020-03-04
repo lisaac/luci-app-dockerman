@@ -164,7 +164,7 @@ m.redirect = luci.dispatcher.build_url("admin/docker/containers")
 docker_status = m:section(SimpleSection)
 docker_status.template = "dockerman/apply_widget"
 docker_status.err=nixio.fs.readfile(dk.options.status_path)
--- luci.util.perror(docker_status.err)
+docker_status.err=docker_status.err and docker_status.err:gsub("\n","<br>"):gsub(" ","&nbsp;")
 if docker_status.err then docker:clear_status() end
 
 

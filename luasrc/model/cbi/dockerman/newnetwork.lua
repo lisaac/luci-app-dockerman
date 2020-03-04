@@ -15,6 +15,7 @@ m.redirect = luci.dispatcher.build_url("admin", "docker", "networks")
 docker_status = m:section(SimpleSection)
 docker_status.template = "dockerman/apply_widget"
 docker_status.err=nixio.fs.readfile(dk.options.status_path)
+docker_status.err=docker_status.err and docker_status.err:gsub("\n","<br>"):gsub(" ","&nbsp;")
 if docker_status.err then docker:clear_status() end
 
 s = m:section(SimpleSection, translate("New Network"))
@@ -196,7 +197,7 @@ m.handle = function(self, state, data)
       docker:clear_status()
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
     else
-      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "<br>")
+      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/newnetwork"))
     end
   end
