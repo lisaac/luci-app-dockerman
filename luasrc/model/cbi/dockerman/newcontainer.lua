@@ -33,43 +33,49 @@ end
 local resolve_cli = function(cmd_line)
   local config = {advance = 1}
   local key_no_val = '|t|d|i|tty|rm|read-only|interactive|init|help|detach|privileged|'
-  local key_with_val = '|sysctl|add-host|a|attach|blkio-weight-device|cap-add|cap-drop|device|device-cgroup-rule|device-read-bps|device-read-iops|device-write-bps|device-write-iops|dns|dns-option|dns-search|e|env|env-file|expose|group-add|l|label|label-file|link|link-local-ip|log-driver|log-opt|network-alias|p|publish|security-opt|storage-opt|tmpfs|v|volume|volumes-from|blkio-weight|cgroup-parent|cidfile|cpu-period|cpu-quota|cpu-rt-period|cpu-rt-runtime|c|cpu-shares|cpus|cpuset-cpus|cpuset-mems|detach-keys|disable-content-trust|domainname|entrypoint|gpus|health-cmd|health-interval|health-retries|health-start-period|health-timeout|h|hostname|ip|ip6|ipc|isolation|kernel-memory|log-driver|mac-address|m|memory|memory-reservation|memory-swap|memory-swappiness|mount|name|network|no-healthcheck|oom-kill-disable|oom-score-adj|pid|pids-limit|P|publish-all|restart|runtime|shm-size|sig-proxy|stop-signal|stop-timeout|ulimit|u|user|userns|uts|volume-driver|w|workdir|'
+  local key_with_val = '|sysctl|add_host|a|attach|blkio_weight_device|cap_add|cap_drop|device|device_cgroup_rule|device_read_bps|device_read_iops|device_write_bps|device_write_iops|dns|dns_option|dns_search|e|env|env_file|expose|group_add|l|label|label_file|link|link_local_ip|log_driver|log_opt|network_alias|p|publish|security_opt|storage_opt|tmpfs|v|volume|volumes_from|blkio_weight|cgroup_parent|cidfile|cpu_period|cpu_quota|cpu_rt_period|cpu_rt_runtime|c|cpu_shares|cpus|cpuset_cpus|cpuset_mems|detach_keys|disable_content_trust|domainname|entrypoint|gpus|health_cmd|health_interval|health_retries|health_start_period|health_timeout|h|hostname|ip|ip6|ipc|isolation|kernel_memory|log_driver|mac_address|m|memory|memory_reservation|memory_swap|memory_swappiness|mount|name|network|no_healthcheck|oom_kill_disable|oom_score_adj|pid|pids_limit|P|publish_all|restart|runtime|shm_size|sig_proxy|stop_signal|stop_timeout|ulimit|u|user|userns|uts|volume_driver|w|workdir|'
   local key_abb = {net='network',a='attach',c='cpu-shares',d='detach',e='env',h='hostname',i='interactive',l='label',m='memory',p='publish',P='publish_all',t='tty',u='user',v='volume',w='workdir'}
-  local key_with_list = '|sysctl|add-host|a|attach|blkio-weight-device|cap-add|cap-drop|device|device-cgroup-rule|device-read-bps|device-read-iops|device-write-bps|device-write-iops|dns|dns-option|dns-search|e|env|env-file|expose|group-add|l|label|label-file|link|link-local-ip|log-driver|log-opt|network-alias|p|publish|security-opt|storage-opt|tmpfs|v|volume|volumes-from|'
+  local key_with_list = '|sysctl|add_host|a|attach|blkio_weight_device|cap_add|cap_drop|device|device_cgroup_rule|device_read_bps|device_read_iops|device_write_bps|device_write_iops|dns|dns_option|dns_search|e|env|env_file|expose|group_add|l|label|label_file|link|link_local_ip|log_driver|log_opt|network_alias|p|publish|security_opt|storage_opt|tmpfs|v|volume|volumes_from|'
   local key = nil
   local _key = nil
   local val = nil
   local is_cmd = false
 
+  luci.util.perror(key_with_val)
   cmd_line = cmd_line:match("^DOCKERCLI%s+(.+)")
   for w in cmd_line:gmatch("[^%s]+") do
     if w =='\\' then
     elseif not key and not _key and not is_cmd then
-      key, val = w:match("^%-%-([^%-]-)=(.+)")
+      --key=val
+      key, val = w:match("^%-%-([%lP%-]-)=(.+)")
       if not key then
-        key = w:match("^%-([^%-]+)")
-        if key then
-          -- for -dit
-          if key:match("i") or key:match("t") then
-            if key:match("i") then
-              config[key_abb["i"]] = true
-              key:gsub("i", "")
+        --key val
+        key = w:match("^%-%-([%lP%-]+)")
+        if not key then
+          -- -v val
+          key = w:match("^%-([%lP%-]+)")
+          if key then
+            -- for -dit
+            if key:match("i") or key:match("t") then
+              if key:match("i") then
+                config[key_abb["i"]] = true
+                key:gsub("i", "")
+              end
+              if key:match("t") then
+                config[key_abb["t"]] = true
+                key:gsub("t", "")
+              end
+              if key:match("d") then
+                config[key_abb["d"]] = true
+                key:gsub("d", "")
+              end
+              if key == "" then key = nil end
             end
-            if key:match("t") then
-              config[key_abb["t"]] = true
-              key:gsub("t", "")
-            end
-            if key:match("d") then
-              config[key_abb["d"]] = true
-              key:gsub("d", "")
-            end
-            if key == "" then key = nil end
           end
-        else
-          key = w:match("^%-%-([^%-]+)")
         end
       end
       if key then
+        key = key:gsub("-","_")
         if key_no_val:match("|"..key.."|") then
           key = key_abb[key] or key
           config[key] = true
@@ -77,7 +83,6 @@ local resolve_cli = function(cmd_line)
           key = nil
         elseif key_with_val:match("|"..key.."|") then
           key = key_abb[key] or key
-          key = key:gsub("-","_")
           if key == "cap_add" then config.privileged = true end
         else
           key = nil
