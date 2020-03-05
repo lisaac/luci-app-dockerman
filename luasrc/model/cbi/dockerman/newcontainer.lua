@@ -548,11 +548,16 @@ m.handle = function(self, state, data)
   local pull_image = function(image)
     local server = "index.docker.io"
     local json_stringify = luci.jsonc and luci.jsonc.stringify
-    docker:append_status("Images: " .. "pulling" .. " " .. image .. "...")
+    docker:append_status("Images: " .. "pulling" .. " " .. image .. "...\n")
     local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
-    local res = dk.images:create({query = {fromImage=image}, header={["X-Registry-Auth"]=x_auth}})
+    local res = dk.images:create({query = {fromImage=image}, header={["X-Registry-Auth"]=x_auth}}, docker.pull_image_show_status_cb)
     if res and res.code == 200 then
-      docker:append_status("done\n")
+      buf = docker:read_status()
+      if buf:match("Status: Downloaded newer image for ".. image) then
+        docker:append_status("done\n")
+      else
+        luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
+      end
     else
       docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))

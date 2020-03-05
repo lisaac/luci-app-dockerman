@@ -14,11 +14,17 @@ local update_image = function(self, image_name)
   local server = "index.docker.io"
 
   local json_stringify = luci.jsonc and luci.jsonc.stringify
-  _docker:append_status("Images: " .. "pulling" .. " " .. image_name .. "...")
+  _docker:append_status("Images: " .. "pulling" .. " " .. image_name .. "...\n")
   local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
-  local res = self.images:create({query = {fromImage=image_name}, header={["X-Registry-Auth"]=x_auth}})
-  if res and res.code < 300 then
-    _docker:append_status("done\n")
+  local res = self.images:create({query = {fromImage=image_name}, header={["X-Registry-Auth"]=x_auth}}, _docker.pull_image_show_status_cb)
+  if res and res.code == 200 then
+    buf = docker:read_status()
+    if buf:match("Status: Downloaded newer image for ".. image) then
+      docker:append_status("done\n")
+    else
+      res.code = 599
+      res.body.message = buf
+    end
   else
     _docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
   end
@@ -157,7 +163,7 @@ local upgrade = function(self, request)
   local old_network_setting = container_info.body.NetworkSettings.Networks or {}
 
   local image_id, res = update_image(self, image_name)
-  if res and res.code > 300 then return res end
+  if res and res.code ~= 200 then return res end
   if image_id == old_image_id then
     return {code = 305, body = {message = "Already up to date"}}
   end
@@ -253,7 +259,7 @@ _docker.clear_status=function(self)
   nixio.fs.remove(self.options.status_path)
 end
 
-_docker.pull_image_show_status_cb = function(res, source)
+local status_cb = function(res, source, handler)
   local json_parse = luci.jsonc.parse
   if res.code ~= 200 then return end
   while true do
@@ -261,20 +267,39 @@ _docker.pull_image_show_status_cb = function(res, source)
     if source_step then
       local step = json_parse(source_step)
       if type(step) == "table" then
-        local buf = _docker:read_status()
-        local num
-        step.id = step.id or step.status
-        local str = step.id .. ": " .. step.status .. (step.progress and (" " .. step.progress) or "").."\n"
-        buf, num = buf:gsub(step.id .. ".-\n", str)
-        if num == 0 then
-          buf = buf .. str
-        end
-        _docker:write_status(buf)
+        handler(step)
       end
     else
       return
     end
   end
+end
+
+_docker.pull_image_show_status_cb = function(res, source)
+  return status_cb(res, source, function(step)
+    local buf = _docker:read_status()
+    local num = 0
+    local str = '\t' .. (step.id and (step.id .. ": ") or "") .. (step.status and step.status or "")  .. (step.progress and (" " .. step.progress) or "").."\n"
+    if step.id then buf, num = buf:gsub("\t"..step.id .. ": .-\n", str) end
+    if num == 0 then
+      buf = buf .. str
+    end
+    _docker:write_status(buf)
+  end)
+end
+
+_docker.import_image_show_status_cb = function(res, source)
+  return status_cb(res, source, function(step)
+    local buf = _docker:read_status()
+    local num = 0
+    local str = '\t' .. (step.status and step.status or "") .. (step.progress and (" " .. step.progress) or "").."\n"
+    if step.status then buf, num = buf:gsub("\t"..step.status .. " .-\n", str) end
+    if num == 0 then
+      buf = buf .. str
+    end
+    _docker:write_status(buf)
+  end
+  )
 end
 
 return _docker

@@ -154,9 +154,8 @@ end
 function action_confirm()
   local status_path=luci.model.uci.cursor():get("dockerman", "local", "status_path")
   local data = nixio.fs.readfile(status_path)
-  data = data:gsub("\n","<br>")
-  data = data:gsub(" ","&nbsp;")
   if data then
+    data = data:gsub("\n","<br>"):gsub(" ","&nbsp;")
     code = 202
     msg = data
   else
@@ -164,7 +163,6 @@ function action_confirm()
     msg = "finish"
     data = "finish"
   end
-  -- luci.util.perror(data)
   luci.http.status(code, msg)
   luci.http.prepare_content("application/json")
   luci.http.write_json({info = data})
@@ -225,6 +223,7 @@ function save_images(container_id)
     if res.code == 200 then
       if not first then
         first = true
+        luci.http.status(res.code, res.message)
         luci.http.header('Content-Disposition', 'inline; filename="images.tar"')
         luci.http.header('Content-Type', 'application\/x-tar')
       end
@@ -234,6 +233,7 @@ function save_images(container_id)
         first = true
         luci.http.prepare_content("text/plain")
       end
+      docker:append_status("Images: " .. "save" .. " " .. container_id .. "...")
       luci.ltn12.pump.all(chunk, luci.http.write)
     end
   end
@@ -241,6 +241,7 @@ function save_images(container_id)
   docker:append_status("Images: " .. "save" .. " " .. container_id .. "...")
   local res = dk.images:get({id = container_id, query = {names = names}}, cb)
   docker:clear_status()
+  local msg = res and res.body and res.body.message or nil
   luci.http.status(res.code, msg)
   luci.http.prepare_content("application/json")
   luci.http.write_json({message = msg})
@@ -284,10 +285,10 @@ function import_images()
   end
 
   docker:clear_status()
-  docker:append_status("Images: " .. "Improt".. " ".. itag .."...")
+  docker:append_status("Images: " .. "Improt".. " ".. itag .."...\n")
   local repo = itag and itag:match("^([^:]+)")
   local tag = itag and itag:match("^[^:]-:([^:]+)")
-  local res = dk.images:create({query = {fromSrc = src or "-", repo = repo or nil, tag = tag or nil }, body = not src and rec_send or nil})
+  local res = dk.images:create({query = {fromSrc = src or "-", repo = repo or nil, tag = tag or nil }, body = not src and rec_send or nil}, docker.import_image_show_status_cb)
   docker:clear_status()
   local msg = res and res.body and res.body.message or nil
   luci.http.status(res.code, msg)
@@ -304,6 +305,7 @@ function get_image_tags(image_id)
   end
   local dk = docker.new()
   local res = dk.images:inspect({id = image_id})
+  local msg = res and res.body and res.body.message or nil
   luci.http.status(res.code, msg)
   luci.http.prepare_content("application/json")
   if res.code == 200 then
@@ -328,6 +330,7 @@ function tag_image(image_id)
   local tag = src:match("^[^:]-:([^:]+)")
   local dk = docker.new()
   local res = dk.images:tag({id = image_id, query={repo=repo, tag=tag}})
+  local msg = res and res.body and res.body.message or nil
   luci.http.status(res.code, msg)
   luci.http.prepare_content("application/json")
   if res.code == 201 then
@@ -353,7 +356,8 @@ function untag_image(tag)
     local tags = res.body.RepoTags
     if #tags > 1 then
       local r = dk.images:remove({name = tag})
-      luci.http.status(res.code, msg)
+      local msg = r and r.body and r.body.message or nil
+      luci.http.status(r.code, msg)
       luci.http.prepare_content("application/json")
       luci.http.write_json({message = msg})
     else
@@ -362,6 +366,7 @@ function untag_image(tag)
       luci.http.write_json({message = "Cannot remove the last tag"})
     end
   else
+    local msg = res and res.body and res.body.message or nil
     luci.http.status(res.code, msg)
     luci.http.prepare_content("application/json")
     local msg = res and res.body and res.body.message or nil
