@@ -168,9 +168,6 @@ local upgrade = function(self, request)
   if not image_name:match(".-:.+") then image_name = image_name .. ":latest" end
   local old_image_id = container_info.body.Image
   local container_name = container_info.body.Name:sub(2)
-  -- local old_config = container_info.body.Config
-  -- local old_host_config = container_info.body.HostConfig
-  -- local old_network_setting = container_info.body.NetworkSettings.Networks or {}
 
   local image_id, res = update_image(self, image_name)
   if res and res.code ~= 200 then return res end

@@ -34,6 +34,9 @@ make V=99
 ### Download /下载
 - [ipk file](https://github.com/lisaac/luci-app-dockerman/releases)
 
+### Contact / 联系
+- [Telegram](https://t.me/joinchat/G5mqjhrlU9S8TMkXeBmj0w)
+
 ### Screenshot/截图
 - Containers
 ![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/containers.png)
