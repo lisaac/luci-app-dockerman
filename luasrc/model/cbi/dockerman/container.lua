@@ -163,7 +163,7 @@ m.redirect = luci.dispatcher.build_url("admin/docker/containers")
 -- m:append(Template("dockerman/container"))
 docker_status = m:section(SimpleSection)
 docker_status.template = "dockerman/apply_widget"
-docker_status.err=nixio.fs.readfile(dk.options.status_path)
+docker_status.err=docker:read_status()
 docker_status.err=docker_status.err and docker_status.err:gsub("\n","<br>"):gsub(" ","&nbsp;")
 if docker_status.err then docker:clear_status() end
 
@@ -452,8 +452,7 @@ elseif action == "edit" then
         Memory = tonumber(memory),
         CpuShares = tonumber(data.cpushares)
         }
-      docker:clear_status()
-      docker:append_status("Containers: update " .. container_id .. "...")
+      docker:write_status("Containers: update " .. container_id .. "...")
       local res = dk.containers:update({id = container_id, body = request_body})
       if res and res.code >= 300 then
         docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))

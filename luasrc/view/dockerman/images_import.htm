@@ -19,16 +19,9 @@
       formData.append('tag', valITag.value)
       let xhr = new XMLHttpRequest()
       uci_confirm_docker()
-      xhr.open("POST", "/cgi-bin/luci/admin/docker/images_import", true)
+      xhr.open("POST", "<%=url('admin/docker/images_import')%>", true)
       xhr.onload = function () {
-        if (xhr.status == 200) {
-          fileimport.value = ''
-          alert("<%:Upload Success%> !")
-          location.reload()
-        }
-        else {
-          alert("<%:Upload Error%>:" + xhr.statusText)
-        }
+        location.reload()
       }
       xhr.send(formData)
     }
@@ -47,16 +40,10 @@
     formData.append('upload-archive', fileimport.files[0])
     let xhr = new XMLHttpRequest()
     uci_confirm_docker()
-    xhr.open("POST", "/cgi-bin/luci/admin/docker/images_import", true)
+    xhr.open("POST", "<%=url('admin/docker/images_import')%>", true)
     xhr.onload = function () {
-      if (xhr.status == 200) {
-        fileimport.value = ''
-        alert("<%:Upload Success%> !")
-        location.reload()
-      }
-      else {
-        alert("<%:Upload Error%>:" + xhr.statusText)
-      }
+      fileimport.value = ''
+      location.reload()
     }
     xhr.send(formData)
   }
@@ -64,14 +51,17 @@
   let new_tag = function (image_id) {
     let new_tag = prompt("<%:New tag%>\n<%:Image%>" + "ID: " + image_id + "\n<%:Please input new tag%>:", "")
     if (new_tag) {
-      (new XHR()).post('<%=url('admin/docker/images_tag')%>',
+      (new XHR()).post("<%=url('admin/docker/images_tag')%>",
         { id: image_id, tag: new_tag },
         function (r) {
           if (r.status == 201) {
             location.reload()
           }
           else {
-            alert("<%:Error%>:" + r.statusText)
+            docker_status_message('warning', 'Image: untagging ' + tag + '...fail code:' + r.status + r.statusText);
+            document.getElementById('docker_apply_overlay').addEventListener("click", (e)=>{
+              docker_status_message()
+            })
           }
         })
     }
@@ -80,14 +70,17 @@
   let un_tag = function (tag) {
     if (tag.match("<none>")) return
     if (confirm("<%:Remove tag%>: " + tag + " ?")) {
-      (new XHR()).post('<%=url('admin/docker/images_untag')%>',
+      (new XHR()).post("<%=url('admin/docker/images_untag')%>",
         { tag: tag },
         function (r) {
           if (r.status == 200) {
             location.reload()
           }
           else {
-            alert("<%:Error%>: " + r.statusText)
+            docker_status_message('warning', 'Image: untagging ' + tag + '...fail code:' + r.status + r.statusText);
+            document.getElementById('docker_apply_overlay').addEventListener("click", (e)=>{
+              docker_status_message()
+            })
           }
         })
     }

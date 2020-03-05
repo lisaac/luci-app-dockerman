@@ -17,16 +17,10 @@ local update_image = function(self, image_name)
   _docker:append_status("Images: " .. "pulling" .. " " .. image_name .. "...\n")
   local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
   local res = self.images:create({query = {fromImage=image_name}, header={["X-Registry-Auth"]=x_auth}}, _docker.pull_image_show_status_cb)
-  if res and res.code == 200 then
-    buf = docker:read_status()
-    if buf:match("Status: Downloaded newer image for ".. image) then
-      docker:append_status("done\n")
-    else
-      res.code = 599
-      res.body.message = buf
-    end
-  else
-    _docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
+  if res and res.code == 200 and res.body[#res.body].status:match("Status: Downloaded newer image for ".. image_name) then
+    _docker:append_status("done\n")
+  -- else
+  --   _docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
   end
   new_image_id = self.images:inspect({name = image_name}).body.Id
   return new_image_id, res
@@ -240,12 +234,14 @@ _docker.options={}
 _docker.options.status_path = uci:get("dockerman", "local", "status_path")
 
 _docker.append_status=function(self,val)
+  if not val then return end
   local file_docker_action_status=io.open(self.options.status_path, "a+")
   file_docker_action_status:write(val)
   file_docker_action_status:close()
 end
 
 _docker.write_status=function(self,val)
+  if not val then return end
   local file_docker_action_status=io.open(self.options.status_path, "w+")
   file_docker_action_status:write(val)
   file_docker_action_status:close()
@@ -260,46 +256,70 @@ _docker.clear_status=function(self)
 end
 
 local status_cb = function(res, source, handler)
-  local json_parse = luci.jsonc.parse
-  if res.code ~= 200 then return end
+  res.body = res.body or {}
   while true do
-    local source_step = source()
-    if source_step then
-      local step = json_parse(source_step)
-      if type(step) == "table" then
-        handler(step)
-      end
+    local chunk = source()
+    if chunk then
+      --standard output to res.body
+      table.insert(res.body, chunk)
+      handler(chunk)
     else
       return
     end
   end
 end
 
+--{"status":"Pulling from library\/debian","id":"latest"}
+--{"status":"Pulling fs layer","progressDetail":[],"id":"50e431f79093"}
+--{"status":"Downloading","progressDetail":{"total":50381971,"current":2029978},"id":"50e431f79093","progress":"[==>                                                ]   2.03MB\/50.38MB"}
+--{"status":"Download complete","progressDetail":[],"id":"50e431f79093"}
+--{"status":"Extracting","progressDetail":{"total":50381971,"current":17301504},"id":"50e431f79093","progress":"[=================>                                 ]   17.3MB\/50.38MB"}
+--{"status":"Pull complete","progressDetail":[],"id":"50e431f79093"}
+--{"status":"Digest: sha256:a63d0b2ecbd723da612abf0a8bdb594ee78f18f691d7dc652ac305a490c9b71a"}
+--{"status":"Status: Downloaded newer image for debian:latest"}
 _docker.pull_image_show_status_cb = function(res, source)
-  return status_cb(res, source, function(step)
-    local buf = _docker:read_status()
-    local num = 0
-    local str = '\t' .. (step.id and (step.id .. ": ") or "") .. (step.status and step.status or "")  .. (step.progress and (" " .. step.progress) or "").."\n"
-    if step.id then buf, num = buf:gsub("\t"..step.id .. ": .-\n", str) end
-    if num == 0 then
-      buf = buf .. str
+  return status_cb(res, source, function(chunk)
+    local json_parse = luci.jsonc.parse
+    local step = json_parse(chunk)
+    if type(step) == "table" then
+      local buf = _docker:read_status()
+      local num = 0
+      local str = '\t' .. (step.id and (step.id .. ": ") or "") .. (step.status and step.status or "")  .. (step.progress and (" " .. step.progress) or "").."\n"
+      if step.id then buf, num = buf:gsub("\t"..step.id .. ": .-\n", str) end
+      if num == 0 then
+        buf = buf .. str
+      end
+      _docker:write_status(buf)
     end
-    _docker:write_status(buf)
   end)
 end
 
+--{"status":"Downloading from https://downloads.openwrt.org/releases/19.07.0/targets/x86/64/openwrt-19.07.0-x86-64-generic-rootfs.tar.gz"}
+--{"status":"Importing","progressDetail":{"current":1572391,"total":3821714},"progress":"[====================\u003e                              ]  1.572MB/3.822MB"}
+--{"status":"sha256:d5304b58e2d8cc0a2fd640c05cec1bd4d1229a604ac0dd2909f13b2b47a29285"}
 _docker.import_image_show_status_cb = function(res, source)
-  return status_cb(res, source, function(step)
-    local buf = _docker:read_status()
-    local num = 0
-    local str = '\t' .. (step.status and step.status or "") .. (step.progress and (" " .. step.progress) or "").."\n"
-    if step.status then buf, num = buf:gsub("\t"..step.status .. " .-\n", str) end
-    if num == 0 then
-      buf = buf .. str
+  return status_cb(res, source, function(chunk)
+    local json_parse = luci.jsonc.parse
+    local step = json_parse(chunk)
+    if type(step) == "table" then
+      local buf = _docker:read_status()
+      local num = 0
+      local str = '\t' .. (step.status and step.status or "") .. (step.progress and (" " .. step.progress) or "").."\n"
+      if step.status then buf, num = buf:gsub("\t"..step.status .. " .-\n", str) end
+      if num == 0 then
+        buf = buf .. str
+      end
+      _docker:write_status(buf)
     end
-    _docker:write_status(buf)
   end
   )
 end
+
+-- _docker.print_status_cb = function(res, source)
+--   return status_cb(res, source, function(step)
+--     luci.util.perror(step)
+--   end
+--   )
+-- end
 
 return _docker

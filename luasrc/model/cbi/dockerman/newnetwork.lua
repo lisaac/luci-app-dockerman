@@ -14,7 +14,7 @@ m.redirect = luci.dispatcher.build_url("admin", "docker", "networks")
 
 docker_status = m:section(SimpleSection)
 docker_status.template = "dockerman/apply_widget"
-docker_status.err=nixio.fs.readfile(dk.options.status_path)
+docker_status.err=docker:read_status()
 docker_status.err=docker_status.err and docker_status.err:gsub("\n","<br>"):gsub(" ","&nbsp;")
 if docker_status.err then docker:clear_status() end
 
@@ -191,7 +191,7 @@ m.handle = function(self, state, data)
       end
     end
 
-    docker:append_status("Network: " .. "create" .. " " .. create_body.Name .. "...")
+    docker:write_status("Network: " .. "create" .. " " .. create_body.Name .. "...")
     local res = dk.networks:create({body = create_body})
     if res and res.code == 201 then
       docker:clear_status()

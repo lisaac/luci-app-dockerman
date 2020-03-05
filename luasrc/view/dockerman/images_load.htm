@@ -22,14 +22,7 @@
     uci_confirm_docker()
     xhr.open("POST", "/cgi-bin/luci/admin/docker/images_load", true)
     xhr.onload = function() {
-      if (xhr.status == 200) {
-        fileLoad.value = ''
-        alert("<%:Upload Success%> !")
-        location.reload()
-      }
-      else {
-        alert("<%:Upload Error%>:" + xhr.statusText)
-      }
+      location.reload()
     }
     xhr.send(formData)
   }
