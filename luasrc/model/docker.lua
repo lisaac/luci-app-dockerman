@@ -96,8 +96,10 @@ local function clear_empty_tables( t )
 end
 
 -- return create_body, extra_network
-local get_config = function(old_config, old_host_config, old_network_setting, image_config)
-  local config = old_config
+local get_config = function(container_config, image_config)
+  local config = container_config.Config
+  local old_host_config = container_config.HostConfig
+  local old_network_setting = container_config.NetworkSettings.Networks or {}
   if config.WorkingDir == image_config.WorkingDir then config.WorkingDir = "" end
   if config.User == image_config.User then config.User = "" end
   if table_equal(config.Cmd, image_config.Cmd) then config.Cmd = nil end
@@ -131,6 +133,20 @@ local get_config = function(old_config, old_host_config, old_network_setting, im
   local host_config = old_host_config
   if host_config.PortBindings and next(host_config.PortBindings) == nil then host_config.PortBindings = nil end
   host_config.LogConfig = nil
+  host_config.Mounts = {}
+  -- for volumes
+  for i, v in ipairs(container_config.Mounts) do
+    if v.Type == "volume" then
+      table.insert(host_config.Mounts, {
+        Type = v.Type,
+        Target = v.Destination,
+        Source = v.Source:match("([^/]+)\/_data"),
+        BindOptions = v.Type == "bind" and {Propagation = v.Propagation} or nil,
+        ReadOnly = not v.RW
+      })
+    end
+  end
+  
 
   -- merge configs
   local create_body = config
@@ -152,9 +168,9 @@ local upgrade = function(self, request)
   if not image_name:match(".-:.+") then image_name = image_name .. ":latest" end
   local old_image_id = container_info.body.Image
   local container_name = container_info.body.Name:sub(2)
-  local old_config = container_info.body.Config
-  local old_host_config = container_info.body.HostConfig
-  local old_network_setting = container_info.body.NetworkSettings.Networks or {}
+  -- local old_config = container_info.body.Config
+  -- local old_host_config = container_info.body.HostConfig
+  -- local old_network_setting = container_info.body.NetworkSettings.Networks or {}
 
   local image_id, res = update_image(self, image_name)
   if res and res.code ~= 200 then return res end
@@ -180,7 +196,7 @@ local upgrade = function(self, request)
 
   -- handle config
   local image_config = self.images:inspect({id = old_image_id}).body.Config
-  local create_body, extra_network = get_config(old_config, old_host_config, old_network_setting, image_config)
+  local create_body, extra_network = get_config(container_info.body, image_config)
 
   -- create new container
   _docker:append_status("Container: Create" .. " " .. container_name .. "...")
@@ -207,11 +223,11 @@ local duplicate_config = function (self, request)
   local container_info = self.containers:inspect({id = request.id})
   if container_info.code > 300 and type(container_info.body) == "table" then return nil end
   local old_image_id = container_info.body.Image
-  local old_config = container_info.body.Config
-  local old_host_config = container_info.body.HostConfig
-  local old_network_setting = container_info.body.NetworkSettings.Networks or {}
+  -- local old_config = container_info.body.Config
+  -- local old_host_config = container_info.body.HostConfig
+  -- local old_network_setting = container_info.body.NetworkSettings.Networks or {}
   local image_config = self.images:inspect({id = old_image_id}).body.Config
-  return get_config(old_config, old_host_config, old_network_setting, image_config)
+  return get_config(container_info.body, image_config)
 end
 
 _docker.new = function(option)
