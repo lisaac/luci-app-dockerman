@@ -49,7 +49,10 @@ endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
+uci set uhttpd.main.script_timeout="600"
+uci commit uhttpd
 rm -fr /tmp/luci-indexcache /tmp/luci-modulecache
+/etc/init.d/uhttpd restart
 endef
 
 define Package/$(PKG_NAME)/install

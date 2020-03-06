@@ -260,12 +260,12 @@ function load_images()
   docker:write_status("Images: loading...")
   local res = dk.images:load({body = rec_send})
   -- res.body = {"stream":"Loaded image ID: sha256:1399d3d81f80d68832e85ed6ba5f94436ca17966539ba715f661bd36f3caf08f\n"}
-  local msg = res and res.body and ( res.body.message or res.body.stream )or nil
-  if res.code == 200 and msg:match("Loaded image ID") then
+  local msg = res and res.body and ( res.body.message or res.body.stream or res.body.error)or nil
+  if res.code == 200 and msg and msg:match("Loaded image ID") then
     docker:clear_status()
     luci.http.status(res.code, msg)
   else
-    docker:append_status("fail code:" .. res.code.." ".. msg)
+    docker:append_status("code:" .. res.code.." ".. msg)
     luci.http.status(300, msg)
   end
   luci.http.prepare_content("application/json")
@@ -291,15 +291,15 @@ function import_images()
   local msg = res and res.body and ( res.body.message )or nil
   if not msg and #res.body == 0 then
     -- res.body = {"status":"sha256:d5304b58e2d8cc0a2fd640c05cec1bd4d1229a604ac0dd2909f13b2b47a29285"}
-    msg = res.body.status
+    msg = res.body.status or res.body.error
   elseif not msg and #res.body >= 1 then
     -- res.body = [...{"status":"sha256:d5304b58e2d8cc0a2fd640c05cec1bd4d1229a604ac0dd2909f13b2b47a29285"}]
-    msg = res.body[#res.body].status
+    msg = res.body[#res.body].status or res.body[#res.body].error
   end
-  if res.code == 200 and msg:match("sha256:") then
+  if res.code == 200 and msg and msg:match("sha256:") then
     docker:clear_status()
   else
-    docker:append_status("fail code:" .. res.code.." ".. msg)
+    docker:append_status("code:" .. res.code.." ".. msg)
   end
   luci.http.status(res.code, msg)
   luci.http.prepare_content("application/json")

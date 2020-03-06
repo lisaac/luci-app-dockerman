@@ -93,13 +93,14 @@ action_pull.write = function(self, section)
     docker:write_status("Images: " .. "pulling" .. " " .. tag .. "...\n")
     local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
     local res = dk.images:create({query = {fromImage=tag}, header={["X-Registry-Auth"] = x_auth}}, docker.pull_image_show_status_cb)
-    if res and res.code == 200 and res.body[#res.body].status:match("Status: Downloaded newer image for ".. tag) then
+    -- {"errorDetail": {"message": "failed to register layer: ApplyLayer exit status 1 stdout:  stderr: write \/docker: no space left on device" }, "error": "failed to register layer: ApplyLayer exit status 1 stdout:  stderr: write \/docker: no space left on device" }
+    if res and res.code == 200 and not res.body[#res.body].error and res.body[#res.body].status == "Status: Downloaded newer image for ".. tag then
       docker:clear_status()
     else
-      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
+      docker:append_status("code:" .. res.code.." ".. (res.body[#res.body].error or (res.body.message or res.message)).. "\n")
     end
   else
-    docker:append_status("fail code: 400 please input the name of image name!")
+    docker:append_status("code: 400 please input the name of image name!")
   end
   luci.http.redirect(luci.dispatcher.build_url("admin/docker/images"))
 end
@@ -132,7 +133,7 @@ local remove_action = function(force)
   for _, image_table_sid in ipairs(image_table_sids) do
     -- 得到选中项的名字
     if image_list[image_table_sid]._selected == 1 then
-      image_selected[#image_selected+1] = (not image_list[image_table_sid]["_tags"]:match("<br>") and not image_list[image_table_sid].tag:match("<none>") ) and image_list[image_table_sid].tag or image_list[image_table_sid].id
+      image_selected[#image_selected+1] = (image_list[image_table_sid]["_tags"]:match("<br>") or image_list[image_table_sid]["_tags"]:match("&lt;none&gt;")) and image_list[image_table_sid].id or image_list[image_table_sid].tag
     end
   end
   if next(image_selected) ~= nil then
@@ -144,7 +145,7 @@ local remove_action = function(force)
       if force then query = {force = true} end
       local msg = dk.images:remove({id = img, query = query})
       if msg.code ~= 200 then
-        docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "\n")
+        docker:append_status("code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "\n")
         success = false
       else
         docker:append_status("done\n")
@@ -222,7 +223,7 @@ btnsave.write = function (self, section)
     docker:write_status("Images: " .. "save" .. " " .. table.concat(image_selected, "\n") .. "...")
     local msg = dk.images:get({query = {names = names}}, cb)
     if msg.code ~= 200 then
-      docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "\n")
+      docker:append_status("code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "\n")
       success = false
     else
       docker:clear_status()

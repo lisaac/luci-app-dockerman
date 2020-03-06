@@ -126,7 +126,7 @@ local start_stop_remove = function(m,cmd)
       local res = dk.containers[cmd](dk, {id = cont})
       if res and res.code >= 300 then
         success = false
-        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
+        docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
       else
         docker:append_status("done\n")
       end

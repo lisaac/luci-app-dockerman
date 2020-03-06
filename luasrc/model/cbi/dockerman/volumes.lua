@@ -104,7 +104,7 @@ btnremove.write = function(self, section)
       docker:append_status("Volumes: " .. "remove" .. " " .. vol .. "...")
       local msg = dk.volumes["remove"](dk, {id = vol})
       if msg.code ~= 204 then
-        docker:append_status("fail code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "\n")
+        docker:append_status("code:" .. msg.code.." ".. (msg.body.message and msg.body.message or msg.message).. "\n")
         success = false
       else
         docker:append_status("done\n")

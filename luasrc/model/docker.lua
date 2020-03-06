@@ -17,10 +17,10 @@ local update_image = function(self, image_name)
   _docker:append_status("Images: " .. "pulling" .. " " .. image_name .. "...\n")
   local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
   local res = self.images:create({query = {fromImage=image_name}, header={["X-Registry-Auth"]=x_auth}}, _docker.pull_image_show_status_cb)
-  if res and res.code == 200 and res.body[#res.body].status:match("Status: Downloaded newer image for ".. image_name) then
+  if res and res.code == 200 and not res.body[#res.body].error and res.body[#res.body].status == "Status: Downloaded newer image for ".. image_name then
     _docker:append_status("done\n")
   -- else
-  --   _docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
+  --   _docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
   end
   new_image_id = self.images:inspect({name = image_name}).body.Id
   return new_image_id, res

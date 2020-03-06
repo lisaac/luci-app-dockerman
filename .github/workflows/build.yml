@@ -43,7 +43,10 @@ jobs:
           EOF
           cat >/tmp/luci-app-dockerman/CONTROL/postinst <<EOF
           #!/bin/sh
+          uci set uhttpd.main.script_timeout="600"
+          uci commit uhttpd
           rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+          /etc/init.d/uhttpd restart
           EOF
           chmod +x /tmp/luci-app-dockerman/CONTROL/postinst
           wget -O /tmp/ipkg-build https://raw.githubusercontent.com/openwrt/openwrt/master/scripts/ipkg-build && \

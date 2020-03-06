@@ -197,7 +197,7 @@ m.handle = function(self, state, data)
       docker:clear_status()
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
     else
-      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
+      docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/newnetwork"))
     end
   end

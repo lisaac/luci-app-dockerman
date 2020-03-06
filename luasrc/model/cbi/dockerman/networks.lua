@@ -108,7 +108,7 @@ btnremove.write = function(self, section)
       docker:append_status("Networks: " .. "remove" .. " " .. net .. "...")
       local res = dk.networks["remove"](dk, {id = net})
       if res and res.code >= 300 then
-        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
+        docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
         success = false
       else
         docker:append_status("done\n")

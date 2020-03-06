@@ -145,7 +145,7 @@ local start_stop_remove = function(m, cmd)
     res = dk.containers_upgrade(dk, {id = container_id})
   end
   if res and res.code >= 300 then
-    docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
+    docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
     luci.http.redirect(luci.dispatcher.build_url("admin/docker/container/"..container_id))
   else
     docker:clear_status()
@@ -395,7 +395,7 @@ if action == "info" then
       res = dk.networks:connect({name = connect_network, body = {Container = container_id, EndpointConfig= network_opiton}})
     end
     if res and res.code > 300 then
-      docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
+      docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
     else
       docker:clear_status()
     end
@@ -455,7 +455,7 @@ elseif action == "edit" then
       docker:write_status("Containers: update " .. container_id .. "...")
       local res = dk.containers:update({id = container_id, body = request_body})
       if res and res.code >= 300 then
-        docker:append_status("fail code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
+        docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message))
       else
         docker:clear_status()
       end
