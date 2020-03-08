@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-dockerman
-PKG_VERSION:=v0.4.1
+PKG_VERSION:=v0.4.2
 PKG_RELEASE:=beta
 PKG_MAINTAINER:=lisaac <https://github.com/lisaac/luci-app-dockerman>
 PKG_LICENSE:=AGPL-3.0
@@ -31,7 +31,9 @@ define Package/$(PKG_NAME)
 	SUBMENU:=3. Applications
 	TITLE:=Docker Manager interface for LuCI
 	PKGARCH:=all
-	DEPENDS:=+luci-lib-docker +PACKAGE_$(PKG_NAME)_INCLUDE_docker_ce:docker-ce +PACKAGE_$(PKG_NAME)_INCLUDE_ttyd:ttyd
+	DEPENDS:=+luci-lib-docker \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_docker_ce:docker-ce \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_ttyd:ttyd
 endef
 
 define Package/$(PKG_NAME)/description
