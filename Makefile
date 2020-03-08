@@ -65,6 +65,8 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/
 	cp -pR $(PKG_BUILD_DIR)/root/* $(1)/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/root/etc/init.d/dockerd $(1)/etc/init.d/dockerd
 	# $(INSTALL_DIR) $(1)/www
 	# cp -pR $(PKG_BUILD_DIR)/htdoc/* $(1)/www
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
