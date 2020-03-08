@@ -127,7 +127,6 @@ if nixio.fs.access("/etc/config/dockerd") then
   section_dockerd.config = "docker_daemon"
   local dockerd_enable = section_dockerd:option(Flag, "ea", translate("Enable"))
   dockerd_enable.enabled = "true"
-
   dockerd_enable.rmempty = true
   local data_root = section_dockerd:option(Value, "data_root", translate("Docker Root Dir"))
   data_root.placeholder = "/opt/docker/"
@@ -137,7 +136,6 @@ if nixio.fs.access("/etc/config/dockerd") then
   local registry_mirrors = section_dockerd:option(DynamicList, "registry_mirrors", translate("Registry Mirrors"))
   registry_mirrors.placeholder = "https://hub-mirror.c.163.com"
   local iptables_enable = section_dockerd:option(Flag, "iptables", translate("Enable WAN access"), translate("Enable WAN access container mapped ports, if disable Docker will not allow to add IP masquerading rules"))
-
   iptables_enable.enabled = "true"
   iptables_enable.rmempty = true
   local log_level = section_dockerd:option(ListValue, "log_level", translate("Log Level"), translate('Set the logging level'))

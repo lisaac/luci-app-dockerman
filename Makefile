@@ -11,7 +11,7 @@ PKG_SOURCE_URL:=https://github.com/lisaac/luci-app-dockerman.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
-PKG_SOURCE:=$(PKG_SOURCE_SUBDIR)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_SOURCE_SUBDIR)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
 include $(INCLUDE_DIR)/package.mk
@@ -51,8 +51,8 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	uci set uhttpd.main.script_timeout="600" >/dev/null 2>&1
 	uci commit uhttpd >/dev/null 2>&1
 	delete ucitrack.@dockerd[-1]
-	add ucitrack dockerd
-	set ucitrack.@dockerd[-1].init=dockerd
+	uci add ucitrack dockerd
+	uci set ucitrack.@dockerd[-1].init=dockerd
 	rm -fr /tmp/luci-indexcache /tmp/luci-modulecache >/dev/null 2>&1
 	/etc/init.d/uhttpd restart >/dev/null 2>&1
 fi
