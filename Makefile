@@ -50,10 +50,12 @@ define Package/$(PKG_NAME)/postinst
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	uci set uhttpd.main.script_timeout="600" >/dev/null 2>&1
 	uci commit uhttpd >/dev/null 2>&1
-	delete ucitrack.@dockerd[-1]
+	uci delete ucitrack.@dockerd[-1]
 	uci add ucitrack dockerd
 	uci set ucitrack.@dockerd[-1].init=dockerd
+	uci commit ucitrack
 	rm -fr /tmp/luci-indexcache /tmp/luci-modulecache >/dev/null 2>&1
+	chmod +x /etc/init.d/dockerd
 	/etc/init.d/uhttpd restart >/dev/null 2>&1
 fi
 endef

@@ -11,7 +11,7 @@ append_list_item() {
 
 get_config() {
 	config_load $1
-	config_get ea "local"1 ea
+	config_get ea "local" ea
 	config_get iptables "local" iptables
 	config_get data_root "local" data_root '/opt/docker'
 	config_get log_level "local" log_level 'warn'
