@@ -18,7 +18,7 @@ function byte_format(byte)
   end
 end
 
-local m = Map("dockerman", translate("Docker"))
+local map_dockerman = Map("dockerman", translate("Docker"))
 local docker_info_table = {}
 -- docker_info_table['0OperatingSystem'] = {_key=translate("Operating System"),_value='-'}
 -- docker_info_table['1Architecture'] = {_key=translate("Architecture"),_value='-'}
@@ -29,12 +29,12 @@ docker_info_table['5NCPU'] = {_key=translate("CPUs"),_value='-'}
 docker_info_table['6MemTotal'] = {_key=translate("Total Memory"),_value='-'}
 docker_info_table['7DockerRootDir'] = {_key=translate("Docker Root Dir"),_value='-'}
 docker_info_table['8IndexServerAddress'] = {_key=translate("Index Server Address"),_value='-'}
+docker_info_table['9RegistryMirrors'] = {_key=translate("Registry Mirrors"),_value='-'}
 
-local s = m:section(Table, docker_info_table)
+local s = map_dockerman:section(Table, docker_info_table)
 s:option(DummyValue, "_key", translate("Info"))
 s:option(DummyValue, "_value")
-
-s = m:section(SimpleSection)
+s = map_dockerman:section(SimpleSection)
 s.containers_running = '-'
 s.images_used = '-'
 s.containers_total = '-'
@@ -59,6 +59,9 @@ if (require "luci.model.docker").new():_ping().code == 200 then
   docker_info_table['6MemTotal']._value = byte_format(docker_info.body.MemTotal)
   docker_info_table['7DockerRootDir']._value = docker_info.body.DockerRootDir
   docker_info_table['8IndexServerAddress']._value = docker_info.body.IndexServerAddress
+  for i, v in ipairs(docker_info.body.RegistryConfig.Mirrors) do
+    docker_info_table['9RegistryMirrors']._value = docker_info_table['9RegistryMirrors']._value == "-" and v or (docker_info_table['9RegistryMirrors']._value .. ", " .. v)
+  end
 
   s.images_used = 0
   for i, v in ipairs(images_list) do
@@ -78,33 +81,70 @@ if (require "luci.model.docker").new():_ping().code == 200 then
 end
 s.template = "dockerman/overview"
 
+--tabs
+tab_section = map_dockerman:section(SimpleSection)
+tab_section.tabs = {
+  dockerman = translate("Dockerman"),
+}
+tab_section.default_tab = "dockerman"
+tab_section.template="dockerman/overview_tab"
 
-s = m:section(NamedSection, "local", "section", translate("Setting"))
+local section_dockerman = map_dockerman:section(NamedSection, "local", "section")
+section_dockerman.config = "dockerman"
 
-local remote_endpoint = s:option(Flag, "remote_endpoint", translate("Remote Endpoint"))
-remote_endpoint.rmempty = true
-remote_endpoint.enabled = "true"
-
-local socket_path = s:option(Value, "socket_path", translate("Docker Socket Path"))
-socket_path:depends("remote_endpoint", "")
+local socket_path = section_dockerman:option(Value, "socket_path", translate("Docker Socket Path"))
 socket_path.default = "/var/run/docker.sock"
 socket_path.placeholder = "/var/run/docker.sock"
+socket_path.rmempty = false
 
-local remote_host = s:option(Value, "remote_host", translate("Remote Host"))
-remote_host:depends("remote_endpoint", "true")
+local remote_endpoint = section_dockerman:option(Flag, "remote_endpoint", translate("Remote Endpoint"), translate("Dockerman connect to remote endpoint"))
+remote_endpoint.rmempty = false
+remote_endpoint.enabled = "true"
+remote_endpoint.disabled = "false"
+
+local remote_host = section_dockerman:option(Value, "remote_host", translate("Remote Host"))
 remote_host.placeholder = "10.1.1.2"
-remote_endpoint.rmempty = true
+-- remote_host:depends("remote_endpoint", "true")
 
-local remote_port = s:option(Value, "remote_port", translate("Remote Port"))
-remote_port:depends("remote_endpoint", "true")
+local remote_port = section_dockerman:option(Value, "remote_port", translate("Remote Port"))
 remote_port.placeholder = "2375"
 remote_port.default = "2375"
-remote_endpoint.rmempty = true
+-- remote_port:depends("remote_endpoint", "true")
 
-local status_path = s:option(Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))
-local debug = s:option(Flag, "debug", translate("Enable Debug"), translate("For debug, It shows all docker API actions of luci-app-dockerman in Debug Tempfile Path"))
+local status_path = section_dockerman:option(Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))
+local debug = section_dockerman:option(Flag, "debug", translate("Enable Debug"), translate("For debug, It shows all docker API actions of luci-app-dockerman in Debug Tempfile Path"))
 debug.enabled="true"
 debug.disabled="false"
-local debug_path = s:option(Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
+local debug_path = section_dockerman:option(Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
 
-return m
+local map_dockerd
+if nixio.fs.access("/etc/config/dockerd") then
+  -- map_dockerman:chain("dockerd")
+  tab_section.tabs.docker_daemon = translate("Docker Daemon")
+  tab_section.default_tab = "docker_daemon"
+  map_dockerd = Map("dockerd","")
+  local section_dockerd = map_dockerd:section(NamedSection, "local", "section")
+  section_dockerd.config = "docker_daemon"
+  local dockerd_enable = section_dockerd:option(Flag, "ea", translate("Enable"))
+  dockerd_enable.enabled = "true"
+
+  dockerd_enable.rmempty = true
+  local data_root = section_dockerd:option(Value, "data_root", translate("Docker Root Dir"))
+  data_root.placeholder = "/opt/docker/"
+  local hosts = section_dockerd:option(DynamicList, "hosts", translate("Server Host"), translate('Daemon unix socket (unix:///var/run/docker.sock) or TCP Remote Hosts (tcp://0.0.0.0:2375), default: unix:///var/run/docker.sock'))
+  hosts.placeholder = "unix:///var/run/docker.sock | tcp://0.0.0.0:2375"
+  hosts.rmempty = true
+  local registry_mirrors = section_dockerd:option(DynamicList, "registry_mirrors", translate("Registry Mirrors"))
+  registry_mirrors.placeholder = "https://hub-mirror.c.163.com"
+  local iptables_enable = section_dockerd:option(Flag, "iptables", translate("Enable WAN access"), translate("Enable WAN access container mapped ports, if disable Docker will not allow to add IP masquerading rules"))
+
+  iptables_enable.enabled = "true"
+  iptables_enable.rmempty = true
+  local log_level = section_dockerd:option(ListValue, "log_level", translate("Log Level"), translate('Set the logging level'))
+  log_level:value("debug", "debug")
+  log_level:value("info", "info")
+  log_level:value("warn", "warn")
+  log_level:value("error", "error")
+  log_level:value("fatal", "fatal")
+end
+return map_dockerman, map_dockerd

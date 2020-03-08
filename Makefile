@@ -17,14 +17,12 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)/config
-menu "Configuration"
 config PACKAGE_$(PKG_NAME)_INCLUDE_docker_ce
 	bool "Include Docker-CE"
-	default y
+	default n
 config PACKAGE_$(PKG_NAME)_INCLUDE_ttyd
 	bool "Include ttyd"
 	default y
-endmenu
 endef
 
 define Package/$(PKG_NAME)
@@ -49,10 +47,15 @@ endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
-uci set uhttpd.main.script_timeout="600"
-uci commit uhttpd
-rm -fr /tmp/luci-indexcache /tmp/luci-modulecache
-/etc/init.d/uhttpd restart
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	uci set uhttpd.main.script_timeout="600" >/dev/null 2>&1
+	uci commit uhttpd >/dev/null 2>&1
+	delete ucitrack.@dockerd[-1]
+	add ucitrack dockerd
+	set ucitrack.@dockerd[-1].init=dockerd
+	rm -fr /tmp/luci-indexcache /tmp/luci-modulecache >/dev/null 2>&1
+	/etc/init.d/uhttpd restart >/dev/null 2>&1
+fi
 endef
 
 define Package/$(PKG_NAME)/install

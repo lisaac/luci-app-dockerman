@@ -11,13 +11,10 @@ local _docker = {}
 
 --pull image and return iamge id
 local update_image = function(self, image_name)
-  local server = "index.docker.io"
-
   local json_stringify = luci.jsonc and luci.jsonc.stringify
   _docker:append_status("Images: " .. "pulling" .. " " .. image_name .. "...\n")
-  local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
-  local res = self.images:create({query = {fromImage=image_name}, header={["X-Registry-Auth"]=x_auth}}, _docker.pull_image_show_status_cb)
-  if res and res.code == 200 and not res.body[#res.body].error and res.body[#res.body].status == "Status: Downloaded newer image for ".. image_name then
+  local res = self.images:create({query = {fromImage=image_name}}, _docker.pull_image_show_status_cb)
+  if res and res.code == 200 and not res.body[#res.body].error and res.body[#res.body].status and (res.body[#res.body].status == "Status: Downloaded newer image for ".. image_name) then
     _docker:append_status("done\n")
   -- else
   --   _docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
@@ -231,12 +228,12 @@ _docker.new = function(option)
   local option = option or {}
   local remote = uci:get("dockerman", "local", "remote_endpoint")
   options = {
-    socket_path = (remote == nil) and (option.socket_path or uci:get("dockerman", "local", "socket_path")) or nil,
     host = (remote == "true") and (option.host or uci:get("dockerman", "local", "remote_host")) or nil,
     port = (remote == "true") and (option.port or uci:get("dockerman", "local", "remote_port")) or nil,
     debug = option.debug or uci:get("dockerman", "local", "debug") == 'true' and true or false,
     debug_path = option.debug_path or uci:get("dockerman", "local", "debug_path")
   }
+  options.socket_path = (remote ~= "true" or not options.host or not options.port) and (option.socket_path or uci:get("dockerman", "local", "socket_path") or "/var/run/docker.sock") or nil
   local _new = docker.new(options)
   _new.options.status_path = uci:get("dockerman", "local", "status_path")
   _new.containers_upgrade = upgrade

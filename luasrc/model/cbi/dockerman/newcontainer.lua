@@ -545,12 +545,10 @@ m.handle = function(self, state, data)
     create_body["HostConfig"]["Links"] = link
   end
   local pull_image = function(image)
-    local server = "index.docker.io"
     local json_stringify = luci.jsonc and luci.jsonc.stringify
     docker:append_status("Images: " .. "pulling" .. " " .. image .. "...\n")
-    local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server}))
-    local res = dk.images:create({query = {fromImage=image}, header={["X-Registry-Auth"]=x_auth}}, docker.pull_image_show_status_cb)
-    if res and res.code == 200 and not res.body[#res.body].error and (res.body[#res.body].status == "Status: Downloaded newer image for ".. image or res.body[#res.body].status == "Status: Image is up to date for ".. image) then
+    local res = dk.images:create({query = {fromImage=image}}, docker.pull_image_show_status_cb)
+    if res and res.code == 200 and not res.body[#res.body].error and res.body[#res.body].status and (res.body[#res.body].status == "Status: Downloaded newer image for ".. image or res.body[#res.body].status == "Status: Image is up to date for ".. image) then
       docker:append_status("done\n")
     else
       docker:append_status("code:" .. res.code.." ".. (res.body[#res.body].error or (res.body.message or res.message)).. "\n")
