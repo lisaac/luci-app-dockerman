@@ -74,17 +74,11 @@ tag_name.write = function(self, section, value)
 end
 action_pull.write = function(self, section)
   local tag = pull_value["_image_tag_name"]
-  --去掉协议前缀和后缀
-  -- local _,_,tmp = server:find(".-://([%.%w%-%_]+)")
-  -- if not tmp then
-  --   _,_,server = server:find("([%.%w%-%_]+)")
-  -- end
   local json_stringify = luci.jsonc and luci.jsonc.stringify
   if tag and tag ~= "" then
     docker:write_status("Images: " .. "pulling" .. " " .. tag .. "...\n")
     -- local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server})) , header={["X-Registry-Auth"] = x_auth}
     local res = dk.images:create({query = {fromImage=tag}}, docker.pull_image_show_status_cb)
-    luci.util.perror(luci.jsonc.stringify(res))
     -- {"errorDetail": {"message": "failed to register layer: ApplyLayer exit status 1 stdout:  stderr: write \/docker: no space left on device" }, "error": "failed to register layer: ApplyLayer exit status 1 stdout:  stderr: write \/docker: no space left on device" }
     if res and res.code == 200 and not res.body[#res.body].error and res.body[#res.body].status and (res.body[#res.body].status == "Status: Downloaded newer image for ".. tag) then
       docker:clear_status()
