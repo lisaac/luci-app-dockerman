@@ -21,6 +21,8 @@ jobs:
           mkdir -p /tmp/luci-app-dockerman/usr/lib/lua/luci /tmp/luci-app-dockerman/www/
           [ -d $GITHUB_WORKSPACE/luasrc ] && cp -R $GITHUB_WORKSPACE/luasrc/* /tmp/luci-app-dockerman/usr/lib/lua/luci/
           [ -d $GITHUB_WORKSPACE/root ] && cp -R $GITHUB_WORKSPACE/root/* /tmp/luci-app-dockerman/
+          chmod +x /tmp/luci-app-dockerman/etc/init.d/* >/dev/null 2>&1
+          chmod +x /tmp/luci-app-dockerman/etc/uci-defaults/* >/dev/null 2>&1
           [ -d $GITHUB_WORKSPACE/htdoc ] && cp -R $GITHUB_WORKSPACE/htdoc/* /tmp/luci-app-dockerman/www/
           [ -d $GITHUB_WORKSPACE/po ] && sudo -E apt-get -y install gcc make && \
           mkdir -p /tmp/po2lmo && mkdir -p /tmp/luci-app-dockerman/usr/lib/lua/luci/i18n/ && \
@@ -43,10 +45,10 @@ jobs:
           EOF
           cat >/tmp/luci-app-dockerman/CONTROL/postinst <<EOF
           #!/bin/sh
-          uci set uhttpd.main.script_timeout="600"
-          uci commit uhttpd
-          rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
-          /etc/init.d/uhttpd restart
+          if [ -z "$${IPKG_INSTROOT}" ]; then
+          ( . /etc/uci-defaults/luci-app-dockerman ) && rm -f /etc/uci-defaults/luci-app-dockerman
+          fi
+          exit 0
           EOF
           chmod +x /tmp/luci-app-dockerman/CONTROL/postinst
           wget -O /tmp/ipkg-build https://raw.githubusercontent.com/openwrt/openwrt/master/scripts/ipkg-build && \
