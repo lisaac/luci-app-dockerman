@@ -91,7 +91,7 @@ tab_section.template="dockerman/overview_tab"
 
 local section_dockerman = map_dockerman:section(NamedSection, "local", "section")
 section_dockerman.config = "dockerman"
-
+section_dockerman.template = "dockerman/cbi/namedsection"
 local socket_path = section_dockerman:option(Value, "socket_path", translate("Docker Socket Path"))
 socket_path.default = "/var/run/docker.sock"
 socket_path.placeholder = "/var/run/docker.sock"
@@ -125,6 +125,7 @@ if nixio.fs.access("/etc/config/dockerd") then
   map_dockerd = Map("dockerd","")
   local section_dockerd = map_dockerd:section(NamedSection, "local", "section")
   section_dockerd.config = "docker_daemon"
+  section_dockerd.template = "dockerman/cbi/namedsection"
   local dockerd_enable = section_dockerd:option(Flag, "ea", translate("Enable"))
   dockerd_enable.enabled = "true"
   dockerd_enable.rmempty = true
