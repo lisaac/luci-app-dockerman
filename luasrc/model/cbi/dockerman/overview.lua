@@ -118,7 +118,7 @@ debug.disabled="false"
 local debug_path = section_dockerman:option(Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
 
 local map_dockerd
-if nixio.fs.access("/etc/config/dockerd") then
+if nixio.fs.access("/etc/config/dockerd") and nixio.fs.access("/usr/bin/dockerd") then
   -- map_dockerman:chain("dockerd")
   tab_section.tabs.docker_daemon = translate("Docker Daemon")
   tab_section.default_tab = "docker_daemon"
