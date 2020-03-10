@@ -14,10 +14,11 @@ local update_image = function(self, image_name)
   local json_stringify = luci.jsonc and luci.jsonc.stringify
   _docker:append_status("Images: " .. "pulling" .. " " .. image_name .. "...\n")
   local res = self.images:create({query = {fromImage=image_name}}, _docker.pull_image_show_status_cb)
-  if res and res.code == 200 and not res.body[#res.body].error and res.body[#res.body].status and (res.body[#res.body].status == "Status: Downloaded newer image for ".. image_name) then
+  if res and res.code == 200 and (#res.body > 0 and not res.body[#res.body].error and res.body[#res.body].status and (res.body[#res.body].status == "Status: Downloaded newer image for ".. image_name)) then
     _docker:append_status("done\n")
-  -- else
-  --   _docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")
+  else
+    res.code = 500
+    res.body.message = res.body[#res.body] and res.body[#res.body].error or (res.body.message or res.message)
   end
   new_image_id = self.images:inspect({name = image_name}).body.Id
   return new_image_id, res

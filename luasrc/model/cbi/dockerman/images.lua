@@ -80,10 +80,10 @@ action_pull.write = function(self, section)
     -- local x_auth = nixio.bin.b64encode(json_stringify({serveraddress= server})) , header={["X-Registry-Auth"] = x_auth}
     local res = dk.images:create({query = {fromImage=tag}}, docker.pull_image_show_status_cb)
     -- {"errorDetail": {"message": "failed to register layer: ApplyLayer exit status 1 stdout:  stderr: write \/docker: no space left on device" }, "error": "failed to register layer: ApplyLayer exit status 1 stdout:  stderr: write \/docker: no space left on device" }
-    if res and res.code == 200 and not res.body[#res.body].error and res.body[#res.body].status and (res.body[#res.body].status == "Status: Downloaded newer image for ".. tag) then
+    if res and res.code == 200 and (res.body[#res.body] and not res.body[#res.body].error and res.body[#res.body].status and (res.body[#res.body].status == "Status: Downloaded newer image for ".. tag)) then
       docker:clear_status()
     else
-      docker:append_status("code:" .. res.code.." ".. (res.body[#res.body].error or (res.body.message or res.message)).. "\n")
+      docker:append_status("code:" .. res.code.." ".. (res.body[#res.body] and res.body[#res.body].error or (res.body.message or res.message)).. "\n")
     end
   else
     docker:append_status("code: 400 please input the name of image name!")

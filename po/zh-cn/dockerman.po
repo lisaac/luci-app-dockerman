@@ -274,8 +274,8 @@ msgstr "设置日志等级"
 msgid "Enable WAN access"
 msgstr "允许 WAN 访问"
 
-msgid "Enable WAN access container mapped ports, if disable Docker will not allow to add IP masquerading rules"
-msgstr "允许 WAN 访问容器映射的端口, 如果禁用，Docker 将不被允许添加 MASQUERADE iptables 规则"
+msgid "Enable WAN access container mapped ports"
+msgstr "允许 WAN 访问容器映射的端口"
 
 msgid "Server Host"
 msgstr "服务端"

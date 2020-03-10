@@ -45,7 +45,7 @@ jobs:
           EOF
           cat >/tmp/luci-app-dockerman/CONTROL/postinst <<EOF
           #!/bin/sh
-          if [ -z "$${IPKG_INSTROOT}" ]; then
+          if [ -z "${IPKG_INSTROOT}" ]; then
           ( . /etc/uci-defaults/luci-app-dockerman ) && rm -f /etc/uci-defaults/luci-app-dockerman
           fi
           exit 0

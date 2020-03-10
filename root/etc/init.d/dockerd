@@ -12,7 +12,7 @@ append_list_item() {
 get_config() {
 	config_load $1
 	config_get ea "local" ea
-	config_get iptables "local" iptables
+	config_get en_wan "local" en_wan
 	config_get data_root "local" data_root '/opt/docker'
 	config_get log_level "local" log_level 'warn'
 	config_list_foreach "local" registry_mirrors append_list_item registry_mirrors
@@ -24,7 +24,6 @@ gen_config(){
 {
 	"data-root": "$data_root",
 	"log-level": "$log_level",
-	"iptables": $iptables,
 	"registry-mirrors": ["$registry_mirrors"],
 	"hosts": ["$hosts"]
 }
@@ -35,12 +34,13 @@ sed -i 's/\[\"\"\]/\[\]/g' $DOCKERD_CONF
 _start() {
 	local nofile=$(cat /proc/sys/fs/nr_open)
 	get_config dockerd
-	if [ -n "$iptables" ]; then
-		iptables="true"
-	else
-		iptables="false"
-	fi
 	gen_config
+	if [ -n "$en_wan" ]; then
+		iptables -D DOCKER-USER ! -i br-lan -o docker0 -j DROP >/dev/null 2>&1
+	else
+		iptables -D DOCKER-USER ! -i br-lan -o docker0 -j DROP >/dev/null 2>&1
+		iptables -I DOCKER-USER ! -i br-lan -o docker0 -j DROP >/dev/null 2>&1
+	fi
 	if [ -n "$ea" ]; then
 		procd_open_instance $NAME
 		procd_set_param stderr 1
