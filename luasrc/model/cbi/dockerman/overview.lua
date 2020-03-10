@@ -13,12 +13,12 @@ function byte_format(byte)
     if byte > 1024 and i < 5 then
       byte = byte / 1024
     else
-      return string.format("%.2f %s", byte, suff[i]) 
-    end 
+      return string.format("%.2f %s", byte, suff[i])
+    end
   end
 end
 
-local map_dockerman = Map("dockerman", translate("Docker"))
+local map_dockerman = Map("dockerman", translate("Docker"), translate("DockerMan is a Simple Docker manager client for LuCI, If you have any issue please visit:") .. " ".. [[<a href="https://github.com/lisaac/luci-app-dockerman" target="_blank">]] ..translate("Github") .. [[</a>]])
 local docker_info_table = {}
 -- docker_info_table['0OperatingSystem'] = {_key=translate("Operating System"),_value='-'}
 -- docker_info_table['1Architecture'] = {_key=translate("Architecture"),_value='-'}
@@ -84,7 +84,7 @@ s.template = "dockerman/overview"
 --tabs
 tab_section = map_dockerman:section(SimpleSection)
 tab_section.tabs = {
-  dockerman = translate("Dockerman"),
+  dockerman = translate("DockerMan"),
 }
 tab_section.default_tab = "dockerman"
 tab_section.template="dockerman/overview_tab"

@@ -411,3 +411,6 @@ msgstr "错误"
 
 msgid "Console"
 msgstr "控制台"
+
+msgid "DockerMan is a Simple Docker manager client for LuCI, If you have any issue please visit:"
+msgstr "DockerMan 是一个简单的 Docker 管理客户端，如果您在使用过程中有问题，请访问："
