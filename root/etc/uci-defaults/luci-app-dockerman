@@ -8,7 +8,7 @@ uci -q batch <<-EOF >/dev/null
 	set ucitrack.@dockerd[-1].init=dockerd
 	commit ucitrack
 EOF
-[ -x "$(which dockerd)" ] && /etc/init.d/dockerd enable >/dev/null 2>&1
+[ -x "$(which dockerd)" ] && chmod +x /etc/init.d/dockerd && /etc/init.d/dockerd enable >/dev/null 2>&1
 /etc/init.d/uhttpd restart >/dev/null 2>&1
 rm -fr /tmp/luci-indexcache /tmp/luci-modulecache >/dev/null 2>&1
 exit 0
