@@ -491,7 +491,7 @@ elseif action == "console" then
   m.reset  = false
   local cmd_docker = luci.util.exec("which docker"):match("^.+docker") or nil
   local cmd_ttyd = luci.util.exec("which ttyd"):match("^.+ttyd") or nil
-  if cmd_docker and cmd_ttyd then
+  if cmd_docker and cmd_ttyd and container_info.State.Status == "running" then
     local consolesection= m:section(SimpleSection)
     local cmd = "/bin/sh"
     local uid
@@ -521,6 +521,7 @@ elseif action == "console" then
       local cmd_ttyd = luci.util.exec("which ttyd"):match("^.+ttyd") or nil
       if not cmd_docker or not cmd_ttyd or cmd_docker:match("^%s+$") or cmd_ttyd:match("^%s+$") then return end
       local kill_ttyd = 'netstat -lnpt | grep ":7682[ \t].*ttyd$" | awk \'{print $NF}\' | awk -F\'/\' \'{print "kill -9 " $1}\' | sh > /dev/null'
+      luci.util.exec(kill_ttyd)
       local hosts
       local remote = uci:get("dockerman", "local", "remote_endpoint")
       local socket_path = (remote == "false") and  uci:get("dockerman", "local", "socket_path") or nil
@@ -533,7 +534,6 @@ elseif action == "console" then
       else
         return
       end
-
       local start_cmd = cmd_ttyd .. ' -d 2 -p 7682 '.. cmd_docker .. ' -H "'.. hosts ..'" exec -it ' .. (uid and uid ~= "" and (" -u ".. uid  .. ' ') or "").. container_id .. ' ' .. cmd .. ' &'
       local res = luci.util.exec(start_cmd)
       local console = consolesection:option(DummyValue, "console")
