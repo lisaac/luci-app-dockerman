@@ -4,7 +4,6 @@ Copyright 2019 lisaac <https://github.com/lisaac/luci-app-dockerman>
 ]]--
 
 require "luci.util"
-local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
 container_id = arg[1]
@@ -364,7 +363,6 @@ if action == "info" then
     end
   end
   btn_update.write = function(self, section, value)
-    -- luci.util.perror(section)
     local res
     docker:clear_status()
     if section == "01name" then
@@ -384,7 +382,6 @@ if action == "info" then
       local connect_network = table_info[section]._value
       local network_opiton
       if connect_network ~= "none" and connect_network ~= "bridge" and connect_network ~= "host" then
-        -- luci.util.perror(table_info[section]._opts)
         network_opiton = table_info[section]._opts ~= "" and {
             IPAMConfig={
               IPv4Address=table_info[section]._opts
@@ -523,8 +520,9 @@ elseif action == "console" then
       local kill_ttyd = 'netstat -lnpt | grep ":7682[ \t].*ttyd$" | awk \'{print $NF}\' | awk -F\'/\' \'{print "kill -9 " $1}\' | sh > /dev/null'
       luci.util.exec(kill_ttyd)
       local hosts
+      local uci = (require "luci.model.uci").cursor()
       local remote = uci:get("dockerman", "local", "remote_endpoint")
-      local socket_path = (remote == "false") and  uci:get("dockerman", "local", "socket_path") or nil
+      local socket_path = (remote == "false" or not remote) and  uci:get("dockerman", "local", "socket_path") or nil
       local host = (remote == "true") and uci:get("dockerman", "local", "remote_host") or nil
       local port = (remote == "true") and uci:get("dockerman", "local", "remote_port") or nil
       if remote and host and port then
@@ -534,8 +532,8 @@ elseif action == "console" then
       else
         return
       end
-      local start_cmd = cmd_ttyd .. ' -d 2 -p 7682 '.. cmd_docker .. ' -H "'.. hosts ..'" exec -it ' .. (uid and uid ~= "" and (" -u ".. uid  .. ' ') or "").. container_id .. ' ' .. cmd .. ' &'
-      local res = luci.util.exec(start_cmd)
+      local start_cmd = cmd_ttyd .. ' -d 2 --once -p 7682 '.. cmd_docker .. ' -H "'.. hosts ..'" exec -it ' .. (uid and uid ~= "" and (" -u ".. uid  .. ' ') or "").. container_id .. ' ' .. cmd .. ' &'
+      os.execute(start_cmd)
       local console = consolesection:option(DummyValue, "console")
       console.container_id = container_id
       console.template = "dockerman/container_console"
@@ -561,7 +559,6 @@ elseif action == "stats" then
     table_stats = {cpu={key=translate("CPU Useage"),value='-'},memory={key=translate("Memory Useage"),value='-'}}
     stat_section = m:section(Table, table_stats, translate("Stats"))
     stat_section:option(DummyValue, "key", translate("Stats")).width="33%"
-    
     stat_section:option(DummyValue, "value")
     top_section= m:section(Table, container_top.Processes, translate("TOP"))
     for i, v in ipairs(container_top.Titles) do

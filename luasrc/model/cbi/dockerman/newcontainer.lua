@@ -75,13 +75,12 @@ local resolve_cli = function(cmd_line)
       end
       if key then
         key = key:gsub("-","_")
+        key = key_abb[key] or key
         if key_no_val:match("|"..key.."|") then
-          key = key_abb[key] or key
           config[key] = true
           val = nil
           key = nil
         elseif key_with_val:match("|"..key.."|") then
-          key = key_abb[key] or key
           if key == "cap_add" then config.privileged = true end
         else
           key = nil
@@ -100,7 +99,7 @@ local resolve_cli = function(cmd_line)
     end
     if (key or _key) and val then
       key = _key or key
-      if key_with_list:match(key) then
+      if key_with_list:match("|"..key.."|") then
         if not config[key] then config[key] = {} end
         if _key then
           config[key][#config[key]] = config[key][#config[key]] .. " " .. w
@@ -269,14 +268,14 @@ d_ip:depends("network", "nil")
 d_ip.default = default_config.ip or nil
 
 d = s:option(DynamicList, "link", translate("Links with other containers"))
-d.template = "dockerman/cbi/xdynlist"
+d.cfgvalue = function (self, section) return default_config.link or nil end
 d.placeholder = "container_name:alias"
 d.rmempty = true
 d:depends("network", "bridge")
 d.default = default_config.link or nil
 
 d = s:option(DynamicList, "dns", translate("Set custom DNS servers"))
-d.template = "dockerman/cbi/xdynlist"
+d.cfgvalue = function (self, section) return default_config.dns or nil end
 d.placeholder = "8.8.8.8"
 d.rmempty = true
 d.default = default_config.dns or nil
@@ -287,19 +286,19 @@ d.rmempty = true
 d.default = default_config.user or nil
 
 d = s:option(DynamicList, "env", translate("Environmental Variable(-e)"), translate("Set environment variables to inside the container"))
-d.template = "dockerman/cbi/xdynlist"
+d.cfgvalue = function (self, section) return default_config.env or nil end
 d.placeholder = "TZ=Asia/Shanghai"
 d.rmempty = true
 d.default = default_config.env or nil
 
 d = s:option(DynamicList, "volume", translate("Bind Mount(-v)"), translate("Bind mount a volume"))
-d.template = "dockerman/cbi/xdynlist"
+d.cfgvalue = function (self, section) return default_config.volume or nil end
 d.placeholder = "/media:/media:slave"
 d.rmempty = true
 d.default = default_config.volume or nil
 
 local d_publish = s:option(DynamicList, "publish", translate("Exposed Ports(-p)"), translate("Publish container's port(s) to the host"))
-d_publish.template = "dockerman/cbi/xdynlist"
+d.cfgvalue = function (self, section) return default_config.publish or nil end
 d_publish.placeholder = "2200:22/tcp"
 d_publish.rmempty = true
 d_publish.default = default_config.publish or nil
@@ -321,21 +320,21 @@ d.default = default_config.hostname or nil
 d:depends("advance", 1)
 
 d = s:option(DynamicList, "device", translate("Device(--device)"), translate("Add host device to the container"))
-d.template = "dockerman/cbi/xdynlist"
+d.cfgvalue = function (self, section) return default_config.device or nil end
 d.placeholder = "/dev/sda:/dev/xvdc:rwm"
 d.rmempty = true
 d:depends("advance", 1)
 d.default = default_config.device or nil
 
 d = s:option(DynamicList, "tmpfs", translate("Tmpfs(--tmpfs)"), translate("Mount tmpfs directory"))
-d.template = "dockerman/cbi/xdynlist"
+d.cfgvalue = function (self, section) return default_config.tmpfs or nil end
 d.placeholder = "/run:rw,noexec,nosuid,size=65536k"
 d.rmempty = true
 d:depends("advance", 1)
 d.default = default_config.tmpfs or nil
 
 d = s:option(DynamicList, "sysctl", translate("Sysctl(--sysctl)"), translate("Sysctls (kernel parameters) options"))
-d.template = "dockerman/cbi/xdynlist"
+d.cfgvalue = function (self, section) return default_config.sysctl or nil end
 d.placeholder = "net.ipv4.ip_forward=1"
 d.rmempty = true
 d:depends("advance", 1)
@@ -367,7 +366,6 @@ d.rmempty = true
 d:depends("advance", 1)
 d.datatype="uinteger"
 d.default = default_config.blkio_weight or nil
-
 
 for _, v in ipairs (networks) do
   if v.Name then
@@ -499,16 +497,16 @@ m.handle = function(self, state, data)
   create_body.Tty = tty and true or false
   create_body.OpenStdin = interactive and true or false
   create_body.User = user
-  create_body.Cmd = (#command ~= 0) and command or nil
+  create_body.Cmd = command
   create_body.Env = env
   create_body.Image = image
-  create_body.ExposedPorts = (next(exposedports) ~= nil) and exposedports or nil
+  create_body.ExposedPorts = exposedports
   create_body.HostConfig = create_body.HostConfig or {}
   create_body.HostConfig.Dns = dns
-  create_body.HostConfig.Binds = (#volume ~= 0) and volume or nil
+  create_body.HostConfig.Binds = volume
   create_body.HostConfig.RestartPolicy = { Name = restart, MaximumRetryCount = 0 }
   create_body.HostConfig.Privileged = privileged and true or false
-  create_body.HostConfig.PortBindings = (next(portbindings) ~= nil) and portbindings or nil
+  create_body.HostConfig.PortBindings = portbindings
   create_body.HostConfig.Memory = tonumber(memory)
   create_body.HostConfig.CpuShares = tonumber(cpu_shares)
   create_body.HostConfig.NanoCPUs = tonumber(cpus) * 10 ^ 9
@@ -537,11 +535,11 @@ m.handle = function(self, state, data)
     -- no ip + no duplicate config
     create_body.NetworkingConfig = nil
   end
-  create_body["HostConfig"]["Tmpfs"] = (next(tmpfs) ~= nil) and tmpfs or nil
-  create_body["HostConfig"]["Devices"] = (next(device) ~= nil) and device or nil
-  create_body["HostConfig"]["Sysctls"] = (next(sysctl) ~= nil) and sysctl or nil
+  create_body["HostConfig"]["Tmpfs"] = tmpfs
+  create_body["HostConfig"]["Devices"] = device
+  create_body["HostConfig"]["Sysctls"] = sysctl
 
-  if network == "bridge" and next(link) ~= nil then
+  if network == "bridge" then
     create_body["HostConfig"]["Links"] = link
   end
   local pull_image = function(image)
@@ -571,6 +569,7 @@ m.handle = function(self, state, data)
     end
   end
 
+  create_body = docker.clear_empty_tables(create_body)
   docker:append_status("Container: " .. "create" .. " " .. name .. "...")
   local res = dk.containers:create({name = name, body = create_body})
   if res and res.code == 201 then

@@ -79,14 +79,14 @@ local map_subtract = function(t1, t2)
   return next(res) ~= nil and res or nil
 end
 
-local function clear_empty_tables( t )
+_docker.clear_empty_tables = function ( t )
   local k, v
   if next(t) == nil then
     t = nil
   else
     for k, v in pairs(t) do
       if type(v) == 'table' then
-        t[k] = clear_empty_tables(v)
+        t[k] = _docker.clear_empty_tables(v)
       end
     end
   end
@@ -150,8 +150,8 @@ local get_config = function(container_config, image_config)
   local create_body = config
   create_body["HostConfig"] = host_config
   create_body["NetworkingConfig"] = {EndpointsConfig = network_setting}
-  create_body = clear_empty_tables(create_body) or {}
-  extra_network = clear_empty_tables(extra_network) or {}
+  create_body = _docker.clear_empty_tables(create_body) or {}
+  extra_network = _docker.clear_empty_tables(extra_network) or {}
   return create_body, extra_network
 end
 
