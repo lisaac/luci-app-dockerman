@@ -4,12 +4,10 @@ Copyright 2019 lisaac <https://github.com/lisaac/luci-app-dockerman>
 ]]--
 
 require "luci.util"
-local uci = luci.model.uci.cursor()
 local docker = require "luci.model.docker"
 local dk = docker.new()
 
 m = SimpleForm("docker", translate("Docker"))
-m.template = "dockerman/cbi/xsimpleform"
 m.redirect = luci.dispatcher.build_url("admin", "docker", "networks")
 
 docker_status = m:section(SimpleSection)
@@ -189,10 +187,14 @@ m.handle = function(self, state, data)
       end
     end
 
+    create_body = docker.clear_empty_tables(create_body)
     docker:write_status("Network: " .. "create" .. " " .. create_body.Name .. "...")
     local res = dk.networks:create({body = create_body})
     if res and res.code == 201 then
       docker:clear_status()
+      if driver == "macvlan" then
+        docker.create_macvlan_interface(data.name, data.parent, data.gateway, data.ip_range)
+      end
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
     else
       docker:append_status("code:" .. res.code.." ".. (res.body.message and res.body.message or res.message).. "\n")

@@ -69,7 +69,6 @@ local c_lists = get_containers()
 -- list Containers
 -- m = Map("docker", translate("Docker"))
 m = SimpleForm("docker", translate("Docker"))
-m.template = "dockerman/cbi/xsimpleform"
 m.submit=false
 m.reset=false
 

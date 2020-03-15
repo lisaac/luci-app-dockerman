@@ -50,7 +50,6 @@ local volume_list = get_volumes()
 
 -- m = Map("docker", translate("Docker"))
 m = SimpleForm("docker", translate("Docker"))
-m.template = "dockerman/cbi/xsimpleform"
 m.submit=false
 m.reset=false
 
