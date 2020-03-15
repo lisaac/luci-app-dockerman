@@ -33,7 +33,12 @@ d:value("overlay", "overlay")
 d = s:option(Value, "parent", translate("Parent Interface"))
 d.rmempty = true
 d:depends("dirver", "macvlan")
-d.placeholder="eth0"
+local interfaces = luci.sys and luci.sys.net and luci.sys.net.devices() or {}
+for _, v in ipairs(interfaces) do
+  d:value(v, v)
+end
+d.default="br-lan"
+d.placeholder="br-lan"
 
 d = s:option(Value, "macvlan_mode", translate("Macvlan Mode"))
 d.rmempty = true
@@ -148,13 +153,10 @@ m.handle = function(self, state, data)
           Subnet = subnet,
           Gateway = gateway,
           IPRange = ip_range,
-          -- AuxAddress = aux_address
-          -- AuxiliaryAddresses = aux_address
+          AuxAddress = aux_address,
+          AuxiliaryAddresses = aux_address
         }
       }
-    end
-    if next(aux_address)~=nil then
-      create_body["IPAM"]["Config"]["AuxiliaryAddresses"] = aux_address
     end
     if driver == "macvlan" then
       create_body["Options"] = {
