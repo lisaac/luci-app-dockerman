@@ -81,7 +81,7 @@ local resolve_cli = function(cmd_line)
           val = nil
           key = nil
         elseif key_with_val:match("|"..key.."|") then
-          if key == "cap_add" then config.privileged = true end
+          -- if key == "cap_add" then config.privileged = true end
         else
           key = nil
           val = nil
@@ -153,6 +153,7 @@ elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
     default_config.env = create_body.Env
     default_config.dns = create_body.HostConfig.Dns
     default_config.volume = create_body.HostConfig.Binds
+    default_config.cap_add = create_body.HostConfig.CapAdd
 
     if create_body.HostConfig.Sysctls and type(create_body.HostConfig.Sysctls) == "table" then
       default_config.sysctl = {}
@@ -340,6 +341,13 @@ d.rmempty = true
 d:depends("advance", 1)
 d.default = default_config.sysctl or nil
 
+d = s:option(DynamicList, "cap_add", translate("CAP-ADD(--cap-add)"), translate("A list of kernel capabilities to add to the container"))
+d.cfgvalue = function (self, section) return default_config.cap_add or nil end
+d.placeholder = "NET_ADMIN"
+d.rmempty = true
+d:depends("advance", 1)
+d.default = default_config.cap_add or nil
+
 d = s:option(Value, "cpus", translate("CPUs"), translate("Number of CPUs. Number is a fractional number. 0.000 means no limit."))
 d.placeholder = "1.5"
 d.rmempty = true
@@ -401,6 +409,7 @@ m.handle = function(self, state, data)
   local restart = data.restart
   local env = data.env
   local dns = data.dns
+  local cap_add = data.cap_add
   local sysctl = {}
   tmp = data.sysctl
   if type(tmp) == "table" then
@@ -538,6 +547,7 @@ m.handle = function(self, state, data)
   create_body["HostConfig"]["Tmpfs"] = tmpfs
   create_body["HostConfig"]["Devices"] = device
   create_body["HostConfig"]["Sysctls"] = sysctl
+  create_body["HostConfig"]["CapAdd"] = cap_add
 
   if network == "bridge" then
     create_body["HostConfig"]["Links"] = link
@@ -549,6 +559,7 @@ m.handle = function(self, state, data)
     if res and res.code == 200 and (res.body[#res.body] and not res.body[#res.body].error and res.body[#res.body].status and (res.body[#res.body].status == "Status: Downloaded newer image for ".. image or res.body[#res.body].status == "Status: Image is up to date for ".. image)) then
       docker:append_status("done\n")
     else
+      res.code = (res.code == 200) and 500 or res.code
       docker:append_status("code:" .. res.code.." ".. (res.body[#res.body] and res.body[#res.body].error or (res.body.message or res.message)).. "\n")
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer"))
     end

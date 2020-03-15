@@ -35,7 +35,7 @@ start(){
 		handle_allowed_interface
 		lua /usr/share/dockerman/dockerd-config.lua "$DOCKERD_CONF" && /etc/init.d/dockerd restart && sleep 5 || {
 			# 1 running, 0 stopped
-			STATE=$([ -n "$(ps -ef |grep /usr/bin/dockerd | grep -v grep)" ] && echo 1 || echo 0)
+			STATE=$([ -n "$(ps |grep /usr/bin/dockerd | grep -v grep)" ] && echo 1 || echo 0)
 			[ "$STATE" == "0" ] && /etc/init.d/dockerd start && sleep 5
 		}
 		lua /usr/share/dockerman/dockerd-ac.lua
