@@ -437,7 +437,7 @@ msgid "Access Control"
 msgstr "访问控制"
 
 msgid "Create macvlan interface"
-msgstr "访问控制"
+msgstr "创建 macvlan 接口"
 
 msgid "Auto create macvlan interface in Openwrt"
 msgstr "在 Openwrt 中自动创建 macvlan 接口"
