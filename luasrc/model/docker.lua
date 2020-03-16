@@ -335,6 +335,7 @@ end
 
 _docker.create_macvlan_interface = function(name, device, gateway, ip_range)
   if not nixio.fs.access("/etc/config/network") or not nixio.fs.access("/etc/config/firewall") then return end
+  if uci:get("dockerman", "local", "remote_endpoint") == "true" then return end
   local ip = require "luci.ip"
   local if_name = "docker_"..name
   local net_mask = tostring(ip.new(ip_range):mask())
@@ -347,7 +348,14 @@ _docker.create_macvlan_interface = function(name, device, gateway, ip_range)
   uci:set("network", if_name, "netmask", net_mask)
   uci:foreach("firewall", "zone", function(s)
     if s.name == "lan" then
-      uci:set("firewall", s[".name"], "network", s.network .. " " .. if_name)
+      local interfaces
+      if type(s.network) == "table" then
+        interfaces = table.concat(s.network, " ")
+        uci:delete("firewall", s[".name"], "network")
+      else
+        interfaces = s.network and s.network or ""
+      end
+      uci:set("firewall", s[".name"], "network", interfaces .. " " .. if_name)
     end
   end)
   uci:commit("firewall")
@@ -358,10 +366,16 @@ end
 
 _docker.remove_macvlan_interface = function(name)
   if not nixio.fs.access("/etc/config/network") or not nixio.fs.access("/etc/config/firewall") then return end
+  if uci:get("dockerman", "local", "remote_endpoint") == "true" then return end
   local if_name = "docker_"..name
   uci:foreach("firewall", "zone", function(s)
     if s.name == "lan" then
-      local interfaces = s.network
+      local interfaces
+      if type(s.network) == "table" then
+        interfaces = table.concat(s.network, " ")
+      else
+        interfaces = s.network and s.network or ""
+      end
       interfaces = interfaces and interfaces:gsub(if_name, "")
       uci:set("firewall", s[".name"], "network", interfaces)
     end

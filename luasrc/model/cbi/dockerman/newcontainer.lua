@@ -55,7 +55,7 @@ local resolve_cli = function(cmd_line)
           key = w:match("^%-([%lP%-]+)")
           if key then
             -- for -dit
-            if key:match("i") or key:match("t") then
+            if key:match("i") or key:match("t") or key:match("d") then
               if key:match("i") then
                 config[key_abb["i"]] = true
                 key:gsub("i", "")
@@ -298,7 +298,7 @@ d.rmempty = true
 d.default = default_config.volume or nil
 
 local d_publish = s:option(DynamicList, "publish", translate("Exposed Ports(-p)"), translate("Publish container's port(s) to the host"))
-d.cfgvalue = function (self, section) return default_config.publish or nil end
+d_publish.cfgvalue = function (self, section) return default_config.publish or nil end
 d_publish.placeholder = "2200:22/tcp"
 d_publish.rmempty = true
 d_publish.default = default_config.publish or nil

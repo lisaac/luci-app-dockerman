@@ -303,7 +303,9 @@ if action == "info" then
       self:reset_values()
       self.size = nil
       for k,v in pairs(list_networks) do
-        self:value(k,v)
+        if k ~= "host" then
+          self:value(k,v)
+        end
       end
       self.default=table_info[section]._value
       ListValue.render(self, section, scope)

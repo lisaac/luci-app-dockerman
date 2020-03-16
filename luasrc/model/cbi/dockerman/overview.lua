@@ -106,20 +106,20 @@ remote_port.placeholder = "2375"
 remote_port.default = "2375"
 -- remote_port:depends("remote_endpoint", "true")
 
-local status_path = section_dockerman:taboption("dockerman", Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))
-local debug = section_dockerman:taboption("dockerman", Flag, "debug", translate("Enable Debug"), translate("For debug, It shows all docker API actions of luci-app-dockerman in Debug Tempfile Path"))
-debug.enabled="true"
-debug.disabled="false"
-local debug_path = section_dockerman:taboption("dockerman", Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
+-- local status_path = section_dockerman:taboption("dockerman", Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))
+-- local debug = section_dockerman:taboption("dockerman", Flag, "debug", translate("Enable Debug"), translate("For debug, It shows all docker API actions of luci-app-dockerman in Debug Tempfile Path"))
+-- debug.enabled="true"
+-- debug.disabled="false"
+-- local debug_path = section_dockerman:taboption("dockerman", Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
 
--- if nixio.fs.access("/usr/bin/dockerd") then
-  local allowed_interface = section_dockerman:taboption("ac", DynamicList, "ac_allowed_interface", translate("Allowed access interfaces"), translate("Which interface(s) can access containers under the bridge network"))
+if nixio.fs.access("/usr/bin/dockerd") then
+  local allowed_interface = section_dockerman:taboption("ac", DynamicList, "ac_allowed_interface", translate("Allowed access interfaces"), translate("Which interface(s) can access containers under the bridge network, fill-in Interface Name"))
   local interfaces = luci.sys and luci.sys.net and luci.sys.net.devices() or {}
   for i, v in ipairs(interfaces) do
     allowed_interface:value(v, v)
   end
-  local allowed_container = section_dockerman:taboption("ac", DynamicList, "ac_allowed_container", translate("Containers allowed to be accessed"), translate("Which container(s) can be accessed, even from interfaces that are not allowed"))
-  allowed_container.placeholder = "172.17.0.2"
+  local allowed_container = section_dockerman:taboption("ac", DynamicList, "ac_allowed_container", translate("Containers allowed to be accessed"), translate("Which container(s) can be accessed, even from interfaces that are not allowed, fill-in Container Id or Name"))
+  allowed_container.placeholder = "container name_or_id"
   if containers_list then
     for i, v in ipairs(containers_list) do
       if  v.State == "running" and v.NetworkSettings and v.NetworkSettings.Networks and v.NetworkSettings.Networks.bridge and v.NetworkSettings.Networks.bridge.IPAddress then
@@ -135,6 +135,7 @@ local debug_path = section_dockerman:taboption("dockerman", Value, "debug_path",
   data_root.placeholder = "/opt/docker/"
   local registry_mirrors = section_dockerman:taboption("daemon", DynamicList, "daemon_registry_mirrors", translate("Registry Mirrors"))
   registry_mirrors.placeholder = "https://hub-mirror.c.163.com"
+  registry_mirrors:value("https://hub-mirror.c.163.com", "https://hub-mirror.c.163.com")
 
   local log_level = section_dockerman:taboption("daemon", ListValue, "daemon_log_level", translate("Log Level"), translate('Set the logging level'))
   log_level:value("debug", "debug")
@@ -143,7 +144,9 @@ local debug_path = section_dockerman:taboption("dockerman", Value, "debug_path",
   log_level:value("error", "error")
   log_level:value("fatal", "fatal")
   local hosts = section_dockerman:taboption("daemon", DynamicList, "daemon_hosts", translate("Server Host"), translate('Daemon unix socket (unix:///var/run/docker.sock) or TCP Remote Hosts (tcp://0.0.0.0:2375), default: unix:///var/run/docker.sock'))
-  hosts.placeholder = "unix:///var/run/docker.sock | tcp://0.0.0.0:2375"
+  hosts.placeholder = "unix:///var/run/docker.sock"
+  hosts:value("unix:///var/run/docker.sock", "unix:///var/run/docker.sock")
+  hosts:value("tcp://0.0.0.0:2375", "tcp://0.0.0.0:2375")
   hosts.rmempty = true
--- end
+end
 return map_dockerman
