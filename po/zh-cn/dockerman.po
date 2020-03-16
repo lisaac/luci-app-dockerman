@@ -435,3 +435,9 @@ msgstr "Dockerman 将连接到远程节点"
 
 msgid "Access Control"
 msgstr "访问控制"
+
+msgid "Create macvlan interface"
+msgstr "访问控制"
+
+msgid "Auto create macvlan interface in Openwrt"
+msgstr "在 Openwrt 中自动创建 macvlan 接口"

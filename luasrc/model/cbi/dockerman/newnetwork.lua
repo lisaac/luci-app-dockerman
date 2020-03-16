@@ -73,6 +73,14 @@ d.disabled = 0
 d.enabled = 1
 d.default = 0
 
+if  nixio.fs.access("/etc/config/network") and nixio.fs.access("/etc/config/firewall")then
+  d = s:option(Flag, "op_macvlan", translate("Create macvlan interface"), translate("Auto create macvlan interface in Openwrt"))
+  d:depends("dirver", "macvlan")
+  d.disabled = 0
+  d.enabled = 1
+  d.default = 1
+end
+
 d = s:option(Value, "subnet", translate("Subnet"))
 d.rmempty = true
 d.placeholder="10.1.0.0/16"
@@ -194,7 +202,7 @@ m.handle = function(self, state, data)
     local res = dk.networks:create({body = create_body})
     if res and res.code == 201 then
       docker:clear_status()
-      if driver == "macvlan" then
+      if driver == "macvlan" and data.op_macvlan ~= 0 then
         docker.create_macvlan_interface(data.name, data.parent, data.gateway, data.ip_range)
       end
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
