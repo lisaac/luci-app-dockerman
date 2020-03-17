@@ -69,6 +69,7 @@ d.placeholder="com.docker.network.driver.mtu=1500"
 
 d = s:option(Flag, "internal", translate("Internal"), translate("Restrict external access to the network"))
 d.rmempty = true
+d:depends("dirver", "overlay")
 d.disabled = 0
 d.enabled = 1
 d.default = 0

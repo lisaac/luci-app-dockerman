@@ -32,7 +32,7 @@ end
 
 local resolve_cli = function(cmd_line)
   local config = {advance = 1}
-  local key_no_val = '|t|d|i|tty|rm|read-only|interactive|init|help|detach|privileged|'
+  local key_no_val = '|t|d|i|tty|rm|read_only|interactive|init|help|detach|privileged|'
   local key_with_val = '|sysctl|add_host|a|attach|blkio_weight_device|cap_add|cap_drop|device|device_cgroup_rule|device_read_bps|device_read_iops|device_write_bps|device_write_iops|dns|dns_option|dns_search|e|env|env_file|expose|group_add|l|label|label_file|link|link_local_ip|log_driver|log_opt|network_alias|p|publish|security_opt|storage_opt|tmpfs|v|volume|volumes_from|blkio_weight|cgroup_parent|cidfile|cpu_period|cpu_quota|cpu_rt_period|cpu_rt_runtime|c|cpu_shares|cpus|cpuset_cpus|cpuset_mems|detach_keys|disable_content_trust|domainname|entrypoint|gpus|health_cmd|health_interval|health_retries|health_start_period|health_timeout|h|hostname|ip|ip6|ipc|isolation|kernel_memory|log_driver|mac_address|m|memory|memory_reservation|memory_swap|memory_swappiness|mount|name|network|no_healthcheck|oom_kill_disable|oom_score_adj|pid|pids_limit|P|publish_all|restart|runtime|shm_size|sig_proxy|stop_signal|stop_timeout|ulimit|u|user|userns|uts|volume_driver|w|workdir|'
   local key_abb = {net='network',a='attach',c='cpu-shares',d='detach',e='env',h='hostname',i='interactive',l='label',m='memory',p='publish',P='publish_all',t='tty',u='user',v='volume',w='workdir'}
   local key_with_list = '|sysctl|add_host|a|attach|blkio_weight_device|cap_add|cap_drop|device|device_cgroup_rule|device_read_bps|device_read_iops|device_write_bps|device_write_iops|dns|dns_option|dns_search|e|env|env_file|expose|group_add|l|label|label_file|link|link_local_ip|log_driver|log_opt|network_alias|p|publish|security_opt|storage_opt|tmpfs|v|volume|volumes_from|'
@@ -93,7 +93,33 @@ local resolve_cli = function(cmd_line)
         is_cmd = true
       end
     elseif (key or _key) and not is_cmd then
-      val = w
+      if key == "mount" then
+        -- we need resolve mount options here
+        -- type=bind,source=/source,target=/app
+        local _type = w:match("^type=([^,]+),") or "bind"
+        local source =  (_type ~= "tmpfs") and (w:match("source=([^,]+),") or  w:match("src=([^,]+),")) or ""
+        local target =  w:match(",target=([^,]+)") or  w:match(",dst=([^,]+)") or w:match(",destination=([^,]+)") or ""
+        local ro = w:match(",readonly") and "ro" or nil
+        if source and target then
+          if _type ~= "tmpfs" then
+            -- bind or volume
+            local bind_propagation = (_type == "bind") and w:match(",bind%-propagation=([^,]+)") or nil
+            val = source..":"..target .. ((ro or bind_propagation) and (":" .. (ro and ro or "") .. (((ro and bind_propagation) and "," or "") .. (bind_propagation and bind_propagation or ""))or ""))
+          else
+            -- tmpfs
+            local tmpfs_mode = w:match(",tmpfs%-mode=([^,]+)") or nil
+            local tmpfs_size = w:match(",tmpfs%-size=([^,]+)") or nil
+            key = "tmpfs"
+            val = target .. ((tmpfs_mode or tmpfs_size) and (":" .. (tmpfs_mode and ("mode=" .. tmpfs_mode) or "") .. ((tmpfs_mode and tmpfs_size) and "," or "") .. (tmpfs_size and ("size=".. tmpfs_size) or "")) or "")
+            if not config[key] then config[key] = {} end
+            table.insert( config[key], val )
+            key = nil
+            val = nil
+          end
+        end
+      else
+        val = w
+      end
     elseif is_cmd then
       config["command"] = (config["command"] and (config["command"] .. " " )or "")  .. w
     end
