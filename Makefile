@@ -58,8 +58,6 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	cp -pR $(PKG_BUILD_DIR)/root/etc/config/* $(1)/etc/config/
-	$(INSTALL_DIR) $(1)/etc/hotplug.d
-	cp -pR $(PKG_BUILD_DIR)/root/etc/hotplug.d/* $(1)/etc/hotplug.d/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/root/etc/init.d/* $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
