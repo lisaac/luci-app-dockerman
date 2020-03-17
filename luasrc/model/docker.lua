@@ -365,7 +365,9 @@ _docker.create_macvlan_interface = function(name, device, gateway, ip_range)
       else
         interfaces = s.network and s.network or ""
       end
-      uci:set("firewall", s[".name"], "network", interfaces .. " " .. if_name)
+      interfaces = interfaces .. " " .. if_name
+      interfaces = interfaces:gsub("%s+", " ")
+      uci:set("firewall", s[".name"], "network", interfaces)
     end
   end)
   uci:commit("firewall")
@@ -387,6 +389,7 @@ _docker.remove_macvlan_interface = function(name)
         interfaces = s.network and s.network or ""
       end
       interfaces = interfaces and interfaces:gsub(if_name, "")
+      interfaces = interfaces and interfaces:gsub("%s+", " ")
       uci:set("firewall", s[".name"], "network", interfaces)
     end
   end)
