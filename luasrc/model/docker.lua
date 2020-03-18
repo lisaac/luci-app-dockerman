@@ -334,7 +334,6 @@ end
 -- end
 
 _docker.create_macvlan_interface = function(name, device, gateway, ip_range)
-  if name == "local" then return end
   if not nixio.fs.access("/etc/config/network") or not nixio.fs.access("/etc/config/firewall") then return end
   if uci:get("dockerman", "local", "remote_endpoint") == "true" then return end
   local ip = require "luci.ip"
@@ -372,10 +371,10 @@ _docker.create_macvlan_interface = function(name, device, gateway, ip_range)
   end)
   uci:commit("firewall")
   uci:commit("network")
+  os.execute("ifup " .. if_name)
 end
 
 _docker.remove_macvlan_interface = function(name)
-  if name == "local" then return end
   if not nixio.fs.access("/etc/config/network") or not nixio.fs.access("/etc/config/firewall") then return end
   if uci:get("dockerman", "local", "remote_endpoint") == "true" then return end
   local if_name = "docker_"..name
