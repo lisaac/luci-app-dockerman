@@ -56,6 +56,8 @@ exit 0
 endef
 
 define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/usr
+	cp -pR $(PKG_BUILD_DIR)/root/usr/* $(1)/etc/usr/
 	$(INSTALL_DIR) $(1)/etc/config
 	cp -pR $(PKG_BUILD_DIR)/root/etc/config/* $(1)/etc/config/
 	$(INSTALL_DIR) $(1)/etc/init.d
