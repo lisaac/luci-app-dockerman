@@ -424,8 +424,8 @@ msgstr "允许访问的接口"
 msgid "Containers allowed to be accessed"
 msgstr "允许被访问的容器"
 
-msgid "Which container(s) can be accessed, even from interfaces that are not allowed, fill-in Container Id or Name"
-msgstr "哪些容器可以被访问，即使访问来自不被允许的接口，填入容器ID或容器名"
+msgid "Which container(s) under bridge network can be accessed, even from interfaces that are not allowed, fill-in Container Id or Name"
+msgstr "哪些 bridge 网络下的容器可以被访问，即使访问来自不被允许的接口，填入容器ID或容器名"
 
 msgid "Which interface(s) can access containers under the bridge network, fill-in Interface Name"
 msgstr "哪些接口可以访问 bridge 网络下的容器, 填入接口名"
