@@ -39,39 +39,36 @@
 					((100 / (info.memory.mem_limit ? info.memory.mem_limit : 100)) * (info.memory.mem_useage ? info.memory.mem_useage : 0))
 				);
 
-			let num = 1
 			for (var eth in info.bw_rxtx) {
-				if (!document.getElementById("cbi-table-network_" + eth + "-value")) {
-					let tab = document.getElementById("cbi-table-cpu").parentNode
-					num++
-					let div = document.getElementById('cbi-table-cpu').cloneNode(true);
-					div.id = "cbi-table-network_" + eth;
-					div.children[0].innerHTML = "<%:TX/RX%>: " + eth
-					div.children[1].id = "cbi-table-network_" + eth + "-value"
-					tab.appendChild(div)
-				}
 				if (!document.getElementById("cbi-table-speed_" + eth + "-value")) {
 					let tab = document.getElementById("cbi-table-cpu").parentNode
-					num++
 					let div = document.getElementById('cbi-table-cpu').cloneNode(true);
 					div.id = "cbi-table-speed_" + eth;
 					div.children[0].innerHTML = "<%:Upload/Download%>: " + eth
 					div.children[1].id = "cbi-table-speed_" + eth + "-value"
 					tab.appendChild(div)
 				}
+				if (!document.getElementById("cbi-table-network_" + eth + "-value")) {
+					let tab = document.getElementById("cbi-table-cpu").parentNode
+					let div = document.getElementById('cbi-table-cpu').cloneNode(true);
+					div.id = "cbi-table-network_" + eth;
+					div.children[0].innerHTML = "<%:TX/RX%>: " + eth
+					div.children[1].id = "cbi-table-network_" + eth + "-value"
+					tab.appendChild(div)
+				}
 				e = document.getElementById("cbi-table-network_" + eth + "-value")
 				e.innerHTML = progressbar(
-					niceBytes(info.bw_rxtx[eth].bw_tx),
-					niceBytes(info.bw_rxtx[eth].bw_rx),
-					((100 / (info.bw_rxtx[eth].bw_rx ? info.bw_rxtx[eth].bw_rx : 100)) * (info.bw_rxtx[eth].bw_tx ? info.bw_rxtx[eth].bw_tx : 0)) > 100 ? 100 : Math.floor((100 / (info.bw_rxtx[eth].bw_rx ? info.bw_rxtx[eth].bw_rx : 100)) * (info.bw_rxtx[eth].bw_tx ? info.bw_rxtx[eth].bw_tx : 0)),
-					true
+					'￪'+niceBytes(info.bw_rxtx[eth].bw_tx),
+					'￬'+niceBytes(info.bw_rxtx[eth].bw_rx),
+					null,
+					true, " "
 				);
 				e = document.getElementById("cbi-table-speed_" + eth + "-value")
 				if (! last_bw_tx) last_bw_tx = info.bw_rxtx[eth].bw_tx
 				if (! last_bw_rx) last_bw_rx = info.bw_rxtx[eth].bw_rx
 				e.innerHTML = progressbar(
-					niceBytes((info.bw_rxtx[eth].bw_tx - last_bw_tx)/interval)+'/s',
-					niceBytes((info.bw_rxtx[eth].bw_rx - last_bw_rx)/interval)+'/s',
+					'￪'+niceBytes((info.bw_rxtx[eth].bw_tx - last_bw_tx)/interval)+'/s',
+					'￬'+niceBytes((info.bw_rxtx[eth].bw_rx - last_bw_rx)/interval)+'/s',
 					null,
 					true, " "
 				);
