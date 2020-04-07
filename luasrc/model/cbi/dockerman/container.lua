@@ -20,7 +20,7 @@ local get_ports = function(d)
   local data
   if d.HostConfig and d.HostConfig.PortBindings then
     for inter, out in pairs(d.HostConfig.PortBindings) do
-      data = (data and (data .. "<br>") or "") .. out[1]["HostPort"] .. ":" .. inter 
+      data = (data and (data .. "<br>") or "") .. out[1]["HostPort"] .. ":" .. inter
     end
   end
   return data
@@ -474,6 +474,13 @@ elseif action == "file" then
   m.reset  = false
   filesection.template = "dockerman/container_file"
   filesection.container = container_id
+elseif action == "inspect" then
+  local inspectsection= m:section(SimpleSection)
+  inspectsection.syslog = luci.jsonc.stringify(container_info, true)
+  inspectsection.title = translate("Container Inspect")
+  inspectsection.template = "dockerman/logs"
+  m.submit = false
+  m.reset  = false
 elseif action == "logs" then
   local logsection= m:section(SimpleSection)
   local logs = ""

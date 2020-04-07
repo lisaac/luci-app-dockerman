@@ -450,3 +450,9 @@ msgstr "在 Openwrt 中自动创建 macvlan 接口"
 
 msgid "Kill"
 msgstr "强制关闭"
+
+msgid "Exposed All Ports(-P)"
+msgstr "暴露所有端口"
+
+msgid "Allocates an ephemeral host port for all of a container's exposed ports."
+msgstr "为容器的所有暴露端口分配临时主机端口。"

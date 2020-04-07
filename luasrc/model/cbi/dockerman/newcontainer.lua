@@ -345,7 +345,7 @@ d.rmempty = true
 d.default = default_config.hostname or nil
 d:depends("advance", 1)
 
-d = s:option(Flag, "publish_all", translate("Publish all exposed ports to random ports"))
+d = s:option(Flag, "publish_all", translate("Exposed All Ports(-P)"), translate("Allocates an ephemeral host port for all of a container's exposed ports."))
 d.rmempty = true
 d.disabled = 0
 d.enabled = 1
