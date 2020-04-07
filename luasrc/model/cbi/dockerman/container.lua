@@ -186,6 +186,11 @@ btnstop.template = "dockerman/cbi/inlinebutton"
 btnstop.inputtitle=translate("Stop")
 btnstop.inputstyle = "reset"
 btnstop.forcewrite = true
+btnkill=action_section:option(Button, "_kill")
+btnkill.template = "dockerman/cbi/inlinebutton"
+btnkill.inputtitle=translate("Kill")
+btnkill.inputstyle = "reset"
+btnkill.forcewrite = true
 btnupgrade=action_section:option(Button, "_upgrade")
 btnupgrade.template = "dockerman/cbi/inlinebutton"
 btnupgrade.inputtitle=translate("Upgrade")
@@ -216,6 +221,9 @@ btnremove.write = function(self, section)
 end
 btnstop.write = function(self, section)
   start_stop_remove(m,"stop")
+end
+btnkill.write = function(self, section)
+  start_stop_remove(m,"kill")
 end
 btnduplicate.write = function(self, section)
   luci.http.redirect(luci.dispatcher.build_url("admin/docker/newcontainer/duplicate/"..container_id))
