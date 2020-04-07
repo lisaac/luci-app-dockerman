@@ -32,8 +32,8 @@ end
 
 local resolve_cli = function(cmd_line)
   local config = {advance = 1}
-  local key_no_val = '|t|d|i|tty|rm|read_only|interactive|init|help|detach|privileged|'
-  local key_with_val = '|sysctl|add_host|a|attach|blkio_weight_device|cap_add|cap_drop|device|device_cgroup_rule|device_read_bps|device_read_iops|device_write_bps|device_write_iops|dns|dns_option|dns_search|e|env|env_file|expose|group_add|l|label|label_file|link|link_local_ip|log_driver|log_opt|network_alias|p|publish|security_opt|storage_opt|tmpfs|v|volume|volumes_from|blkio_weight|cgroup_parent|cidfile|cpu_period|cpu_quota|cpu_rt_period|cpu_rt_runtime|c|cpu_shares|cpus|cpuset_cpus|cpuset_mems|detach_keys|disable_content_trust|domainname|entrypoint|gpus|health_cmd|health_interval|health_retries|health_start_period|health_timeout|h|hostname|ip|ip6|ipc|isolation|kernel_memory|log_driver|mac_address|m|memory|memory_reservation|memory_swap|memory_swappiness|mount|name|network|no_healthcheck|oom_kill_disable|oom_score_adj|pid|pids_limit|P|publish_all|restart|runtime|shm_size|sig_proxy|stop_signal|stop_timeout|ulimit|u|user|userns|uts|volume_driver|w|workdir|'
+  local key_no_val = '|t|d|i|tty|rm|read_only|interactive|init|help|detach|privileged|P|publish_all|'
+  local key_with_val = '|sysctl|add_host|a|attach|blkio_weight_device|cap_add|cap_drop|device|device_cgroup_rule|device_read_bps|device_read_iops|device_write_bps|device_write_iops|dns|dns_option|dns_search|e|env|env_file|expose|group_add|l|label|label_file|link|link_local_ip|log_driver|log_opt|network_alias|p|publish|security_opt|storage_opt|tmpfs|v|volume|volumes_from|blkio_weight|cgroup_parent|cidfile|cpu_period|cpu_quota|cpu_rt_period|cpu_rt_runtime|c|cpu_shares|cpus|cpuset_cpus|cpuset_mems|detach_keys|disable_content_trust|domainname|entrypoint|gpus|health_cmd|health_interval|health_retries|health_start_period|health_timeout|h|hostname|ip|ip6|ipc|isolation|kernel_memory|log_driver|mac_address|m|memory|memory_reservation|memory_swap|memory_swappiness|mount|name|network|no_healthcheck|oom_kill_disable|oom_score_adj|pid|pids_limit|restart|runtime|shm_size|sig_proxy|stop_signal|stop_timeout|ulimit|u|user|userns|uts|volume_driver|w|workdir|'
   local key_abb = {net='network',a='attach',c='cpu-shares',d='detach',e='env',h='hostname',i='interactive',l='label',m='memory',p='publish',P='publish_all',t='tty',u='user',v='volume',w='workdir'}
   local key_with_list = '|sysctl|add_host|a|attach|blkio_weight_device|cap_add|cap_drop|device|device_cgroup_rule|device_read_bps|device_read_iops|device_write_bps|device_write_iops|dns|dns_option|dns_search|e|env|env_file|expose|group_add|l|label|label_file|link|link_local_ip|log_driver|log_opt|network_alias|p|publish|security_opt|storage_opt|tmpfs|v|volume|volumes_from|'
   local key = nil
@@ -67,6 +67,10 @@ local resolve_cli = function(cmd_line)
               if key:match("d") then
                 config[key_abb["d"]] = true
                 key:gsub("d", "")
+              end
+              if key:match("P") then
+                config[key_abb["P"]] = true
+                key:gsub("P", "")
               end
               if key == "" then key = nil end
             end
@@ -180,6 +184,7 @@ elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
     default_config.dns = create_body.HostConfig.Dns
     default_config.volume = create_body.HostConfig.Binds
     default_config.cap_add = create_body.HostConfig.CapAdd
+    default_config.publish_all = create_body.HostConfig.PublishAllPorts
 
     if create_body.HostConfig.Sysctls and type(create_body.HostConfig.Sysctls) == "table" then
       default_config.sysctl = {}
@@ -340,6 +345,13 @@ d.rmempty = true
 d.default = default_config.hostname or nil
 d:depends("advance", 1)
 
+d = s:option(Flag, "publish_all", translate("Publish all exposed ports to random ports"))
+d.rmempty = true
+d.disabled = 0
+d.enabled = 1
+d.default = default_config.publish_all and 1 or 0
+d:depends("advance", 1)
+
 d = s:option(DynamicList, "device", translate("Device(--device)"), translate("Add host device to the container"))
 d.placeholder = "/dev/sda:/dev/xvdc:rwm"
 d.rmempty = true
@@ -415,6 +427,7 @@ m.handle = function(self, state, data)
   local name = data.name or ("luci_" .. os.date("%Y%m%d%H%M%S"))
   local hostname = data.hostname
   local tty = type(data.tty) == "number" and (data.tty == 1 and true or false) or default_config.tty or false
+  local publish_all = type(data.publish_all) == "number" and (data.publish_all == 1 and true or false) or default_config.publish_all or false
   local interactive = type(data.interactive) == "number" and (data.interactive == 1 and true or false) or default_config.interactive or false
   local image = data.image
   local user = data.user
@@ -536,6 +549,7 @@ m.handle = function(self, state, data)
   create_body.HostConfig.CpuShares = tonumber(cpu_shares)
   create_body.HostConfig.NanoCPUs = tonumber(cpus) * 10 ^ 9
   create_body.HostConfig.BlkioWeight = tonumber(blkio_weight)
+  create_body.HostConfig.PublishAllPorts = publish_all
   if create_body.HostConfig.NetworkMode ~= network then
     -- network mode changed, need to clear duplicate config
     create_body.NetworkingConfig = nil
