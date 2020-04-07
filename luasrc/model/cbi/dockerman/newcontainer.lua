@@ -193,6 +193,13 @@ elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
       end
     end
 
+    if create_body.HostConfig.LogConfig and create_body.HostConfig.LogConfig.Config and type(create_body.HostConfig.LogConfig.Config) == "table" then
+      default_config.log_opt = {}
+      for k, v in pairs(create_body.HostConfig.LogConfig.Config) do
+        table.insert( default_config.log_opt, k.."="..v )
+      end
+    end
+
     if create_body.HostConfig.PortBindings and type(create_body.HostConfig.PortBindings) == "table" then
       default_config.publish = {}
       for k, v in pairs(create_body.HostConfig.PortBindings) do
@@ -345,7 +352,7 @@ d.rmempty = true
 d.default = default_config.hostname or nil
 d:depends("advance", 1)
 
-d = s:option(Flag, "publish_all", translate("Exposed All Ports(-P)"), translate("Allocates an ephemeral host port for all of a container's exposed ports."))
+d = s:option(Flag, "publish_all", translate("Exposed All Ports(-P)"), translate("Allocates an ephemeral host port for all of a container's exposed ports"))
 d.rmempty = true
 d.disabled = 0
 d.enabled = 1
@@ -376,32 +383,38 @@ d.rmempty = true
 d:depends("advance", 1)
 d.default = default_config.cap_add or nil
 
-d = s:option(Value, "cpus", translate("CPUs"), translate("Number of CPUs. Number is a fractional number. 0.000 means no limit."))
+d = s:option(Value, "cpus", translate("CPUs"), translate("Number of CPUs. Number is a fractional number. 0.000 means no limit"))
 d.placeholder = "1.5"
 d.rmempty = true
 d:depends("advance", 1)
 d.datatype="ufloat"
 d.default = default_config.cpus or nil
 
-d = s:option(Value, "cpu_shares", translate("CPU Shares Weight"), translate("CPU shares relative weight, if 0 is set, the system will ignore the value and use the default of 1024."))
+d = s:option(Value, "cpu_shares", translate("CPU Shares Weight"), translate("CPU shares relative weight, if 0 is set, the system will ignore the value and use the default of 1024"))
 d.placeholder = "1024"
 d.rmempty = true
 d:depends("advance", 1)
 d.datatype="uinteger"
 d.default = default_config.cpu_shares or nil
 
-d = s:option(Value, "memory", translate("Memory"), translate("Memory limit (format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g. Minimum is 4M."))
+d = s:option(Value, "memory", translate("Memory"), translate("Memory limit (format: <number>[<unit>]). Number is a positive integer. Unit can be one of b, k, m, or g. Minimum is 4M"))
 d.placeholder = "128m"
 d.rmempty = true
 d:depends("advance", 1)
 d.default = default_config.memory or nil
 
-d = s:option(Value, "blkio_weight", translate("Block IO Weight"), translate("Block IO weight (relative weight) accepts a weight value between 10 and 1000."))
+d = s:option(Value, "blkio_weight", translate("Block IO Weight"), translate("Block IO weight (relative weight) accepts a weight value between 10 and 1000"))
 d.placeholder = "500"
 d.rmempty = true
 d:depends("advance", 1)
 d.datatype="uinteger"
 d.default = default_config.blkio_weight or nil
+
+d = s:option(DynamicList, "log_opt", translate("Log driver options"), translate("The logging configuration for this container"))
+d.placeholder = "max-size=1m"
+d.rmempty = true
+d:depends("advance", 1)
+d.default = default_config.log_opt or nil
 
 for _, v in ipairs (networks) do
   if v.Name then
@@ -446,6 +459,16 @@ m.handle = function(self, state, data)
       local k,v1 = v:match("(.-)=(.+)")
       if k and v1 then
         sysctl[k]=v1
+      end
+    end
+  end
+  local log_opt = {}
+  tmp = data.log_opt
+  if type(tmp) == "table" then
+    for i, v in ipairs(tmp) do
+      local k,v1 = v:match("(.-)=(.+)")
+      if k and v1 then
+        log_opt[k]=v1
       end
     end
   end
@@ -578,6 +601,7 @@ m.handle = function(self, state, data)
   create_body["HostConfig"]["Devices"] = device
   create_body["HostConfig"]["Sysctls"] = sysctl
   create_body["HostConfig"]["CapAdd"] = cap_add
+  create_body["HostConfig"]["LogConfig"] = { Config = log_opt}
 
   if network == "bridge" then
     create_body["HostConfig"]["Links"] = link
