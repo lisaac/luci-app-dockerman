@@ -601,7 +601,7 @@ m.handle = function(self, state, data)
   create_body["HostConfig"]["Devices"] = device
   create_body["HostConfig"]["Sysctls"] = sysctl
   create_body["HostConfig"]["CapAdd"] = cap_add
-  create_body["HostConfig"]["LogConfig"] = { Config = log_opt}
+  create_body["HostConfig"]["LogConfig"] = next(log_opt) ~= nil and { Config = log_opt } or nil
 
   if network == "bridge" then
     create_body["HostConfig"]["Links"] = link
