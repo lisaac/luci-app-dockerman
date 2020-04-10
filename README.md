@@ -1,18 +1,25 @@
-# Docker Manager interface for LuCI
+# Luci-app-dockerman
 
-## 适用于 LuCI 的 Docker 管理插件
-用于管理 Docker 容器、镜像、网络，适用于自带 Docker 的 Openwrt系统、运行在 Docker 中的 openwrt 或 [LuCI-in-docker](https://github.com/lisaac/luci-in-docker).
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/lisaac/luci-app-dockerman?style=flat-square)
+![GitHub stars](https://img.shields.io/github/stars/lisaac/luci-app-dockerman?style=flat-square)
+![GitHub forks](https://img.shields.io/github/forks/lisaac/luci-app-dockerman?style=flat-square)
+![GitHub](https://img.shields.io/github/license/lisaac/luci-app-dockerman?style=flat-square)
+<!-- ![GitHub All Releases](https://img.shields.io/github/downloads/lisaac/luci-app-dockerman/total?style=flat-square) -->
 
-### Depends/依赖
-- docker-ce (optional, since you can use it as a remote docker client)
-- luci-lib-jsonc
+## Docker Manager for LuCI / 适用于 LuCI 的 Docker 管理插件
+- 一个用于管理 Docker 容器、镜像、网络、存储卷的 Openwrt 插件
+- 同时也适用于 [Openwrt-in-docker](https://github.com/lisaac/openwrt-in-docker) 或 [LuCI-in-docker](https://github.com/lisaac/luci-in-docker)
+- [Download / 下载 ipk](https://github.com/lisaac/luci-app-dockerman/releases)
+- [TG 群组](https://t.me/joinchat/G5mqjhrlU9S8TMkXeBmj0w)
+
+## Depends / 依赖
 - [luci-lib-docker](https://github.com/lisaac/luci-lib-docker)
+- docker-ce (optional, since you can use it as a docker client)
+- luci-lib-jsonc
 - ttyd (optional, use for container console)
 
-### Compile/编译
+## Compile / 编译
 ```bash
-./scripts/feeds update luci-lib-jsonc
-./scripts/feeds install luci-lib-jsonc
 mkdir -p package/luci-lib-docker && \
 wget https://raw.githubusercontent.com/lisaac/luci-lib-docker/master/Makefile -O package/luci-lib-docker/Makefile
 mkdir -p package/luci-app-dockerman && \
@@ -31,13 +38,7 @@ make menuconfig
 make V=99
 ```
 
-### Download /下载
-- [ipk file](https://github.com/lisaac/luci-app-dockerman/releases)
-
-### Contact / 联系
-- [Telegram](https://t.me/joinchat/G5mqjhrlU9S8TMkXeBmj0w)
-
-### Screenshot/截图
+## Screenshot / 截图
 - Containers
 ![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/containers.png)
 - Container Info
@@ -57,5 +58,5 @@ make V=99
 - New Network
 ![](https://raw.githubusercontent.com/lisaac/luci-app-dockerman/master/doc/new_network.png)
 
-### Thanks
+## Thanks / 谢致
 - Chinese translation by [401626436](https://www.right.com.cn/forum/space-uid-382335.html)
