@@ -1,9 +1,9 @@
 # Luci-app-dockerman
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/lisaac/luci-app-dockerman?style=flat-square)
-![GitHub stars](https://img.shields.io/github/stars/lisaac/luci-app-dockerman?style=flat-square)
-![GitHub forks](https://img.shields.io/github/forks/lisaac/luci-app-dockerman?style=flat-square)
-![GitHub](https://img.shields.io/github/license/lisaac/luci-app-dockerman?style=flat-square)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/lisaac/luci-app-dockerman?style=flat-square)](https://github.com/lisaac/luci-app-dockerman/releases)
+[![GitHub stars](https://img.shields.io/github/stars/lisaac/luci-app-dockerman?style=flat-square)](https://github.com/lisaac/luci-app-dockerman/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/lisaac/luci-app-dockerman?style=flat-square)](https://github.com/lisaac/luci-app-dockerman/network/members)
+[![GitHub](https://img.shields.io/github/license/lisaac/luci-app-dockerman?style=flat-square)](https://github.com/lisaac/luci-app-dockerman/blob/master/LICENSE)
 <!-- ![GitHub All Releases](https://img.shields.io/github/downloads/lisaac/luci-app-dockerman/total?style=flat-square) -->
 
 ## Docker Manager for LuCI / 适用于 LuCI 的 Docker 管理插件
