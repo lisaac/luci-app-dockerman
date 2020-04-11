@@ -3,14 +3,14 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/lisaac/luci-app-dockerman?style=flat-square)](https://github.com/lisaac/luci-app-dockerman/releases)
 [![GitHub stars](https://img.shields.io/github/stars/lisaac/luci-app-dockerman?style=flat-square)](https://github.com/lisaac/luci-app-dockerman/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/lisaac/luci-app-dockerman?style=flat-square)](https://github.com/lisaac/luci-app-dockerman/network/members)
-[![GitHub](https://img.shields.io/github/license/lisaac/luci-app-dockerman?style=flat-square)](https://github.com/lisaac/luci-app-dockerman/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/lisaac/luci-app-dockerman?style=flat-square)](https://github.com/lisaac/luci-app-dockerman/blob/master/LICENSE)
+[![Telegram Group](https://img.shields.io/badge/telegam-group-_?style=flat-square)](https://t.me/joinchat/G5mqjhrlU9S8TMkXeBmj0w)
 <!-- ![GitHub All Releases](https://img.shields.io/github/downloads/lisaac/luci-app-dockerman/total?style=flat-square) -->
 
 ## Docker Manager for LuCI / 适用于 LuCI 的 Docker 管理插件
 - 一个用于管理 Docker 容器、镜像、网络、存储卷的 Openwrt 插件
 - 同时也适用于 [Openwrt-in-docker](https://github.com/lisaac/openwrt-in-docker) 或 [LuCI-in-docker](https://github.com/lisaac/luci-in-docker)
 - [Download / 下载 ipk](https://github.com/lisaac/luci-app-dockerman/releases)
-- [TG 群组](https://t.me/joinchat/G5mqjhrlU9S8TMkXeBmj0w)
 
 ## Depends / 依赖
 - [luci-lib-docker](https://github.com/lisaac/luci-lib-docker)
