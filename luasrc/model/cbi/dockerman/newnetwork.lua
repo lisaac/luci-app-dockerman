@@ -204,7 +204,7 @@ m.handle = function(self, state, data)
     if res and res.code == 201 then
       docker:clear_status()
       if driver == "macvlan" and data.op_macvlan ~= 0 then
-        docker.create_macvlan_interface(data.name, data.parent, data.gateway, data.ip_range)
+        docker.create_macvlan_interface(data.name, data.parent, data.gateway, data.subnet)
       end
       luci.http.redirect(luci.dispatcher.build_url("admin/docker/networks"))
     else
