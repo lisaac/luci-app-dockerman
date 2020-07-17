@@ -18,7 +18,12 @@ function byte_format(byte)
   end
 end
 
-local m = Map("dockerd", translate("Docker"), translate("DockerMan is a Simple Docker manager client for LuCI, If you have any issue please visit:") .. " ".. [[<a href="https://github.com/lisaac/luci-app-dockerman" target="_blank">]] ..translate("Github") .. [[</a>]])
+local map_dockerman = Map("dockerd", translate("Docker"),
+	translate("DockerMan is a Simple Docker manager client for LuCI, If you have any issue please visit:") ..
+	" " ..
+	[[<a href="https://github.com/lisaac/luci-app-dockerman" target="_blank">]] ..
+	translate("Github") ..
+	[[</a>]])
 local docker_info_table = {}
 -- docker_info_table['0OperatingSystem'] = {_key=translate("Operating System"),_value='-'}
 -- docker_info_table['1Architecture'] = {_key=translate("Architecture"),_value='-'}
@@ -42,7 +47,7 @@ s.images_total = '-'
 s.networks_total = '-'
 s.volumes_total = '-'
 local containers_list
--- local socket = luci.model.uci.cursor():get("dockerd", "dockerman", "socket_path")
+-- local socket = luci.model.uci.cursor():get("dockerd", "globals", "socket_path")
 if (require "luci.model.docker").new():_ping().code == 200 then
   local dk = docker.new()
   containers_list = dk.containers:list({query = {all=true}}).body
@@ -86,9 +91,8 @@ if (require "luci.model.docker").new():_ping().code == 200 then
 end
 s.template = "dockerman/overview"
 
-local section_dockerman = m:section(NamedSection, "dockerman", "section", translate("Setting"))
+local section_dockerman = map_dockerman:section(NamedSection, "globals", "section", translate("Setting"))
 section_dockerman:tab("daemon", translate("Docker Daemon"))
-section_dockerman:tab("ac", translate("Access Control"))
 section_dockerman:tab("dockerman",  translate("DockerMan"))
 
 local socket_path = section_dockerman:taboption("dockerman", Value, "socket_path", translate("Docker Socket Path"))
@@ -117,67 +121,75 @@ remote_port.default = "2375"
 -- local debug_path = section_dockerman:taboption("dockerman", Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
 
 if nixio.fs.access("/usr/bin/dockerd") then
-  local dockerd_enable = section_dockerman:taboption("daemon", Flag, "daemon_ea", translate("Enable"))
-  dockerd_enable.enabled = "true"
-  dockerd_enable.disabled = "false"
-  dockerd_enable.rmempty = true
+	local o
+	
+	o = section_dockerman:taboption("daemon", Flag, "daemon_ea", translate("Enable"))
+	o.enabled = "true"
+	o.disabled = "false"
+	o.rmempty = true
 
-  local data_root = section_dockerman:taboption("daemon", Value, "daemon_data_root", translate("Docker Root Dir"))
-  data_root.placeholder = "/opt/docker/"
-  local registry_mirrors = section_dockerman:taboption("daemon", DynamicList, "daemon_registry_mirrors", translate("Registry Mirrors"))
-  registry_mirrors:value("https://hub-mirror.c.163.com", "https://hub-mirror.c.163.com")
+	o = section_dockerman:taboption("daemon", Value, "data_root",
+		translate("Docker Root Dir"))
+	o.placeholder = "/opt/docker/"
 
-  local log_level = section_dockerman:taboption("daemon", ListValue, "daemon_log_level", translate("Log Level"), translate('Set the logging level'))
-  log_level:value("debug", "debug")
-  log_level:value("info", "info")
-  log_level:value("warn", "warn")
-  log_level:value("error", "error")
-  log_level:value("fatal", "fatal")
-  local hosts = section_dockerman:taboption("daemon", DynamicList, "daemon_hosts", translate("Server Host"), translate('Daemon unix socket (unix:///var/run/docker.sock) or TCP Remote Hosts (tcp://0.0.0.0:2375), default: unix:///var/run/docker.sock'))
-  hosts:value("unix:///var/run/docker.sock", "unix:///var/run/docker.sock")
-  hosts:value("tcp://0.0.0.0:2375", "tcp://0.0.0.0:2375")
-  hosts.rmempty = true
+	o = section_dockerman:taboption("daemon", DynamicList, "registry_mirrors",
+		translate("Registry Mirrors"))
+	o:value("https://hub-mirror.c.163.com", "https://hub-mirror.c.163.com")
 
-  local daemon_changes = 0
-  m.on_before_save = function(self)
-    local m_changes = m.uci:changes("dockerd")
-    if not m_changes or not m_changes.dockerd or not m_changes.dockerd.dockerman then return end
+	o = section_dockerman:taboption("daemon", ListValue, "log_level",
+		translate("Log Level"),
+		translate('Set the logging level'))
+	o:value("debug", "debug")
+	o:value("info", "info")
+	o:value("warn", "warn")
+	o:value("error", "error")
+	o:value("fatal", "fatal")
 
-    if m_changes.dockerd.dockerman.daemon_hosts then
-      m.uci:set("dockerd", "globals", "hosts", m_changes.dockerd.dockerman.daemon_hosts)
-      daemon_changes = 1
-    end
-    if m_changes.dockerd.dockerman.daemon_registry_mirrors then
-      m.uci:set("dockerd", "globals", "registry_mirrors", m_changes.dockerd.dockerman.daemon_registry_mirrors)
-      daemon_changes = 1
-    end
-    if m_changes.dockerd.dockerman.daemon_data_root then
-      m.uci:set("dockerd", "globals", "data_root", m_changes.dockerd.dockerman.daemon_data_root)
-      daemon_changes = 1
-    end
-    if m_changes.dockerd.dockerman.daemon_log_level then
-      m.uci:set("dockerd", "globals", "log_level", m_changes.dockerd.dockerman.daemon_log_level)
-      daemon_changes = 1
-    end
-    if m_changes.dockerd.dockerman.daemon_ea then
-      if m_changes.dockerd.dockerman.daemon_ea == "false" then
-        daemon_changes = -1
-      elseif daemon_changes == 0 then
-        daemon_changes = 1
-      end
-    end
-  end
+	o = section_dockerman:taboption("daemon", DynamicList, "hosts",
+		translate("Server Host"),
+		translate('Daemon unix socket (unix:///var/run/docker.sock) or TCP Remote Hosts (tcp://0.0.0.0:2375), default: unix:///var/run/docker.sock'))
+	o:value("unix:///var/run/docker.sock", "unix:///var/run/docker.sock")
+	o:value("tcp://0.0.0.0:2375", "tcp://0.0.0.0:2375")
+	o.rmempty = true
+	
+	local daemon_changes = 0
+	map_dockerman.on_before_save = function(self)
+		local m_changes = map_dockerman.uci:changes("dockerd")
+		if not m_changes or not m_changes.dockerd then
+			return
+		end
 
-  m.on_after_commit = function(self)
-    if daemon_changes == 1 then
-      luci.util.exec("/etc/init.d/dockerd enable")
-      luci.util.exec("/etc/init.d/dockerd restart")
-    elseif daemon_changes == -1 then
-      luci.util.exec("/etc/init.d/dockerd stop")
-      luci.util.exec("/etc/init.d/dockerd disable")
-    end
-    luci.util.exec("/etc/init.d/dockerman start")
-  end
+		if m_changes.dockerd.globals.hosts then
+			daemon_changes = 1
+		end
+		if m_changes.dockerd.globals.registry_mirrors then
+			daemon_changes = 1
+		end
+		if m_changes.dockerd.globals.data_root then
+			daemon_changes = 1
+		end
+		if m_changes.dockerd.globals.log_level then
+			daemon_changes = 1
+		end
+		if m_changes.dockerd.globals.daemon_ea then
+			if m_changes.dockerd.globals.daemon_ea == "false" then
+				daemon_changes = -1
+			elseif daemon_changes == 0 then
+				daemon_changes = 1
+			end
+		end
+	end
+
+	map_dockerman.on_after_commit = function(self)
+		if daemon_changes == 1 then
+			luci.util.exec("/etc/init.d/dockerd enable")
+			luci.util.exec("/etc/init.d/dockerd restart")
+		elseif daemon_changes == -1 then
+			luci.util.exec("/etc/init.d/dockerd stop")
+			luci.util.exec("/etc/init.d/dockerd disable")
+		end
+		luci.util.exec("/etc/init.d/dockerd start")
+	end
 end
 
-return m
+return map_dockerman
