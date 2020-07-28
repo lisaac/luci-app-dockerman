@@ -94,35 +94,35 @@ if docker.new():_ping().code == 200 then
 end
 
 s = m:section(NamedSection, "globals", "section", translate("Setting"))
-s:tab("daemon", translate("Docker Daemon"))
-s:tab("dockerman",  translate("DockerMan"))
 
-o = s:taboption("dockerman", Value, "socket_path",
+o = s:option(Flag, "remote_endpoint",
+	translate("Remote Endpoint"),
+	translate("Connect to remote endpoint"))
+o.rmempty = false
+
+o = s:option(Value, "socket_path",
 	translate("Docker Socket Path"))
 o.default = "/var/run/docker.sock"
 o.placeholder = "/var/run/docker.sock"
 o.rmempty = false
+o:depends("remote_endpoint", 1)
 
-o = s:taboption("dockerman", Flag, "remote_endpoint",
-	translate("Remote Endpoint"),
-	translate("Dockerman connect to remote endpoint"))
-o.rmempty = false
-o.enabled = "true"
-o.disabled = "false"
-
-o = s:taboption("dockerman", Value, "remote_host",
+o = s:option(Value, "remote_host",
 	translate("Remote Host"))
 o.placeholder = "10.1.1.2"
+o:depends("remote_endpoint", 1)
 
 -- local status_path = section_dockerman:taboption("dockerman", Value, "status_path", translate("Action Status Tempfile Path"), translate("Where you want to save the docker status file"))
 -- local debug = section_dockerman:taboption("dockerman", Flag, "debug", translate("Enable Debug"), translate("For debug, It shows all docker API actions of luci-app-dockerman in Debug Tempfile Path"))
 -- debug.enabled="true"
 -- debug.disabled="false"
 -- local debug_path = section_dockerman:taboption("dockerman", Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
-o = s:taboption("dockerman", Value, "remote_port",
+
+o = s:option(Value, "remote_port",
 	translate("Remote Port"))
 o.placeholder = "2375"
 o.default = "2375"
+o:depends("remote_endpoint", 1)
 
 if nixio.fs.access("/usr/bin/dockerd") then
 	local o
@@ -132,15 +132,17 @@ if nixio.fs.access("/usr/bin/dockerd") then
 	o.disabled = "false"
 	o.rmempty = true
 
-	o = s:taboption("daemon", Value, "data_root",
+	o = s:option(Value, "data_root",
 		translate("Docker Root Dir"))
 	o.placeholder = "/opt/docker/"
+	o:depends("remote_endpoint", 0)
 
-	o = s:taboption("daemon", DynamicList, "registry_mirrors",
+	o = s:option(DynamicList, "registry_mirrors",
 		translate("Registry Mirrors"))
 	o:value("https://hub-mirror.c.163.com", "https://hub-mirror.c.163.com")
+	o:depends("remote_endpoint", 0)
 
-	o = s:taboption("daemon", ListValue, "log_level",
+	o = s:option(ListValue, "log_level",
 		translate("Log Level"),
 		translate('Set the logging level'))
 	o:value("debug", "debug")
@@ -148,8 +150,9 @@ if nixio.fs.access("/usr/bin/dockerd") then
 	o:value("warn", "warn")
 	o:value("error", "error")
 	o:value("fatal", "fatal")
+	o:depends("remote_endpoint", 0)
 
-	o = s:taboption("daemon", DynamicList, "hosts",
+	o = s:option(DynamicList, "hosts",
 		translate("Client connection"),
 		translate('Specifies where the Docker daemon will listen for client connections'))
 	o:value("unix://var/run/docker.sock", "unix://var/run/docker.sock")
@@ -194,6 +197,7 @@ if nixio.fs.access("/usr/bin/dockerd") then
 		end
 		luci.util.exec("/etc/init.d/dockerd start")
 	end
+	o:depends("remote_endpoint", 0)
 end
 
 return m
