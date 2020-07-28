@@ -14,17 +14,18 @@ function index()
 	e.acl_depends = { "luci-app-dockerman" }
 
 	entry({"admin", "docker", "overview"},cbi("dockerman/overview"),_("Overview"),0).leaf=true
-
-	local remote = luci.model.uci.cursor():get("dockerd", "dockerman", "remote_endpoint")
-	if remote ==  nil then
-		local socket = luci.model.uci.cursor():get("dockerd", "dockerman", "socket_path")
-		if socket and not nixio.fs.access(socket) then
+	
+	local uci = (require "luci.model.uci").cursor()
+	local remote = uci:get_bool("dockerd", "dockerman", "remote_endpoint")
+	if remote then
+		local host = uci:get("dockerd", "dockerman", "remote_host")
+		local port = uci:get("dockerd", "dockerman", "remote_port")
+		if not host or not port then
 			return
 		end
-	elseif remote == "true" then
-		local host = luci.model.uci.cursor():get("dockerd", "dockerman", "remote_host")
-		local port = luci.model.uci.cursor():get("dockerd", "dockerman", "remote_port")
-		if not host or not port then
+	else
+		local socket = uci:get("dockerd", "dockerman", "socket_path")
+		if socket and not nixio.fs.access(socket) then
 			return
 		end
 	end

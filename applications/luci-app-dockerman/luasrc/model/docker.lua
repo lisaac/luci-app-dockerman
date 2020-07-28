@@ -270,15 +270,26 @@ local duplicate_config = function (self, request)
 end
 
 _docker.new = function()
+	local host = nil
+	local port = nil
+	local socket = nil
 
-	local remote = uci:get("dockerd", "dockerman", "remote_endpoint")
+	local remote = uci:get_bool("dockerd", "dockerman", "remote_endpoint")
+
+	if remote then
+		host = uci:get("dockerd", "dockerman", "remote_host") or nil
+		port = uci:get("dockerd", "dockerman", "remote_port") or nil
+	else
+		socket = uci:get("dockerd", "dockerman", "socket_path") or "/var/run/docker.sock" or nil
+	end
+
 	_docker.options = {
-		host = (remote == "true") and (option.host or uci:get("dockerd", "dockerman", "remote_host")) or nil,
-		port = (remote == "true") and (option.port or uci:get("dockerd", "dockerman", "remote_port")) or nil,
-		debug = option.debug or uci:get("dockerd", "dockerman", "debug") == 'true' and true or false,
-		debug_path = option.debug_path or uci:get("dockerd", "dockerman", "debug_path") or "/tmp/.docker_debug",
-		status_path = uci:get("dockerd", "dockerman", "status_path") or "/tmp/.docker_status",
-		socket_path = (remote ~= "true" or not options.host or not options.port) and (option.socket_path or uci:get("dockerd", "dockerman", "socket_path") or "/var/run/docker.sock") or nil
+		host = host,
+		port = port,
+		socket_path = socket,
+		debug = uci:get("dockerd", "dockerman", "debug") == 'true' and true or false,
+		debug_path = uci:get("dockerd", "dockerman", "debug_path") or "/tmp/.docker_debug",
+		status_path = uci:get("dockerd", "dockerman", "status_path") or "/tmp/.docker_status"
 	}
 
 	local _new = docker.new(_docker.options)
