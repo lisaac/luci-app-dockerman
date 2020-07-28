@@ -710,7 +710,10 @@ elseif action == "console" then
 			local cmd_docker = luci.util.exec("which docker"):match("^.+docker") or nil
 			local cmd_ttyd = luci.util.exec("which ttyd"):match("^.+ttyd") or nil
 
-			if not cmd_docker or not cmd_ttyd or cmd_docker:match("^%s+$") or cmd_ttyd:match("^%s+$") then return end
+			if not cmd_docker or not cmd_ttyd or cmd_docker:match("^%s+$") or cmd_ttyd:match("^%s+$") then
+				return
+			end
+
 			local kill_ttyd = 'netstat -lnpt | grep ":7682[ \t].*ttyd$" | awk \'{print $NF}\' | awk -F\'/\' \'{print "kill -9 " $1}\' | sh > /dev/null'
 			luci.util.exec(kill_ttyd)
 			local hosts
