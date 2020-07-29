@@ -289,13 +289,15 @@ _docker.new = function()
 		debug_path = uci:get("dockerd", "dockerman", "debug_path") or "/tmp/.docker_debug"
 	end
 
+	local status_path = uci:get("dockerd", "dockerman", "status_path") or "/tmp/.docker_status"
+
 	_docker.options = {
 		host = host,
 		port = port,
 		socket_path = socket_path,
 		debug = debug,
 		debug_path = debug_path,
-		status_path = uci:get("dockerd", "dockerman", "status_path") or "/tmp/.docker_status"
+		status_path = status_path
 	}
 
 	local _new = docker.new(_docker.options)
