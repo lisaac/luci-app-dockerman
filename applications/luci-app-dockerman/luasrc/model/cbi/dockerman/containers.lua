@@ -43,12 +43,12 @@ function get_containers()
 		return nil
 	end
 	for i, v in ipairs(containers) do
-		local index = (10^12 - v.Created) .. "_id_" .. v.Id
+		local index = v.Id
+
 		data[index]={}
 		data[index]["_selected"] = 0
 		data[index]["_id"] = v.Id:sub(1,12)
-		-- data[index]["name"] = v.Names[1]:sub(2)
-		data[index]["_name"] = '<a href='..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'	class="dockerman_link" title="'..translate("Container detail")..'">'.. v.Names[1]:sub(2).."</a>"
+		data[index]["_name"] = v.Names[1]:sub(2)
 		data[index]["_status"] = v.Status
 		if v.Status:find("^Up") then
 			data[index]["_status"] = '<font color="green">'.. data[index]["_status"] .. "</font>" .. "<br><font color='#9f9f9f' class='container_cpu_status'></font><br><font color='#9f9f9f' class='container_mem_status'></font><br><font color='#9f9f9f' class='container_network_status'></font>"
@@ -135,11 +135,11 @@ if s.err then
 end
 
 s = m:section(Table, container_list, translate("Containers"))
-s.nodescr=true
-s.config="containers"
--- v.template = "cbi/tblsection"
--- v.sortable = true
-
+s.addremove = false
+s.sectionhead = translate("Containers")
+s.sortable = false
+s.template = "cbi/tblsection"
+s.extedit = luci.dispatcher.build_url("admin", "docker", "container","%s")
 
 o = s:option(Flag, "_selected","")
 o.disabled = 0
@@ -188,7 +188,7 @@ local start_stop_remove = function(m,cmd)
 	for k in pairs(container_list) do
 		-- 得到选中项的名字
 		if container_list[k]._selected == 1 then
-			container_selected[#container_selected + 1] = container_list[k].name
+			container_selected[#container_selected + 1] = container_list[k]._name
 		end
 	end
 
