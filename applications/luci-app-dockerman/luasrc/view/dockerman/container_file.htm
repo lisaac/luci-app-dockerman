@@ -68,11 +68,10 @@
     );
 
     tarFile.entries.push(entryForFileToAdd);
-    console.log(1)
     return tarFile
   }
   let btnUpload = document.getElementById('upload')
-  btnUpload.onclick = function (e) {
+  btnUpload.onclick = async function (e) {
     let uploadArchive = document.getElementById('upload_archive')
     let uploadPath = document.getElementById('path').value
     if (!uploadArchive.value || !uploadPath) {
@@ -84,32 +83,30 @@
     }
     let uploadPromises = new Array()
     Globals.Instance.tarFile = TarFile.create("Archive.tar")
+    let bytesToWriteAsBlob
     for (let i = 0; i < uploadArchive.files.length; i++){
-      uploadPromises.push(new Promise(async (resolve, reject) => {
-        let fileName = uploadArchive.files[i].name
-        var bytesToWriteAsBlob = await file2Tar(Globals.Instance.tarFile, uploadArchive.files[i])
-
-        let formData = new FormData()
-        formData.append('upload-filename', fileName)
-        formData.append('upload-path', uploadPath)
-        formData.append('upload-archive', bytesToWriteAsBlob)
-        let xhr = new XMLHttpRequest()
-        xhr.open("POST", '<%=luci.dispatcher.build_url("admin/docker/container_put_archive")%>/<%=self.container%>', true)
-        xhr.onload = function() {
-          if (xhr.status == 200) {
-            uploadArchive.value = ''
-            docker_status_message('notice', "<%:Upload Success%>")
-          }
-          else {
-            docker_status_message('warning', "<%:Upload Error%>:" + xhr.statusText)
-          }
-          document.getElementById('docker_apply_overlay').addEventListener("click", (e)=>{
-              docker_status_message()
-            })
-        }
-        xhr.send(formData)
-      }))
+      let fileName = uploadArchive.files[i].name
+      bytesToWriteAsBlob = await file2Tar(Globals.Instance.tarFile, uploadArchive.files[i])
     }
+    let formData = new FormData()
+    formData.append('upload-filename', "Archive.tar")
+    formData.append('upload-path', uploadPath)
+    formData.append('upload-archive', bytesToWriteAsBlob)
+    let xhr = new XMLHttpRequest()
+    xhr.open("POST", '<%=luci.dispatcher.build_url("admin/docker/container_put_archive")%>/<%=self.container%>', true)
+    xhr.onload = function() {
+      if (xhr.status == 200) {
+        uploadArchive.value = ''
+        docker_status_message('notice', "<%:Upload Success%>")
+      }
+      else {
+        docker_status_message('warning', "<%:Upload Error%>:" + xhr.statusText)
+      }
+      document.getElementById('docker_apply_overlay').addEventListener("click", (e)=>{
+          docker_status_message()
+        })
+    }
+    xhr.send(formData)
   }
   let btnDownload = document.getElementById('download')
   btnDownload.onclick = function (e) {
