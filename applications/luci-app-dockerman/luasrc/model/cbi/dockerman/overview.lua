@@ -103,7 +103,9 @@ o.rmempty = false
 o = s:option(Value, "remote_host",
 	translate("Remote Host"),
 	translate("Host or IP Address for the connection to a remote docker instance"))
-	o.datatype = "host"
+o.datatype = "host"
+o.rmempty = false
+o.optional = false
 o.placeholder = "10.1.1.2"
 o:depends("remote_endpoint", 1)
 
@@ -116,7 +118,9 @@ o:depends("remote_endpoint", 1)
 o = s:option(Value, "remote_port",
 	translate("Remote Port"))
 o.placeholder = "2375"
-o.default = "2375"
+o.datatype = "port"
+o.rmempty = false
+o.optional = false
 o:depends("remote_endpoint", 1)
 
 if nixio.fs.access("/usr/bin/dockerd") then
