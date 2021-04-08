@@ -112,7 +112,9 @@ o.placeholder = "/var/run/docker.sock"
 o:depends("remote_endpoint", 0)
 
 o = s:option(Value, "remote_host",
-	translate("Remote Host"))
+	translate("Remote Host"),
+	translate("Host or IP Address for the connection to a remote docker instance"))
+	o.datatype = "host"
 o.placeholder = "10.1.1.2"
 o:depends("remote_endpoint", 1)
 
