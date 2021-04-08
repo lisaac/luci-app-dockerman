@@ -18,12 +18,9 @@ function byte_format(byte)
 	end
 end
 
-m = Map("dockerd", translate("Docker"),
-	translate("DockerMan is a Simple Docker manager client for LuCI, If you have any issue please visit:") ..
-	" " ..
-	[[<a href="https://github.com/lisaac/luci-app-dockerman" target="_blank">]] ..
-	translate("Github") ..
-	[[</a>]])
+m = Map("dockerd",
+	translate("Docker - Overview"),
+	translate("An overview with the relevant data is displayed here with which the LuCI docker client is connected."))
 
 local docker_info_table = {}
 -- docker_info_table['0OperatingSystem'] = {_key=translate("Operating System"),_value='-'}
