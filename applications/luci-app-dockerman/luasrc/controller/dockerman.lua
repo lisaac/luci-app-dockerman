@@ -24,7 +24,7 @@ function index()
 			return
 		end
 	else
-		local socket = uci:get("dockerd", "dockerman", "socket_path")
+		local socket = uci:get("dockerd", "dockerman", "socket_path") or "/var/run/docker.sock"
 		if socket and not nixio.fs.access(socket) then
 			return
 		end
