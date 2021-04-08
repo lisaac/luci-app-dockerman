@@ -9,11 +9,12 @@ local docker = require "luci.model.docker"
 module("luci.controller.dockerman",package.seeall)
 
 function index()
-	local e = entry({"admin", "docker"}, firstchild(), "Docker", 40)
-	e.dependent = false
-	e.acl_depends = { "luci-app-dockerman" }
+	entry({"admin", "docker"},
+		alias("admin", "docker", "config"),
+		_("Docker"),
+		40).acl_depends = { "luci-app-dockerman" }
 
-	entry({"admin", "docker", "overview"},cbi("dockerman/overview"),_("Overview"),1).leaf=true
+	entry({"admin", "docker", "config"},cbi("dockerman/configuration"),_("Configuration"), 1).leaf=true
 	
 	local uci = (require "luci.model.uci").cursor()
 	local remote = uci:get_bool("dockerd", "dockerman", "remote_endpoint")
@@ -34,11 +35,12 @@ function index()
 		return
 	end
 
-	entry({"admin", "docker", "containers"}, form("dockerman/containers"), _("Containers"), 2).leaf=true
-	entry({"admin", "docker", "images"}, form("dockerman/images"), _("Images"), 3).leaf=true
-	entry({"admin", "docker", "networks"}, form("dockerman/networks"), _("Networks"), 4).leaf=true
-	entry({"admin", "docker", "volumes"}, form("dockerman/volumes"), _("Volumes"), 5).leaf=true
-	entry({"admin", "docker", "events"}, call("action_events"), _("Events"), 6)
+	entry({"admin", "docker", "overview"},cbi("dockerman/overview"),_("Overview"), 2).leaf=true
+	entry({"admin", "docker", "containers"}, form("dockerman/containers"), _("Containers"), 3).leaf=true
+	entry({"admin", "docker", "images"}, form("dockerman/images"), _("Images"), 4).leaf=true
+	entry({"admin", "docker", "networks"}, form("dockerman/networks"), _("Networks"), 5).leaf=true
+	entry({"admin", "docker", "volumes"}, form("dockerman/volumes"), _("Volumes"), 6).leaf=true
+	entry({"admin", "docker", "events"}, call("action_events"), _("Events"), 7)
 
 	entry({"admin", "docker", "newcontainer"}, form("dockerman/newcontainer")).leaf=true
 	entry({"admin", "docker", "newnetwork"}, form("dockerman/newnetwork")).leaf=true
