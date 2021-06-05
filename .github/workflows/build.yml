@@ -35,7 +35,7 @@ jobs:
           cat >/tmp/luci-app-dockerman/CONTROL/control <<EOF
           Package: luci-app-dockerman
           Version: ${TAG}
-          Depends: luci-lib-docker, ttyd, docker-ce
+          Depends: luci-lib-docker, ttyd, docker, dockerd
           Architecture: all
           Maintainer: lisaac<https://github.com/lisaac/luci-app-dockerman>
           Section: base
