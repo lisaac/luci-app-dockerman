@@ -1,7 +1,8 @@
 #!/bin/sh /etc/rc.common
 
 START=99
-DOCKERD_CONF="/etc/docker/daemon.json"
+DOCKER_CONF_DIR="/tmp/dockerd"
+DOCKERD_CONF="${DOCKER_CONF_DIR}/daemon.json"
 
 config_load dockerman
 config_get daemon_ea "local" daemon_ea
