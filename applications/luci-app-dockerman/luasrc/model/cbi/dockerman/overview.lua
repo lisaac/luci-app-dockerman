@@ -42,7 +42,7 @@ s.images_total = '-'
 s.networks_total = '-'
 s.volumes_total = '-'
 local containers_list
--- local socket = luci.model.uci.cursor():get("dockerman", "local", "socket_path")
+-- local socket = luci.model.uci.cursor():get("dockerd", "dockerman", "socket_path")
 if (require "luci.model.docker").new():_ping().code == 200 then
   local dk = docker.new()
   containers_list = dk.containers:list({query = {all=true}}).body
@@ -116,7 +116,7 @@ remote_port.default = "2375"
 -- debug.disabled="false"
 -- local debug_path = section_dockerman:taboption("dockerman", Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
 
--- if nixio.fs.access("/usr/bin/dockerd") then
+if nixio.fs.access("/usr/bin/dockerd") then
   local allowed_interface = section_dockerman:taboption("ac", DynamicList, "ac_allowed_interface", translate("Allowed access interfaces"), translate("Which interface(s) can access containers under the bridge network, fill-in Interface Name"))
   local interfaces = luci.sys and luci.sys.net and luci.sys.net.devices() or {}
   for i, v in ipairs(interfaces) do
@@ -150,7 +150,7 @@ remote_port.default = "2375"
   hosts:value("unix:///var/run/docker.sock", "unix:///var/run/docker.sock")
   hosts:value("tcp://0.0.0.0:2375", "tcp://0.0.0.0:2375")
   hosts.rmempty = true
--- end
+end
 
 m.on_before_save = function(self)
   m.uci:set("dockerd", "globals", "hosts", m.uci:get("dockerd", "dockerman", "daemon_hosts"))

@@ -14,9 +14,10 @@
 
 ## Depends / 依赖
 - [luci-lib-docker](https://github.com/lisaac/luci-lib-docker)
-- docker-ce (optional, since you can use it as a docker client)
+- dockerd (optional, since you can use it as a docker client)
 - luci-lib-jsonc
 - ttyd (optional, use for container console)
+- docker (optional, use for container console)
 
 ## Compile / 编译
 ```bash
