@@ -2,7 +2,7 @@
 
 START=99
 
-config_load docker
+config_load dockerd
 
 init_dockerman_chain(){
 	iptables -N DOCKER-MAN >/dev/null 2>&1
