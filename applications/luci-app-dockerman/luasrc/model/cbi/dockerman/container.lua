@@ -55,14 +55,14 @@ local get_mounts = function(d)
       local v_dest = ""
       for v_sorce_d in v["Source"]:gmatch('[^/]+') do
         if v_sorce_d and #v_sorce_d > 12 then
-          v_sorce = v_sorce .. "/" .. v_sorce_d:sub(1,12) .. "..."
+          v_sorce = v_sorce .. "/" .. v_sorce_d:sub(1,8) .. "..."
         else
           v_sorce = v_sorce .."/".. v_sorce_d
         end
       end
       for v_dest_d in v["Destination"]:gmatch('[^/]+') do
         if v_dest_d and #v_dest_d > 12 then
-          v_dest = v_dest .. "/" .. v_dest_d:sub(1,12) .. "..."
+          v_dest = v_dest .. "/" .. v_dest_d:sub(1,8) .. "..."
         else
           v_dest = v_dest .."/".. v_dest_d
         end
