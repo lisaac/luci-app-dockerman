@@ -11,7 +11,8 @@ uci -q batch <<-EOF >/dev/null
 	set dockerd.dockerman.debug_path='/tmp/.docker_debug'
 	set dockerd.dockerman.remote_endpoint='false'
 
-	set dockerd.dockerman.ac_allowed_interface='br-lan'
+	del_list dockerd.dockerman.ac_allowed_interface='br-lan'
+	add_list dockerd.dockerman.ac_allowed_interface='br-lan'
 
 	set dockerd.dockerman.daemon_data_root='/opt/docker/'
 	set dockerd.dockerman.daemon_log_level='warn'
