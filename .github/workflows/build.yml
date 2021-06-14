@@ -23,7 +23,7 @@ jobs:
           [ -d $GITHUB_WORKSPACE/applications/luci-app-dockerman/root ] && cp -R $GITHUB_WORKSPACE/applications/luci-app-dockerman/root/* /tmp/luci-app-dockerman/
           chmod +x /tmp/luci-app-dockerman/etc/init.d/* >/dev/null 2>&1
           chmod +x /tmp/luci-app-dockerman/etc/uci-defaults/* >/dev/null 2>&1
-          [ -d $GITHUB_WORKSPACE/applications/luci-app-dockerman/htdoc ] && cp -R $GITHUB_WORKSPACE/applications/luci-app-dockerman/htdoc/* /tmp/luci-app-dockerman/www/
+          [ -d $GITHUB_WORKSPACE/applications/luci-app-dockerman/htdocs ] && cp -R $GITHUB_WORKSPACE/applications/luci-app-dockerman/htdocs/* /tmp/luci-app-dockerman/www/
           [ -d $GITHUB_WORKSPACE/applications/luci-app-dockerman/po ] && sudo -E apt-get -y install gcc make && \
           mkdir -p /tmp/po2lmo && mkdir -p /tmp/luci-app-dockerman/usr/lib/lua/luci/i18n/ && \
           wget -O /tmp/po2lmo/po2lmo.c https://raw.githubusercontent.com/openwrt/luci/openwrt-18.06/modules/luci-base/src/po2lmo.c && \
