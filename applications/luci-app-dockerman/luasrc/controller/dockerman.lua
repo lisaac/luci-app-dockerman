@@ -57,7 +57,7 @@ function index()
 end
 
 function scandir(id, directory)
-  local cmd_docker = luci.util.exec("which docker"):match("^.+docker") or nil
+  local cmd_docker = luci.util.exec("command -v docker"):match("^.+docker") or nil
   if not cmd_docker or cmd_docker:match("^%s+$") then return end
   local i, t, popen = 0, {}, io.popen
   local uci = (require "luci.model.uci").cursor()
@@ -106,7 +106,7 @@ end
 function rename_file(id)
   local filepath = luci.http.formvalue("filepath")
   local newpath = luci.http.formvalue("newpath")
-  local cmd_docker = luci.util.exec("which docker"):match("^.+docker") or nil
+  local cmd_docker = luci.util.exec("command -v docker"):match("^.+docker") or nil
   if not cmd_docker or cmd_docker:match("^%s+$") then return end
   local uci = (require "luci.model.uci").cursor()
   local remote = uci:get("dockerd", "dockerman", "remote_endpoint")
@@ -127,7 +127,7 @@ end
 function remove_file(id)
   local path = luci.http.formvalue("path")
   local isdir = luci.http.formvalue("isdir")
-  local cmd_docker = luci.util.exec("which docker"):match("^.+docker") or nil
+  local cmd_docker = luci.util.exec("command -v docker"):match("^.+docker") or nil
   if not cmd_docker or cmd_docker:match("^%s+$") then return end 
   local uci = (require "luci.model.uci").cursor()
   local remote = uci:get("dockerd", "dockerman", "remote_endpoint")
