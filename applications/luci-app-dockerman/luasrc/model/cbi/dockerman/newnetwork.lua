@@ -43,6 +43,8 @@ local interfaces = luci.sys and luci.sys.net and luci.sys.net.devices() or {}
 for _, v in ipairs(interfaces) do
 	o:value(v, v)
 end
+o.default="br-lan"
+o.placeholder="br-lan"
 
 o = s:option(ListValue, "macvlan_mode", translate("Mode"))
 o.rmempty = true
