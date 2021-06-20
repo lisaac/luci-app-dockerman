@@ -21,7 +21,12 @@ end
 
 m = Map("dockerd",
 	translate("Docker - Overview"),
-	translate("An overview with the relevant data is displayed here with which the LuCI docker client is connected."))
+	translate("An overview with the relevant data is displayed here with which the LuCI docker client is connected.")
+..
+	" " ..
+	[[<a href="https://github.com/lisaac/luci-app-dockerman" target="_blank">]] ..
+	translate("Github") ..
+	[[</a>]])
 
 local docker_info_table = {}
 -- docker_info_table['0OperatingSystem'] = {_key=translate("Operating System"),_value='-'}
