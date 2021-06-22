@@ -30,9 +30,7 @@
 							runningStats[0].innerText = "MEM: " + niceBytes(info.memory.mem_useage)
 							runningStats = cell.getElementsByClassName("container_network_status")
 							for (var eth in info.bw_rxtx) {
-								if (!last_bw_tx[containerId] || !last_bw_rx[containerId]) {
-
-								} else {
+								if (last_bw_tx[containerId] != undefined && last_bw_rx[containerId] != undefined) {
 									runningStats[0].innerText = '￪' + niceBytes((info.bw_rxtx[eth].bw_tx - last_bw_tx[containerId]) / interval) + '/s ￬' + niceBytes((info.bw_rxtx[eth].bw_rx - last_bw_rx[containerId]) / interval) + '/s'
 								}
 								last_bw_rx[containerId] = info.bw_rxtx[eth].bw_rx
