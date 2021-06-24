@@ -69,7 +69,7 @@ function scandir(id, directory)
 	end
 	local i, t, popen = 0, {}, io.popen
 	local uci = (require "luci.model.uci").cursor()
-	local remote = uci:get("dockerd", "dockerman", "remote_endpoint")
+	local remote = uci:get_bool("dockerd", "dockerman", "remote_endpoint")
 	local socket_path = (remote == "false" or not remote) and  uci:get("dockerd", "dockerman", "socket_path") or nil
 	local host = (remote == "true") and uci:get("dockerd", "dockerman", "remote_host") or nil
 	local port = (remote == "true") and uci:get("dockerd", "dockerman", "remote_port") or nil
@@ -119,7 +119,7 @@ function rename_file(id)
 		return
 	end
 	local uci = (require "luci.model.uci").cursor()
-	local remote = uci:get("dockerd", "dockerman", "remote_endpoint")
+	local remote = uci:get_bool("dockerd", "dockerman", "remote_endpoint")
 	local socket_path = (remote == "false" or not remote) and  uci:get("dockerd", "dockerman", "socket_path") or nil
 	local host = (remote == "true") and uci:get("dockerd", "dockerman", "remote_host") or nil
 	local port = (remote == "true") and uci:get("dockerd", "dockerman", "remote_port") or nil
@@ -142,7 +142,7 @@ function remove_file(id)
 		return
 	end 
 	local uci = (require "luci.model.uci").cursor()
-	local remote = uci:get("dockerd", "dockerman", "remote_endpoint")
+	local remote = uci:get_bool("dockerd", "dockerman", "remote_endpoint")
 	local socket_path = (remote == "false" or not remote) and  uci:get("dockerd", "dockerman", "socket_path") or nil
 	local host = (remote == "true") and uci:get("dockerd", "dockerman", "remote_host") or nil
 	local port = (remote == "true") and uci:get("dockerd", "dockerman", "remote_port") or nil
