@@ -137,6 +137,9 @@ o.write = function(self, section, value)
 	image_list[section]._selected = value
 end
 
+o = s:option(DummyValue, "_id", translate("ID"))
+o.rawhtml = true
+
 o = s:option(DummyValue, "_tags", translate("RepoTags"))
 o.rawhtml = true
 
@@ -146,9 +149,6 @@ o.rawhtml = true
 o = s:option(DummyValue, "_size", translate("Size"))
 
 o = s:option(DummyValue, "_created", translate("Created"))
-
-o = s:option(DummyValue, "_id", translate("ID"))
-o.rawhtml = true
 
 local remove_action = function(force)
 	local image_selected = {}
