@@ -986,8 +986,8 @@ msgstr ""
 #~ msgid "Macvlan Mode"
 #~ msgstr "Macvlan 模式"
 
-#~ msgid "Access Control"
-#~ msgstr "访问控制"
+msgid "Access Control"
+msgstr "访问控制"
 
 msgid "Allowed access interfaces"
 msgstr "允许的访问接口"
@@ -1002,11 +1002,11 @@ msgstr "允许访问的容器"
 #~ "守护进程 unix 套接字 (unix:///var/run/docker.sock) 或 TCP 远程主机 "
 #~ "(tcp://0.0.0.0:2375)，默认值:unix:///var/run/docker.sock"
 
-#~ msgid "Docker Daemon"
-#~ msgstr "Docker 守护程序"
+msgid "Docker Daemon"
+msgstr "Docker 守护程序"
 
-#~ msgid "DockerMan"
-#~ msgstr "DockerMan"
+msgid "DockerMan"
+msgstr "DockerMan"
 
 #~ msgid "Dockerman connect to remote endpoint"
 #~ msgstr "Dockerman 连接到远程端点"

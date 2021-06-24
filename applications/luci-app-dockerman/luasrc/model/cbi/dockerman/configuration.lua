@@ -10,19 +10,22 @@ m = Map("dockerd",
 	translate("DockerMan is a simple docker manager client for LuCI"))
 
 s = m:section(NamedSection, "dockerman", "section", translate("Global settings"))
+s:tab("daemon", translate("Docker Daemon"))
+s:tab("ac", translate("Access Control"))
+s:tab("dockerman", translate("DockerMan"))
 
-o = s:option(Flag, "remote_endpoint",
+o = s:taboption("dockerman", Flag, "remote_endpoint",
 	translate("Remote Endpoint"),
 	translate("Connect to remote endpoint"))
 o.rmempty = false
 
-o = s:option(Value, "socket_path",
+o = s:taboption("dockerman", Value, "socket_path",
 	translate("Docker Socket Path"))
 o.default = "/var/run/docker.sock"
 o.placeholder = "/var/run/docker.sock"
 o:depends("remote_endpoint", 0)
 
-o = s:option(Value, "remote_host",
+o = s:taboption("dockerman", Value, "remote_host",
 	translate("Remote Host"),
 	translate("Host or IP Address for the connection to a remote docker instance"))
 o.datatype = "host"
@@ -31,7 +34,7 @@ o.optional = false
 o.placeholder = "10.1.1.2"
 o:depends("remote_endpoint", 1)
 
-o = s:option(Value, "remote_port",
+o = s:taboption("dockerman", Value, "remote_port",
 	translate("Remote Port"))
 o.placeholder = "2375"
 o.datatype = "port"
@@ -46,12 +49,12 @@ o:depends("remote_endpoint", 1)
 -- o = s:taboption("dockerman", Value, "debug_path", translate("Debug Tempfile Path"), translate("Where you want to save the debug tempfile"))
 
 if nixio.fs.access("/usr/bin/dockerd") then
-	o = s:option(DynamicList, "ac_allowed_interface", translate("Allowed access interfaces"), translate("Which interface(s) can access containers under the bridge network, fill-in Interface Name"))
+	o = s:taboption("ac", DynamicList, "ac_allowed_interface", translate("Allowed access interfaces"), translate("Which interface(s) can access containers under the bridge network, fill-in Interface Name"))
 	local interfaces = luci.sys and luci.sys.net and luci.sys.net.devices() or {}
 	for i, v in ipairs(interfaces) do
 		o:value(v, v)
 	end
-	o = s:option(DynamicList, "ac_allowed_container", translate("Containers allowed to be accessed"), translate("Which container(s) under bridge network can be accessed, even from interfaces that are not allowed, fill-in Container Id or Name"))
+	o = s:taboption("ac", DynamicList, "ac_allowed_container", translate("Containers allowed to be accessed"), translate("Which container(s) under bridge network can be accessed, even from interfaces that are not allowed, fill-in Container Id or Name"))
 	-- allowed_container.placeholder = "container name_or_id"
 	if containers_list then
 		for i, v in ipairs(containers_list) do
@@ -61,12 +64,12 @@ if nixio.fs.access("/usr/bin/dockerd") then
 		end
 	end
 
-	o = s:option(Flag, "daemon_ea", translate("Enable"))
+	o = s:taboption("daemon", Flag, "daemon_ea", translate("Enable"))
 	o.enabled = "true"
 	o.disabled = "false"
 	o.rmempty = true
 
-	o = s:option(Value, "data_root",
+	o = s:taboption("daemon", Value, "data_root",
 		translate("Docker Root Dir"))
 	o.placeholder = "/opt/docker/"
 	o:depends("remote_endpoint", 0)
@@ -78,13 +81,13 @@ if nixio.fs.access("/usr/bin/dockerd") then
 	o.datatype = "ipaddr"
 	o:depends("remote_endpoint", 0)
 
-	o = s:option(DynamicList, "registry_mirrors",
+	o = s:taboption("daemon", DynamicList, "registry_mirrors",
 		translate("Registry Mirrors"),
 		translate("It replaces the daemon registry mirrors with a new set of registry mirrors"))
 	o.placeholder = translate("Example: https://hub-mirror.c.163.com")
 	o:depends("remote_endpoint", 0)
 
-	o = s:option(ListValue, "log_level",
+	o = s:taboption("daemon", ListValue, "log_level",
 		translate("Log Level"),
 		translate('Set the logging level'))
 	o:value("debug", translate("Debug"))
@@ -95,7 +98,7 @@ if nixio.fs.access("/usr/bin/dockerd") then
 	o.rmempty = true
 	o:depends("remote_endpoint", 0)
 
-	o = s:option(DynamicList, "hosts",
+	o = s:taboption("daemon", DynamicList, "hosts",
 		translate("Client connection"),
 		translate('Specifies where the Docker daemon will listen for client connections (default: unix:///var/run/docker.sock)'))
 	o.placeholder = translate("Example: tcp://0.0.0.0:2375")
