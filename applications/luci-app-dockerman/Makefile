@@ -8,6 +8,7 @@ LUCI_DEPENDS:=@(aarch64||arm||x86_64) \
 	+docker \
 	+dockerd \
 	+ttyd
+	+DOCKER_CGROUP_OPTIONS
 LUCI_PKGARCH:=all
 
 PKG_LICENSE:=AGPL-3.0
