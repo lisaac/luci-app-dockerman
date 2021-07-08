@@ -25,13 +25,6 @@ else
 	return
 end
 
-res = dk.networks:list()
-if res.code < 300 then
-	networks = res.body
-else
-	return
-end
-
 local get_ports = function(d)
 	local data
 
@@ -289,6 +282,12 @@ s = m:section(SimpleSection)
 s.template = "dockerman/container"
 
 if action == "info" then
+	res = dk.networks:list()
+	if res.code < 300 then
+		networks = res.body
+	else
+		return
+	end
 	m.submit = false
 	m.reset  = false
 	table_info = {

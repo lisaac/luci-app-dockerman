@@ -274,7 +274,9 @@
 				})
 				return
 			}
-			let uploadPromises = new Array()
+			docker_status_message('notice',
+				'<img src="<%=resource%>/icons/loading.gif" style="vertical-align:middle" /> <span style="white-space:pre-line; word-break:break-all; font-family: \'Courier New\', Courier, monospace;">' +
+				'Uploading...' + '</span>');
 			Globals.Instance.tarFile = TarFile.create("Archive.tar")
 			let bytesToWriteAsBlob
 			for (let i = 0; i < uploadArchive.files.length; i++) {
@@ -299,7 +301,9 @@
 					})
 				}
 				else {
-					docker_status_message('warning', "<%:Upload Error%>:" + xhr.statusText)
+					// docker_status_message('warning', "<%:Upload Error%>:" + xhr.statusText)
+					docker_status_message('warning', "<%:Upload Error%>:" + '<span style="white-space:pre-line; word-break:break-all; font-family: \'Courier New\', Courier, monospace;">' +
+						JSON.parse(xhr.response).message + '</span>')
 				}
 				document.getElementById('docker_apply_overlay').addEventListener("click", (e) => {
 					docker_status_message()
