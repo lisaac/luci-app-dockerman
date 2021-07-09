@@ -379,7 +379,7 @@ if action == "info" then
 	info_networks = get_networks(container_info)
 	list_networks = {}
 	for _, v in ipairs (networks) do
-		if v.Name then
+		if v and v.Name then
 			local parent = v.Options and v.Options.parent or nil
 			local ip = v.IPAM and v.IPAM.Config and v.IPAM.Config[1] and v.IPAM.Config[1].Subnet or nil
 			ipv6 =  v.IPAM and v.IPAM.Config and v.IPAM.Config[2] and v.IPAM.Config[2].Subnet or nil
