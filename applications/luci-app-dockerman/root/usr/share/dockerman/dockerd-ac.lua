@@ -15,12 +15,21 @@ if not allowed_container or next(allowed_container)==nil then
 end
 
 allowed_ip = {}
+local new_allowed_container = {}
 for i, v in ipairs(containers_list) do
 	for ii, vv in ipairs(allowed_container) do
-		if v.Id:sub(1,12) == vv and v.NetworkSettings and v.NetworkSettings.Networks and v.NetworkSettings.Networks.bridge and v.NetworkSettings.Networks.bridge.IPAddress then
-			print(v.NetworkSettings.Networks.bridge.IPAddress)
-			luci.util.exec("iptables -I DOCKER-MAN -d "..v.NetworkSettings.Networks.bridge.IPAddress.." -o docker0 -j ACCEPT")
+		if v.Id:sub(1,12) == vv then
+			if v.NetworkSettings and v.NetworkSettings.Networks and v.NetworkSettings.Networks.bridge and 
+			v.NetworkSettings.Networks.bridge.IPAddress and v.NetworkSettings.Networks.bridge.IPAddress ~= "" then 
+				print(v.NetworkSettings.Networks.bridge.IPAddress)
+				luci.util.exec("iptables -I DOCKER-MAN -d "..v.NetworkSettings.Networks.bridge.IPAddress.." -o docker0 -j ACCEPT")
+			end
 			table.remove(allowed_container, ii)
+			table.insert(new_allowed_container, vv)
 		end
 	end
 end
+
+uci:set_list("dockerd", "dockerman", "ac_allowed_container", new_allowed_container)
+uci:commit("dockerd")
+
