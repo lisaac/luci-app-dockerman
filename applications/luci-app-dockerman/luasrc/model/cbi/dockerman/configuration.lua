@@ -120,7 +120,11 @@ if nixio.fs.access("/usr/bin/dockerd") and not m.uci:get_bool("dockerd", "docker
 	for i, v in ipairs(interfaces) do
 		o:value(v, v)
 	end
-	o = s:taboption("ac", DynamicList, "ac_allowed_container", translate("Containers allowed to be accessed"), translate("Which container(s) under bridge network can be accessed, even from interfaces that are not allowed, fill-in Container Id or Name"))
+	o = s:taboption("ac", DynamicList, "ac_allowed_container", translate("Containers allowed to be accessed"))
+	o.template = "dockerman/cbi/container_list"
+	o.widget = "checkbox"
+	o.unspecified = true
+	o.description = translate("Which container(s) under bridge network can be accessed, even from interfaces that are not allowed, fill-in Container Id or Name")
 	-- allowed_container.placeholder = "container name_or_id"
 	if containers_list then
 		for i, v in ipairs(containers_list) do

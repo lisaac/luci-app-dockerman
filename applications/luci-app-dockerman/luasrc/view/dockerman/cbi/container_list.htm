@@ -1,0 +1,119 @@
+<%+cbi/valueheader%>
+
+<%-
+	local utl = require "luci.util"
+	local docker = require "luci.model.docker"
+	local containers, res, lost_state
+	local dk = docker.new()
+
+	if dk:_ping().code ~= 200 then
+		lost_state = true
+	else
+		lost_state = false
+		res = dk.containers:list({
+			query = {
+				all=true
+			}
+		})
+		if res and res.code and res.code < 300 then
+			containers = res.body
+		end
+	end
+
+	function get_containers()
+		local data = {}
+		if type(containers) ~= "table" then
+			return nil
+		end
+
+		for i, v in ipairs(containers) do
+			local index = i
+			data[index]={}
+			data[index]["id"] = v.Id:sub(1,12)
+			data[index]["name"] = v.Names[1]:sub(2)
+		end
+		return data
+	end
+
+	local container_list = not lost_state and get_containers() or {}
+
+	local value = self:formvalue(section)
+
+	self.cast = nil
+
+	if not value then
+		value = self:cfgvalue(section) or self.default
+	end
+
+	local checked = { }
+	for value in utl.imatch(value) do
+		checked[value] = true
+	end
+-%>
+<%
+	function ToStringEx(value)
+		if type(value)=='table' then
+		return TableToStr(value)
+		elseif type(value)=='string' then
+			return "\'"..value.."\'"
+		else
+		return tostring(value)
+		end
+	end
+
+	function TableToStr(t)
+		if t == nil then return "" end
+		local retstr= "{"
+
+		local i = 1
+		for key,value in pairs(t) do
+			local signal = ","
+			if i==1 then
+				signal = ""
+			end
+
+			if key == i then
+				retstr = retstr..signal..ToStringEx(value)
+			else
+				if type(key)=='number' or type(key) == 'string' then
+					retstr = retstr..signal..'['..ToStringEx(key).."]="..ToStringEx(value)
+				else
+					if type(key)=='userdata' then
+						retstr = retstr..signal.."*s"..TableToStr(getmetatable(key)).."*e".."="..ToStringEx(value)
+					else
+						retstr = retstr..signal..key.."="..ToStringEx(value)
+					end
+				end
+			end
+
+			i = i+1
+		end
+
+		retstr = retstr.."}"
+		return retstr
+	end
+%>
+<div class="cbi-dropdown" display-items="10" placeholder="<%:-- please select -- %>"<%=
+	attr("name", cbid) ..
+	ifattr(self.widget == "checkbox", "multiple", "multiple") ..
+	ifattr(self.widget == "checkbox", "optional", "optional")
+%>>
+	<% if type(container_list) ~= "table" then %>
+	<span>no container_list</span>
+	<% else %>
+	<ul>
+		<% if self.widget ~= "checkbox" then %>
+		<li data-value=""<%= ifattr(not value, "selected", "selected") %>>
+			<em><%:unspecified%></em>
+		</li>
+		<% end %>
+		<% for _, container in ipairs(container_list) do %>
+		<li<%= attr("data-value", container.id) .. ifattr(checked[container.id], "selected", "selected") %>>
+			<span class="ifacebadge"><%=container.name%><em class="hide-close">(<%=container.id%>)</em></span>
+		</li>
+		<% end %>
+	</ul>
+	<% end %>
+</div>
+
+<%+cbi/valuefooter%>
