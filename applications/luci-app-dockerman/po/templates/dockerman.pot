@@ -1,6 +1,10 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+#: applications/luci-app-dockerman/luasrc/view/dockerman/cbi/container_list.htm:96
+msgid "-- please select --"
+msgstr ""
+
 #: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/newcontainer.lua:621
 msgid "A list of kernel capabilities to add to the container"
 msgstr ""
@@ -989,7 +993,7 @@ msgid ""
 "system and a valid image tar can be downloaded from remote."
 msgstr ""
 
-#: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/configuration.lua:123
+#: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/configuration.lua:127
 msgid ""
 "Which container(s) under bridge network can be accessed, even from "
 "interfaces that are not allowed, fill-in Container Id or Name"
@@ -999,4 +1003,8 @@ msgstr ""
 msgid ""
 "Which interface(s) can access containers under the bridge network, fill-in "
 "Interface Name"
+msgstr ""
+
+#: applications/luci-app-dockerman/luasrc/view/dockerman/cbi/container_list.htm:107
+msgid "unspecified"
 msgstr ""

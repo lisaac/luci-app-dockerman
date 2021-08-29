@@ -10,6 +10,10 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 4.5.2-dev\n"
 
+#: applications/luci-app-dockerman/luasrc/view/dockerman/cbi/container_list.htm:96
+msgid "-- please select --"
+msgstr ""
+
 #: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/newcontainer.lua:621
 msgid "A list of kernel capabilities to add to the container"
 msgstr "要添加到容器的内核功能列表"
@@ -103,7 +107,9 @@ msgstr "Bridge device"
 msgid ""
 "By entering a valid image name with the corresponding version, the docker "
 "image can be downloaded from the configured registry."
-msgstr "通过输入具有相应版本的有效映像名称，可以从镜像存储中心（Registry）中下载docker映像。"
+msgstr ""
+"通过输入具有相应版本的有效映像名称，可以从镜像存储中心（Registry）中下载"
+"docker映像。"
 
 #: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/newcontainer.lua:620
 msgid "CAP-ADD(--cap-add)"
@@ -530,7 +536,9 @@ msgstr "Ipvlan 模式"
 #: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/configuration.lua:43
 msgid ""
 "It replaces the daemon registry mirrors with a new set of registry mirrors"
-msgstr "设置新的镜像存储中心（Registry）镜像源，这将取代服务端（daemon）配置的镜像存储中心（Registry）的镜像源"
+msgstr ""
+"设置新的镜像存储中心（Registry）镜像源，这将取代服务端（daemon）配置的镜像存"
+"储中心（Registry）的镜像源"
 
 #: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/container.lua:238
 #: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/containers.lua:264
@@ -842,7 +850,8 @@ msgid ""
 "Specifies where the Docker daemon will listen for client connections "
 "(default: unix:///var/run/docker.sock)"
 msgstr ""
-"指定Docker服务端（Docker daemon）将在何处侦听客户端连接（默认： unix:///var/run/docker.sock）"
+"指定Docker服务端（Docker daemon）将在何处侦听客户端连接（默认： unix:///var/"
+"run/docker.sock）"
 
 #: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/container.lua:211
 #: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/containers.lua:234
@@ -1005,18 +1014,23 @@ msgstr ""
 "按下导入按钮时，既可以将本地镜像文件加载到系统上，也可以从远程下载有效的Tar格"
 "式的镜像文件。"
 
-#: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/configuration.lua:123
+#: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/configuration.lua:127
 msgid ""
 "Which container(s) under bridge network can be accessed, even from "
 "interfaces that are not allowed, fill-in Container Id or Name"
 msgstr ""
-"桥接网络下哪些容器可以访问，即使是不允许从接口访问，也要填写容器 ID 或名称"
+"桥接网络下哪些容器可以访问，设置此项则即使是在不允许访问的接口下访问容器也不"
+"会被拒绝，请填写容器 ID 或名称"
 
 #: applications/luci-app-dockerman/luasrc/model/cbi/dockerman/configuration.lua:118
 msgid ""
 "Which interface(s) can access containers under the bridge network, fill-in "
 "Interface Name"
 msgstr "哪些接口可以访问桥接网络下的容器，请填写接口名称"
+
+#: applications/luci-app-dockerman/luasrc/view/dockerman/cbi/container_list.htm:107
+msgid "unspecified"
+msgstr ""
 
 #~ msgid "Connect to remote endpoint"
 #~ msgstr "连接到远程终端"
