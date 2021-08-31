@@ -2,15 +2,26 @@
 
 START=99
 USE_PROCD=1
-
-config_load dockerd
+# PROCD_DEBUG=1
+config_load 'dockerd'
 # config_get daemon_ea "dockerman" daemon_ea
+
+docker_running(){
+	docker version > /dev/null 2>&1
+	return $?
+}
 
 init_dockerman_chain(){
 	iptables -N DOCKER-MAN >/dev/null 2>&1
 	iptables -F DOCKER-MAN >/dev/null 2>&1
 	iptables -D DOCKER-USER -j DOCKER-MAN >/dev/null 2>&1
 	iptables -I DOCKER-USER -j DOCKER-MAN >/dev/null 2>&1
+}
+
+delete_dockerman_chain(){
+	iptables -D DOCKER-USER -j DOCKER-MAN >/dev/null 2>&1
+	iptables -F DOCKER-MAN >/dev/null 2>&1
+	iptables -X DOCKER-MAN >/dev/null 2>&1
 }
 
 add_allowed_interface(){
@@ -31,11 +42,23 @@ handle_allowed_interface(){
 
 start_service(){
 	[ ! -x "/etc/init.d/dockerd" ] && return 0
+	delete_dockerman_chain
+	$(/etc/init.d/dockerd running && docker_running) || return 0
 	init_dockerman_chain
 	# if [ -n "$daemon_ea" ]; then
 	handle_allowed_interface
 	lua /usr/share/dockerman/dockerd-ac.lua
 	# fi
+	# local data_root
+	# config_get data_root globals data_root "/opt/docker/"
+	# data_root="${data_root%%/}"
+	# procd_open_instance
+	# procd_set_param file "${data_root}/network/files/local-kv.db"
+	# procd_close_instance
+}
+
+stop_service(){
+	delete_dockerman_chain
 }
 
 service_triggers() {
@@ -44,4 +67,16 @@ service_triggers() {
 
 reload_service() {
 	start
+}
+
+boot() {
+	_DOCKERD=/etc/init.d/dockerd
+	if [ -x "$_DOCKERD" ] && $($_DOCKERD enabled); then
+		while [ 1==1 ]; do
+			if $($_DOCKERD running && docker_running); then
+				rc_procd start_service
+				break
+			fi
+		done
+	fi
 }
