@@ -28,33 +28,32 @@ add_allowed_interface(){
 	iptables -A DOCKER-MAN -i $1 -o docker0 -j RETURN
 }
 
-add_allowed_ip(){
-	iptables -A DOCKER-MAN -d $1 -o docker0 -j ACCEPT
+add_allowed_container(){
+	ip=$(docker inspect --format '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${1} 2>/dev/null)
+	[ -n "$ip" ] && iptables -A DOCKER-MAN -d $ip -o docker0 -j ACCEPT
+}
+
+handle_allowed_container(){
+	config_list_foreach "dockerman" "ac_allowed_container" add_allowed_container
 }
 
 handle_allowed_interface(){
 	#config_list_foreach "dockerman" allowed_ip add_allowed_ip
-	config_list_foreach "dockerman" ac_allowed_interface add_allowed_interface
+	config_list_foreach "dockerman" "ac_allowed_interface" add_allowed_interface
 	iptables -A DOCKER-MAN -m conntrack --ctstate ESTABLISHED,RELATED -o docker0 -j RETURN >/dev/null 2>&1
 	iptables -A DOCKER-MAN -m conntrack --ctstate NEW,INVALID -o docker0 -j DROP >/dev/null 2>&1
 	iptables -A DOCKER-MAN -j RETURN >/dev/null 2>&1
 }
 
 start_service(){
-	[ ! -x "/etc/init.d/dockerd" ] && return 0
+	_DOCKERD=/etc/init.d/dockerd
+	[ -x "$_DOCKERD" ] && $($_DOCKERD enabled) || return 0
 	delete_dockerman_chain
-	$(/etc/init.d/dockerd running && docker_running) || return 0
+	$($_DOCKERD running) && docker_running || return 0
 	init_dockerman_chain
-	# if [ -n "$daemon_ea" ]; then
+	# handle_allowed_container
 	handle_allowed_interface
 	lua /usr/share/dockerman/dockerd-ac.lua
-	# fi
-	# local data_root
-	# config_get data_root globals data_root "/opt/docker/"
-	# data_root="${data_root%%/}"
-	# procd_open_instance
-	# procd_set_param file "${data_root}/network/files/local-kv.db"
-	# procd_close_instance
 }
 
 stop_service(){
@@ -70,13 +69,6 @@ reload_service() {
 }
 
 boot() {
-	_DOCKERD=/etc/init.d/dockerd
-	if [ -x "$_DOCKERD" ] && $($_DOCKERD enabled); then
-		while [ 1==1 ]; do
-			if $($_DOCKERD running && docker_running); then
-				rc_procd start_service
-				break
-			fi
-		done
-	fi
+	sleep 5s
+	start
 }
