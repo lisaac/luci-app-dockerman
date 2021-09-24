@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. $IPKG_INSTROOT/lib/functions.sh
+
 [ -x "$(command -v dockerd)" ] && chmod +x /etc/init.d/dockerman && /etc/init.d/dockerman enable >/dev/null 2>&1
 sed -i 's/self:cfgvalue(section) or {}/self:cfgvalue(section) or self.default or {}/' /usr/lib/lua/luci/view/cbi/dynlist.htm
 /etc/init.d/uhttpd restart >/dev/null 2>&1
@@ -21,5 +23,14 @@ uci -q batch <<-EOF >/dev/null
 
 	commit dockerd
 EOF
-(sleep 60s && /etc/init.d/dockerman convert) &
+# remove dockerd firewall
+config_load dockerd
+remove_firewall(){
+	cfg=${1}
+	uci_remove dockerd ${1}
+}
+config_foreach remove_firewall firewall
+# Convert ac_allowed_container to ac_allowed_ports
+(sleep 30s && /etc/init.d/dockerman convert;/etc/init.d/dockerman restart) &
+
 exit 0

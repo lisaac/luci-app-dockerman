@@ -128,4 +128,4 @@ boot() {
 }
 
 extra_command "add_ports" "Add allowed ports based on the container ID(s)"
-extra_command "convert" "Change Ac allowed container to AC allowed ports"
+extra_command "convert" "Convert Ac allowed container to AC allowed ports"
