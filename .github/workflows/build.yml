@@ -38,7 +38,7 @@ jobs:
           Depends: luci-lib-docker, ttyd, docker, dockerd, luci-lib-ip
           Architecture: all
           Maintainer: lisaac<https://github.com/lisaac/luci-app-dockerman>
-          Section: base
+          Section: luci
           Priority: optional
           Description: Simple Docker manager interface
           Source: http://github.com/lisaac/luci-app-dockerman
